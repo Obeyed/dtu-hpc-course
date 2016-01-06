@@ -1,0 +1,273 @@
+%!TEX root = ../report.tex
+\RequirePackage[l2tabu,orthodox]{nag} % Old habits die hard
+
+\newcommand{\papersizeswitch}[3]{\ifnum\strcmp{\papersize}{#1}=0#2\else#3\fi}
+\papersizeswitch{a4paper}{\def\classfontsize{11pt}}{\def\classfontsize{12pt}}
+
+\PassOptionsToPackage{table,usenames,dvipsnames}{xcolor}
+\documentclass[\classfontsize,\papersize,oneside,showtrims]{memoir}
+\RequireXeTeX
+
+\showtrimsoff
+\papersizeswitch{b5paper}{
+    % Stock and paper layout
+    \pagebv
+    \setlrmarginsandblock{26mm}{20mm}{*}
+    \setulmarginsandblock{35mm}{30mm}{*}
+    \setheadfoot{8mm}{10mm}
+    \setlength{\headsep}{7mm}
+    \setlength{\marginparwidth}{18mm}
+    \setlength{\marginparsep}{2mm}
+}{
+\papersizeswitch{a4paper}{
+        \pageaiv
+        \setlength{\trimtop}{0pt}
+        \setlength{\trimedge}{\stockwidth}
+        \addtolength{\trimedge}{-\paperwidth}
+        \settypeblocksize{634pt}{448.13pt}{*}
+        \setulmargins{4cm}{*}{*}
+        \setlrmargins{*}{*}{0.66}
+        \setmarginnotes{17pt}{51pt}{\onelineskip}
+        \setheadfoot{\onelineskip}{2\onelineskip}
+        \setheaderspaces{*}{2\onelineskip}{*}
+    }{
+    }
+}
+\ifnum\strcmp{\showtrims}{true}=0
+    % For printing B5 on A4 with trimmarks
+    \showtrimson
+    \papersizeswitch{b5paper}{\stockaiv}{\stockaiii}
+    \setlength{\trimtop}{\stockheight}
+    \addtolength{\trimtop}{-\paperheight}
+    \setlength{\trimtop}{0.5\trimtop}
+    \setlength{\trimedge}{\stockwidth}
+    \addtolength{\trimedge}{-\paperwidth}
+    \setlength{\trimedge}{0.5\trimedge}
+    \trimLmarks
+\fi
+
+\checkandfixthelayout                 % Check if errors in paper format!
+\sideparmargin{outer}                 % Put sidemargins in outer position (why the fuck is this option not default by the class?)
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{stmaryrd}
+
+% Large environments
+\usepackage{microtype}
+\usepackage{mathtools}
+\usepackage{listings}                 % Source code printer for LaTeX
+
+\usepackage{pgf}
+\usepackage{pgfplots}
+\pgfplotsset{
+  compat        = newest,
+  table/col sep = comma
+}
+\usepackage{tikz}
+\usepackage{preamble/external/tikzuml/tikz-uml}
+\usetikzlibrary{arrows,automata}
+
+% convert eps to pdf
+\usepackage{epstopdf}
+
+% Links
+\usepackage[hyphens]{url}             % Allow hyphens in URL's
+\usepackage[psdextra]{hyperref}                 % References package
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{naturalnames}{hyperref}
+
+% Graphics and colors
+\usepackage{geometry} 		      % Including graphics and using colours
+\usepackage[table,usenames,dvipsnames]{xcolor}                   % Defined more color names
+%\usepackage{colortbl}				  % Color for tables
+\usepackage{eso-pic}                  % Watermark and other bag
+\usepackage{preamble/dtucolors}
+\usepackage{booktabs}
+\usepackage{epstopdf}
+
+% FloatBarrier packages
+\usepackage{graphicx}
+\usepackage{placeins}
+
+\graphicspath{{graphics/}}
+
+% Language
+\synctex=1
+% PARAGRAPH SPACING
+\parskip=5pt plus 2pt minus 1pt
+\parindent=0pt
+\usepackage[T1]{fontenc}
+%\usepackage[english]{babel}
+%\usepackage[utf8]{inputenc} % Must correspond to the input encoding used by the editor
+\usepackage{polyglossia}    % multilingual typesetting and appropriate hyphenation
+\setdefaultlanguage{english}
+\usepackage{csquotes}       % language sensitive quotation facilities
+\usepackage{enumitem}
+\setlist{noitemsep} %removes vertical spaces of enumerate/itemize
+
+% Floating objets, captions and references
+%\usepackage[noabbrev,nameinlink,capitalise]{cleveref} % Clever references. Options: "fig. !1!" --> "!Figure 1!"
+\usepackage[nameinlink]{cleveref} 
+\hangcaption
+\captionnamefont{\bfseries}
+\subcaptionlabelfont{\bfseries}
+\newsubfloat{figure}
+\newsubfloat{table}
+\letcountercounter{figure}{table}     % Consecutive table and figure numbering
+\captiontitlefinal{.}
+
+% Table of contents (TOC)
+\settocdepth{section}
+\setsecnumdepth{subsubsection}
+
+% Todos
+\usepackage{todonotes}
+\usepackage{footnote}
+
+% CUSTOM MACROES
+\input{preamble/macroes}
+
+% Chapterstyle
+\makeatletter
+\makechapterstyle{mychapterstyle}{
+    \chapterstyle{default}
+    \def\format{\normalfont\sffamily}
+
+    \setlength\beforechapskip{0mm}
+
+    \renewcommand*{\chapnamefont}{\format\LARGE}
+    \renewcommand*{\chapnumfont}{\format\fontsize{40}{40}\selectfont}
+    \renewcommand*{\chaptitlefont}{\format\fontsize{32}{32}\selectfont}
+
+    \renewcommand*{\printchaptername}{\chapnamefont\MakeUppercase{\@chapapp}}
+    \patchcommand{\printchaptername}{\begingroup\color{dtugray}}{\endgroup}
+    \renewcommand*{\chapternamenum}{\space\space}
+    \patchcommand{\printchapternum}{\begingroup\color{dtured}}{\endgroup}
+    \renewcommand*{\printchapternonum}{%
+        \vphantom{\printchaptername\chapternamenum\chapnumfont 1}
+        \afterchapternum
+    }
+
+    \setlength\midchapskip{1ex}
+
+    \renewcommand*{\printchaptertitle}[1]{\raggedleft \chaptitlefont ##1}
+    \renewcommand*{\afterchaptertitle}{\vskip0.5\onelineskip \hrule \vskip1.3\onelineskip}
+
+}
+\makeatother
+\chapterstyle{mychapterstyle}
+
+% Header and footer
+\def\hffont{\sffamily\small}
+\makepagestyle{myruled}
+\makeheadrule{myruled}{\textwidth}{\normalrulethickness}
+\makeevenhead{myruled}{\hffont\thepage}{}{\hffont\leftmark}
+\makeoddhead{myruled}{\hffont\rightmark}{}{\hffont\thepage}
+\makeevenfoot{myruled}{}{}{}
+\makeoddfoot{myruled}{}{}{}
+\makepsmarks{myruled}{
+    \nouppercaseheads
+    \createmark{chapter}{both}{shownumber}{}{\space}
+    \createmark{section}{right}{shownumber}{}{\space}
+    \createplainmark{toc}{both}{\contentsname}
+    \createplainmark{lof}{both}{\listfigurename}
+    \createplainmark{lot}{both}{\listtablename}
+    \createplainmark{bib}{both}{\bibname}
+    \createplainmark{index}{both}{\indexname}
+    \createplainmark{glossary}{both}{\glossaryname}
+}
+\pagestyle{myruled}
+\copypagestyle{cleared}{myruled}      % When \cleardoublepage, use myruled instead of empty
+\makeevenhead{cleared}{\hffont\thepage}{}{} % Remove leftmark on cleared pages
+
+\makeevenfoot{plain}{}{}{}            % No page number on plain even pages (chapter begin)
+\makeoddfoot{plain}{}{}{}             % No page number on plain odd pages (chapter begin)
+
+% Hypersetup
+\hypersetup{
+    pdfauthor={\thesisauthor{}},
+    pdftitle={\thesistitle{}},
+    pdfsubject={\thesissubtitle{}},
+    pdfdisplaydoctitle,
+    bookmarksnumbered=true,
+    bookmarksopen,
+    breaklinks,
+    linktoc=all,
+    plainpages=false,
+    unicode=true,
+    colorlinks=false,
+    citebordercolor=dtured,           % color of links to bibliography
+    filebordercolor=dtured,           % color of file links
+    linkbordercolor=dtured,           % color of internal links (change box color with linkbordercolor)
+    urlbordercolor=s13,               % color of external links
+    hidelinks,                        % Do not show boxes or colored links.
+}
+% Hack to make right pdfbookmark link. The normal behavior links just below the chapter title. This hack put the link just above the chapter like any other normal use of \chapter.
+% Another solution can be found in http://tex.stackexchange.com/questions/59359/certain-hyperlinks-memoirhyperref-placed-too-low
+\makeatletter
+\renewcommand{\@memb@bchap}{%
+  \ifnobibintoc\else
+    \phantomsection
+    \addcontentsline{toc}{chapter}{\bibname}%
+  \fi
+  \chapter*{\bibname}%
+  \bibmark
+  \prebibhook
+}
+\let\oldtableofcontents\tableofcontents
+\newcommand{\newtableofcontents}{
+    \@ifstar{\oldtableofcontents*}{
+        \phantomsection\addcontentsline{toc}{chapter}{\contentsname}\oldtableofcontents*}}
+\let\tableofcontents\newtableofcontents
+\makeatother
+
+% Confidential
+\newcommand{\confidentialbox}[1]{
+    \put(0,0){\parbox[b][\paperheight]{\paperwidth}{
+        \begin{vplace}
+            \centering
+            \scalebox{1.3}{
+                \begin{tikzpicture}
+                    \node[very thick,draw=red!#1,color=red!#1,
+                          rounded corners=2pt,inner sep=8pt,rotate=-20]
+                          {\sffamily \HUGE \MakeUppercase{Confidential}};
+                \end{tikzpicture}
+            }
+        \end{vplace}
+    }}
+}
+
+% Prefrontmatter
+\newcommand{\prefrontmatter}{
+    \pagenumbering{alph}
+    \ifnum\strcmp{\confidential}{true}=0
+        \AddToShipoutPictureBG{\confidentialbox{10}}   % 10% classified box in background on each page
+        \AddToShipoutPictureFG*{\confidentialbox{100}} % 100% classified box in foreground on first page
+    \fi
+}
+
+% DTU frieze
+\newcommand{\frieze}{%
+    \AddToShipoutPicture*{
+        \put(0,0){
+            \parbox[b][\paperheight]{\paperwidth}{%
+                \includegraphics[trim=130mm 0 0 0,width=0.9\textwidth]{DTU-frise-SH-15}
+                \vspace*{2.5cm}
+            }
+        }
+    }
+}
+
+% This is a double sided book. If there is a last empty page lets use it for some fun e.g. the frieze.
+% NB: For a fully functional hack the \clearpage used in \include does some odd thinks with the sequence numbering. Thefore use \input instead of \include at the end of the book. If bibliography is used at last everything should be ok.
+\makeatletter
+% Adjust so gatherings is allowd for single sheets too! (hacking functions in memoir.dtx)
+%\patchcmd{\leavespergathering}{\ifnum\@memcnta<\tw@}{\ifnum\@memcnta<\@ne}{
+%    \leavespergathering{1}
+    % Insert the frieze
+%    \patchcmd{\@memensuresigpages}{\repeat}{\repeat\frieze}{}{}
+%}{}
+\makeatother
