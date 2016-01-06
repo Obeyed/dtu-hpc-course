@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 /* -------- KERNEL -------- */
-__global__ void reduce_kernel(float * d_out, float * d_in, const int size)
+__global__ void reduce_kernel(float * d_out, float * d_in, int size)
 {
   // position and threadId
   int pos = blockIdx.x * blockDim.x + threadIdx.x;
@@ -46,39 +46,40 @@ void reduce(float * d_out, float * d_in, int size, int num_threads)
   cudaMemset(d_intermediate, 0, sizeof(float)*num_blocks);
   int prev_num_blocks;
   int i = 1;
+  int size_rest = 0;
   // recursively solving, will run approximately log base num_threads times.
   do
   {
     printf("Round:%.d\n", i);
     printf("NumBlocks:%.d\n", num_blocks);
     printf("NumThreads:%.d\n", num_threads);
+    printf("size of array:%.d\n", size);
     i++;
     reduce_kernel<<<num_blocks, num_threads>>>(d_intermediate, d_in, size);
+    size_rest = size % num_threads;
+    size = size / num_threads + size_rest;
 
     // updating input to intermediate
     cudaMemcpy(d_in, d_intermediate, sizeof(float)*num_blocks, cudaMemcpyDeviceToDevice);
 
     // Updating num_blocks to reflect how many blocks we now want to compute on
     prev_num_blocks = num_blocks;
-    if(num_blocks % num_threads)
+    if(size % num_threads)
     {
-      num_blocks = num_blocks / num_threads + 1;      
+      num_blocks = size / num_threads + 1;      
     }
     else
     {
-      num_blocks = num_blocks / num_threads;
+      num_blocks = size / num_threads;
     }
-
-
     // updating intermediate
     cudaFree(d_intermediate);
     cudaMalloc(&d_intermediate, sizeof(float)*num_blocks);
-    size = num_blocks*num_threads;
   }
-  while(prev_num_blocks > num_threads); // if it is too small, compute rest.
+  while(size > num_threads); // if it is too small, compute rest.
 
   // computing rest
-  reduce_kernel<<<1, prev_num_blocks>>>(d_out, d_in, prev_num_blocks);
+  reduce_kernel<<<1, size>>>(d_out, d_in, prev_num_blocks);
 
 }
 
@@ -86,9 +87,9 @@ void reduce(float * d_out, float * d_in, int size, int num_threads)
 int main(int argc, char **argv)
 {
   // Setting num_threads
-  int num_threads = 16;
+  int num_threads = 2;
   // Making non-bogus data and setting it on the GPU
-  const int size = 16384;
+  const int size = 12308;
   const int size_out = 1;
   float * d_in;
   float * d_out;

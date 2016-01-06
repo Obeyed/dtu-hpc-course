@@ -3,8 +3,41 @@
 #include <cuda_runtime.h>
 
 // Performs one step of the hillis and steele algorithm for integers
-__global__ void hs_kernel(int * d_out, int * d_in, int step, const int ARRAY_SIZE)
+__global__ void hs_kernel_global(int * d_out, int * d_in, int step, const int ARRAY_SIZE)
 {
+	// setting ID
+	int myId = threadIdx.x + blockDim.x * blockIdx.x;
+
+	// checking if out-of-bounds
+	if(myId >= ARRAY_SIZE)
+	{
+		return;
+	}
+
+	// setting itself
+	int myVal = d_in[myId];
+
+	// finding the number to add, checking out-of-bounds
+	int myAdd;
+	if((myId - step)<0)
+	{
+		myAdd = 0;
+	}
+	else
+	{
+		myAdd = d_in[myId-step];
+	}
+
+	// setting output
+	d_out[myId] = myVal + myAdd;
+}
+
+// Performs one step of the hillis and steele algorithm for integers
+__global__ void hs_kernel_shared(int * d_out, int * d_in, int step, const int ARRAY_SIZE)
+{
+	// sdate is allocated in the kernel call: 3rd arg to <<<b, t, shmem>>>
+	extern __shared__ float sdata[];
+	
 	// setting ID
 	int myId = threadIdx.x + blockDim.x * blockIdx.x;
 
@@ -48,7 +81,7 @@ void hs_kernel_wrapper(int * d_out, int * d_in, const unsigned int ARRAY_SIZE, c
 		// printf("round %d: step %d\n", i, step);
 		// i++;
 		// one step/kernel at a time to do synchronization across blocks
-		hs_kernel<<<num_blocks, num_threads>>>(d_out, d_intermediate, step, ARRAY_SIZE);
+		hs_kernel_global<<<num_blocks, num_threads>>>(d_out, d_intermediate, step, ARRAY_SIZE);
 		cudaMemcpy(d_intermediate, d_out, ARRAY_BYTES, cudaMemcpyDeviceToDevice);
 		step <<= 1; // double step size at each iteration
 
@@ -61,9 +94,10 @@ int main(int argc, char **argv)
 	printf("Hillis and Steele ONLINE... \n");
 	// defining vars
 	const unsigned int num_threads = 512;
-	const unsigned int ARRAY_SIZE = 65535;
+	const unsigned int ARRAY_SIZE = 1<<21;
 	const unsigned int ARRAY_BYTES = ARRAY_SIZE * sizeof(int);
 	printf("defined vars... \n");
+	printf("ARRAY_SIZE: %d\n", ARRAY_SIZE);
 
 	// setting host in
 	int h_in[ARRAY_SIZE];
