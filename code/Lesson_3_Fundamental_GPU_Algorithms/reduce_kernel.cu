@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 /* -------- KERNEL -------- */
-__global__ void reduce_kernel(float * d_out, float * d_in, int size)
+__global__ void reduce_kernel(int * d_out, int * d_in, int size)
 {
   // position and threadId
   int pos = blockIdx.x * blockDim.x + threadIdx.x;
@@ -28,7 +28,7 @@ __global__ void reduce_kernel(float * d_out, float * d_in, int size)
 }
 
 /* -------- KERNEL WRAPPER -------- */
-void reduce(float * d_out, float * d_in, int size, int num_threads)
+void reduce(int * d_out, int * d_in, int size, int num_threads)
 {
   // setting up blocks and intermediate result holder
   
@@ -41,9 +41,9 @@ void reduce(float * d_out, float * d_in, int size, int num_threads)
     {
       num_blocks = (size) / num_threads;
     }
-  float * d_intermediate;
-  cudaMalloc(&d_intermediate, sizeof(float)*num_blocks);
-  cudaMemset(d_intermediate, 0, sizeof(float)*num_blocks);
+  int * d_intermediate;
+  cudaMalloc(&d_intermediate, sizeof(int)*num_blocks);
+  cudaMemset(d_intermediate, 0, sizeof(int)*num_blocks);
   int prev_num_blocks;
   int i = 1;
   int size_rest = 0;
@@ -60,7 +60,7 @@ void reduce(float * d_out, float * d_in, int size, int num_threads)
     size = size / num_threads + size_rest;
 
     // updating input to intermediate
-    cudaMemcpy(d_in, d_intermediate, sizeof(float)*num_blocks, cudaMemcpyDeviceToDevice);
+    cudaMemcpy(d_in, d_intermediate, sizeof(int)*num_blocks, cudaMemcpyDeviceToDevice);
 
     // Updating num_blocks to reflect how many blocks we now want to compute on
     prev_num_blocks = num_blocks;
@@ -74,7 +74,7 @@ void reduce(float * d_out, float * d_in, int size, int num_threads)
     }
     // updating intermediate
     cudaFree(d_intermediate);
-    cudaMalloc(&d_intermediate, sizeof(float)*num_blocks);
+    cudaMalloc(&d_intermediate, sizeof(int)*num_blocks);
   }
   while(size > num_threads); // if it is too small, compute rest.
 
@@ -86,24 +86,24 @@ void reduce(float * d_out, float * d_in, int size, int num_threads)
 /* -------- MAIN -------- */
 int main(int argc, char **argv)
 {
+  printf("@@STARTING@@ \n");
   // Setting num_threads
-  int num_threads = 2;
+  int num_threads = 512;
   // Making non-bogus data and setting it on the GPU
-  const int size = 12308;
+  const int size = 1<<19;
   const int size_out = 1;
-  float * d_in;
-  float * d_out;
-  cudaMalloc(&d_in, sizeof(float)*size);
-  cudaMalloc(&d_out, sizeof(float)*size_out);
-  //const int value = 5;
-  //cudaMemset(d_in, value, sizeof(float)*size);
-  float * h_in = (float *)malloc(size*sizeof(float));
-  for (int i = 0; i <  size; i++) h_in[i] = 1.0f;
-  cudaMemcpy(d_in, h_in, sizeof(float)*size, cudaMemcpyHostToDevice);
+  int * d_in;
+  int * d_out;
+  cudaMalloc(&d_in, sizeof(int)*size);
+  cudaMalloc(&d_out, sizeof(int)*size_out);
+
+  int * h_in = (int *)malloc(size*sizeof(int));
+  for (int i = 0; i <  size; i++) h_in[i] = 1;
+  cudaMemcpy(d_in, h_in, sizeof(int)*size, cudaMemcpyHostToDevice);
 
   // Running kernel wrapper
   reduce(d_out, d_in, size, num_threads);
-  float result;
-  cudaMemcpy(&result, d_out, sizeof(float), cudaMemcpyDeviceToHost);
-  printf("sum is element is: %.f\n", result);
+  int result;
+  cudaMemcpy(&result, d_out, sizeof(int), cudaMemcpyDeviceToHost);
+  printf("\nFINAL SUM IS: %d\n", result);
 }
