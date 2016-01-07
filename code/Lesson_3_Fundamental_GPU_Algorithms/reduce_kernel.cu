@@ -90,8 +90,8 @@ int main(int argc, char **argv)
   // Setting num_threads
   int num_threads = 512;
   // Making non-bogus data and setting it on the GPU
-  const unsigned int size = 1<<18;
-  const unsigned int size_out = 1;
+  const int size = 1<<19;
+  const int size_out = 1;
   int * d_in;
   int * d_out;
   cudaMalloc(&d_in, sizeof(int)*size);
