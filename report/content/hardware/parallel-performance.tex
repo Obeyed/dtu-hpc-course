@@ -1,13 +1,50 @@
 \section{Parallel Performance}
 \label{sec:parallel performance}
 
-\todo[inline]{write hardware:parallel-performance section}
+This section presents two laws that aim to describe two different things when discussing performance speedup.
+The first is Amdahl's Law which describes how much faster a program can become with the same workload, and the second is Gustafson-Barsis Law which describes how much more work can be performed with the same running time.
+However, neither take into account that all computations have some overhead, e.g. reading and writing data, atomic operations where threads wait for each other, creating or deleting threads, etc.
 
 \subsection{Amdahl's Law}
 \label{sec:amdahls law}
 
+Amdahl's Law is an equation that aims to approximate the potential speedup of a serial program.
+The equation is presented in \cref{eq:amdahls law}, where $P$ is the portion of the serial code that can be parallelized, $(1-P)$ is the portion that cannot be made parallel, and we have $n$ processors.
+Thus, $S(n)$ approximates the speedup by making a program parallel.
 
-\subsection{Gustafson's Law}
-\label{sec:gustafsons law}
+\begin{equation}
+  \label{eq:amdahls law}
+  S(n) = \frac{1}{(1-P) + P/n}
+\end{equation}
 
+Amdahl's Law only applies if the amount of work performed in the parallel version is not significantly different than the serial code's amount of work.
+An illustration of the potential speedup is presented in \cref{fig:amdahls law} with $n=1024$.
+It shows that the optimal solution is that the entire portion of code can be made parallel, and the code runs $n$ times faster compared to the serial code, when running $n$ processors~\cite{farber2011cuda}.
+
+\begin{figure}[htb]
+  \centering
+  \input{graphics/plots/amdahls-law}
+  \caption{Speedup given by Amdahl's Law with variable portions of paralleliable code $P$ and $n=1024$ processors}
+  \label{fig:amdahls law}
+\end{figure}
+
+Notice how steep the curve is when having a portion of the code that is not parallelizable of 1\% to 0\%.
+With 1\% serial portion the speedup is about $91\times$, and $1024\times$ when everything can be made parallel.
+So, with just a tiny portion of the code that can only be serial, a high speedup is not likely to be achieved.
+
+\subsection{Gustafson-Barsis Law}
+\label{sec:gustafson-barsis law}
+
+Gustafson-Barsis Law aims to overcome the shortcomings of Amdahl's Law, which says that the size of the problem is unchanged when made parallel.
+The point that Gustafson makes is that many computational problems scale with the number of processors available, e.g. computing pi -- if we have more computational power, we compute more digits of pi~\cite{amdahlorgustafson2011}.
+Note, however that if the goal at hand is to compute pi quicker, then that is ofcourse possible, this is just not what Gustafson-Barsis Law aims to describe.
+
+\begin{equation}
+  \label{eq:gustafson-barsis law}
+  W(n) = n + (1-n) \times (1-P)
+\end{equation}
+
+So, the goal is to run a program in the same amount of time but with more work.
+This approximation is present in \cref{eq:gustafson-barsis law}.
+Thus, $W(n)$ gives the amount of work that can be further performed~\cite{gustafson1988reevaluating}.
 
