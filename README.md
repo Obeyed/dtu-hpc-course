@@ -5,6 +5,7 @@ This repository contains our documentation for a special course in high performa
 We have a folder containing our report, and one folder containing the code.
 
 # Smart ideas
+
 - Nvidia NSight
 - testing these things http://stackoverflow.com/questions/11816786/why-bother-to-know-about-cuda-warps
-- 
+- setting up guide http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-linux/#axzz3wZxUxpLy
