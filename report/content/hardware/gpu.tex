@@ -3,6 +3,14 @@
 
 The Graphical Processing Unit (GPU) is a device which is attached to a host machine.
 This means that the GPU is an attached piece of hardware, which then is a work horse that works together with the CPU to perform computations.
+We present \cref{fig:sm example} as a reference for this section.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=.5\textwidth]{graphics/images/cropped-cuda-sm.png}
+  \caption{Example of a Streaming Multiprocessor for reference~\cite{farber2011cuda}}
+  \label{fig:sm example}
+\end{figure}
 
 A GPU's basic building block is the streaming multiprocessor (SM), which is independently responsible for its own resources, cores, and memory.
 By making each SM independent memory access and computation are performed faster, because there is not global memory or special units that are shared among all the hardware.
@@ -39,21 +47,40 @@ If this is the case, then the GPU is not utilised to its optimal capacity~\cite{
 
 Throughout this report, we will be using the Tesla K40 GPU~\cite{teslak402013nvidia}.
 For future reference \cref{tab:tesla k40 specs} presents the specifications for our GPU device.
-\todo[inline]{fill in the table}
+\todo{is L1 cache used for shared memory?}
 
 \begin{table}[htb]
   \centering
-  \begin{tabular}{r l}
+  \begin{tabular}{l r}
     \toprule
-    item & spec \\
+    item                        & limit \\
     \midrule
-    warp size & 32 \\
-    register size & 16 b \\
-    shared memory & 49999 b \\
-    global memory & 12 GB \\
+    warp size                   & \SI{32}{} \\
+    max threads / block         & \SI{1024}{} \\
+    total cores                 & \SI{2880}{} \\
+    registers / block           & \SI{65536}{} \\
+    constant memory             & \SI{65536}{B} \\
+    L1 cache / block            & \SI{49152}{B}  \\
+    L2 cache / core             & \SI{1572864}{B}  \\
+    global memory               & \SI{12079136768}{B} \\
     \bottomrule
   \end{tabular}
   \caption{Tesla K40 GPU's specifications}
   \label{tab:tesla k40 specs}
 \end{table}
 
+Furthermore, the maximum dimension of grids and blocks are presented in \cref{tab:tesla k40 grid and block}.
+
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{r r r r}
+    \toprule
+    item & x & y & z \\
+    \midrule
+    block size & \SI{1024}{} & \SI{1024}{} & \SI{64}{} \\
+    grid size  & \SI{2147483647}{} & \SI{65535}{} & \SI{65535}{} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Tesla K40 GPU's block and grid sizes}
+  \label{tab:tesla k40 grid and block}
+\end{table}
