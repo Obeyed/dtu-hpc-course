@@ -27,6 +27,8 @@ Each SFU executes one instruction per thread per clock.
 SFUs can perform an operation while it is communicating with another thread.
 Compared to the SIMD cores, the SFUs are designed specifically to perform their designated functions, and the SIMD cores are general purpose cores.
 
+% good warp answers:  http://stackoverflow.com/questions/11816786/why-bother-to-know-about-cuda-warps
+%                     http://stackoverflow.com/questions/10460742/how-do-cuda-blocks-warps-threads-map-onto-cuda-cores
 A warp is a block of 32 SIMD threads, and they are the basic unit for scheduling work in the SMs.
 To maximize the utilisation of the GPU the developer must make sure that these warp sizes are considered when executing code.
 If one does not consider the warp size and randomly schedules tasks, then the programs might have many idle threads that do nothing.
@@ -36,3 +38,22 @@ If this is the case, then the GPU is not utilised to its optimal capacity~\cite{
 \label{sec:hardware specific numbers}
 
 Throughout this report, we will be using the Tesla K40 GPU~\cite{teslak402013nvidia}.
+For future reference \cref{tab:tesla k40 specs} presents the specifications for our GPU device.
+\todo[inline]{fill in the table}
+
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{r l}
+    \toprule
+    item & spec \\
+    \midrule
+    warp size & 32 \\
+    register size & 16 b \\
+    shared memory & 49999 b \\
+    global memory & 12 GB \\
+    \bottomrule
+  \end{tabular}
+  \caption{Tesla K40 GPU's specifications}
+  \label{tab:tesla k40 specs}
+\end{table}
+
