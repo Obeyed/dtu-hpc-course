@@ -2,10 +2,11 @@
 \label{sec:gpu}
 
 The Graphical Processing Unit (GPU) is a device which is attached to a host machine.
+This means that the GPU is an attached piece of hardware, which then is a work horse that works together with the CPU to perform computations.
 
 A GPU's basic building block is the streaming multiprocessor (SM), which is independently responsible for its own resources, cores, and memory.
 By making each SM independent memory access and computation are performed faster, because there is not global memory or special units that are shared among all the hardware.
-Each SM has Single Instruction Multiple Data (SIMD) cores.
+Each SM has Single Instruction Multiple Data (SIMD) Arithmetic Logic Units (ALU), which are commonly referred to as the cores.
 These cores will all run the same instruction, but may use different data.
 
 The work given to the GPU is distributed to the SMs by the Giga-Thread global scheduler, which knows when the SMs are busy.
