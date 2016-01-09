@@ -1,4 +1,65 @@
 \section{Kernels}
 \label{sec:kernels}
 
+In CUDA a kernel is a function that is run on the GPU.
+A kernel is a function with the \ttt{\_\_global\_\_} identifier in front of its declaration as illustrated in \cref{lst:kernel declaration example}.
+This function first computes the thread's index (\ttt{tid}) in the block, then checks if it is out of bounds, and finally copies the value at \ttt{tid} from \ttt{d\_in} to \ttt{d\_out}.
+
+\begin{lstlisting}[caption={Kernel declaration example}, label={lst:kernel declaration example}]
+__global__
+void map_kernel(const int * d_in, int * d_out, const int size){
+  // thread ID
+  const int tid = threadIdx.x + blockDim.x * blockIdx.x;
+  // check if out of bounds
+  if (tid >= size) return;
+  // copy item by thread's index
+  d_out[tid] = d_in[tid];
+}
+\end{lstlisting}
+
+Recall that the core of a GPU is a SIMD core as presented in \cref{sec:gpu}.
+The kernel will be launched on the GPU, where the given amount of threads will all run the same kernel.
+However, they are all aligned in the block of threads, and they all know their own index in that block.
+
+\subsection{Calling a Kernel}
+\label{sec:calling a kernel}
+
+A kernel is called from the main program by calling the function with triple chevrons, which encapsulate the number of grids, blocks, and threads to run the kernel.
+This is illustrated in \cref{lst:kernel call example}, where the kernel is called with 2 blocks with 128 threads per block.
+
+\begin{lstlisting}[caption={Calling a kernel}, label={lst:kernel call example}]
+int main(int argc, char **argv) {
+  const int num_blocks  = 2, 
+            num_threads = 128, 
+            size  = 1<<8,
+            bytes = size * sizeof(int);
+
+  // set up host memory
+  int h_in[size], h_out[size];
+
+  for(int i = 0; i < ARRAY_SIZE; i++) h_in[i] = 3;
+
+  // set up device memory
+  int * d_in; int * d_out;
+  cudaMalloc((void **) &d_in, bytes);
+  cudaMalloc((void **) &d_out, bytes);
+
+  // copy host memory to device memory
+  cudaMemcpy(d_in, h_in, bytes, cudaMemcpyHostToDevice);
+
+  // call kernel
+  map_kernel<<<num_blocks, num_threads>>>(d_in, d_out, size);
+
+  // copy device memory from device to host
+  cudaMemcpy(h_out, d_out, bytes, cudaMemcpyDeviceToHost);
+
+  // print content of array
+  for (int i = 0; i < size; i++) printf(h_out[i]);
+
+  // free GPU memory
+  cudaFree(d_in); cudaFree(d_out);
+
+  return 0;
+}
+\end{lstlisting}
 

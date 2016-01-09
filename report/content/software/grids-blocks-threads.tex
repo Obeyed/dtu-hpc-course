@@ -1,7 +1,27 @@
 \section{Grids, Blocks, and Threads}
 \label{sec:grids blocks threads}
 
-\Cref{tab:warp size testing} shows average elapsed time for launching different threads, to see the impact compared to the amount of warps are needed.
+Threads are ordered into blocks.
+Blocks are ordered into grids.
+Each thread, block, and/or grid knows its own position in the grid/block ordering.
+These positions are fetched with the following reserved objects, which all have three dimensions (\ttt{x, y, z}).
+\todo{nice to have illustration of grids of blocks of threads}
+
+\begin{itemize}
+  \item \ttt{gridDim}
+  \item \ttt{gridIdx} 
+  \item \ttt{blockDim} 
+  \item \ttt{blockIdx} 
+  \item \ttt{threadIdx}
+\end{itemize}
+
+As presented in \cref{sec:hardware specific numbers} the max number of threads per block is 1024 for the device we will be working with.
+
+\subsection{Testing Warp Sizes}
+\label{sec:testing warp sizes}
+
+In \cref{sec:gpu} we introduced the notion of a warp.
+\Cref{tab:warp size testing} shows the average elapsed time over 1,000 runs for launching different threads, to see the impact compared to the amount of warps are needed.
 One warp launches 32 threads at a time.
 
 \begin{table}[htb]%
@@ -34,3 +54,9 @@ One warp launches 32 threads at a time.
   \caption{Testing different warp sizes}
   \label{tab:warp size testing}
 \end{table}
+
+We present the multiple of 32 as the base case for the two tables.
+By subtracting one and launching one thread less, the SM still launches an amount of threads that are a multiple of 32 and we have one idle thread.
+By subtracting 31, we have 31 idle threads.
+Our tests show that having idle threads actually increases the total latency.
+
