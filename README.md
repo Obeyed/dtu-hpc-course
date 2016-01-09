@@ -23,12 +23,13 @@ Num_threads Time
 - 32x9-31:  6.236
 
 # Overhead testing
-Num_threads=1<<10
+Num_threads = 1<<10
+Size of problem = 1<<29 
 Model       Time
 - Base:     5.437
 - Init:     5.437
 - global read:  5.437(coalescled)
-- globla read: (not coalescled)
-- shared write: 22.83
-- global write: 25.5
+- globla read:  5.437(not coalescled)
+- global read, shared write: 22.83
+- global read, shared write: 25.5
 
