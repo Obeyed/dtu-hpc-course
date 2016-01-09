@@ -27,7 +27,8 @@ Num_threads=1<<10
 Model       Time
 - Base:     5.437
 - Init:     5.437
-- global read:  (coalescled)
+- global read:  5.437(coalescled)
 - globla read: (not coalescled)
-- shared write:
-- global write:
+- shared write: 22.83
+- global write: 25.5
+
