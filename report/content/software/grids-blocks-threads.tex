@@ -4,18 +4,29 @@
 Threads are ordered into blocks.
 Blocks are ordered into grids.
 Each thread, block, and/or grid knows its own position in the grid/block ordering.
-These positions are fetched with the following reserved objects, which all have three dimensions (\ttt{x, y, z}).
+These positions are fetched with the built-in variables presented in \cref{tab:built-in variables}, which all have three dimensions (\ttt{x, y, z}).
 \todo{nice to have illustration of grids of blocks of threads}
 
-\begin{itemize}
-  \item \ttt{gridDim}
-  \item \ttt{gridIdx} 
-  \item \ttt{blockDim} 
-  \item \ttt{blockIdx} 
-  \item \ttt{threadIdx}
-\end{itemize}
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    variable & explanation & type \\
+    \midrule
+    \ttt{gridDim}   & dimension of grid           & \ttt{dim3}  \\
+    \ttt{blockIdx}  & block's index within grid   & \ttt{uint3} \\
+    \ttt{blockDim}  & dimension of block          & \ttt{dim3}  \\
+    \ttt{threadIdx} & thread's index within block & \ttt{uint3} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Built-in variables that are only valid within functions that are executed on device}
+  \label{tab:built-in variables}
+\end{table}
 
-As presented in \cref{sec:hardware specific numbers} the max number of threads per block is 1024 for the device we will be working with.
+These built-in variables are of type \ttt{uint3} and \ttt{dim3}, which are integer vectors.
+They are used to specify dimensions.
+For the \ttt{dim3} variable all unspecified components are set to 1.
+As presented in \cref{sec:hardware specific numbers} the max number of threads per block is 1024 for the device we will be working with.~\cite{nvidia2015doc}
 
 \subsection{Testing Warp Sizes}
 \label{sec:testing warp sizes}

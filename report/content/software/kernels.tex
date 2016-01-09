@@ -7,7 +7,7 @@ This function first computes the thread's index (\ttt{tid}) in the block, then c
 
 \begin{lstlisting}[caption={Kernel declaration example}, label={lst:kernel declaration example}]
 __global__
-void map_kernel(const int * d_in, int * d_out, const int size){
+void map_kernel(const int *d_in, int *d_out, const int size) {
   // thread ID
   const int tid = threadIdx.x + blockDim.x * blockIdx.x;
   // check if out of bounds
@@ -17,7 +17,7 @@ void map_kernel(const int * d_in, int * d_out, const int size){
 }
 \end{lstlisting}
 
-Recall that the core of a GPU is a SIMD core as presented in \cref{sec:gpu}.
+Recall that the cores of a GPU are SIMD cores as presented in \cref{sec:gpu}.
 The kernel will be launched on the GPU, where the given amount of threads will all run the same kernel.
 However, they are all aligned in the block of threads, and they all know their own index in that block.
 
@@ -29,29 +29,28 @@ This is illustrated in \cref{lst:kernel call example}, where the kernel is calle
 
 \begin{lstlisting}[caption={Calling a kernel}, label={lst:kernel call example}]
 int main(int argc, char **argv) {
-  const int num_blocks  = 2, 
-            num_threads = 128, 
-            size  = 1<<8,
-            bytes = size * sizeof(int);
+  const int NUM_BLOCKS  = 2, 
+            NUM_THREADS = 128, 
+            SIZE  = 1<<8,
+            BYTES = SIZE * sizeof(int);
 
   // set up host memory
-  int h_in[size], h_out[size];
-
-  for(int i = 0; i < size; i++) h_in[i] = 3;
+  int h_in[SIZE], h_out[SIZE];
+  for(int i = 0; i < SIZE; i++) h_in[i] = 3;
 
   // set up device memory
-  int * d_in; int * d_out;
-  cudaMalloc((void **) &d_in, bytes);
-  cudaMalloc((void **) &d_out, bytes);
+  int *d_in, *d_out;
+  cudaMalloc((void **) &d_in, BYTES);
+  cudaMalloc((void **) &d_out, BYTES);
 
   // copy host memory to device memory
-  cudaMemcpy(d_in, h_in, bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_in, h_in, BYTES, cudaMemcpyHostToDevice);
 
   // call kernel
-  map_kernel<<<num_blocks, num_threads>>>(d_in, d_out, size);
+  map_kernel<<<NUM_BLOCKS, NUM_THREADS>>>(d_in, d_out, SIZE);
 
   // copy device memory from device to host
-  cudaMemcpy(h_out, d_out, bytes, cudaMemcpyDeviceToHost);
+  cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
 
   // print content of array
   for (int i = 0; i < size; i++) printf(h_out[i]);
@@ -63,3 +62,15 @@ int main(int argc, char **argv) {
 }
 \end{lstlisting}
 
+First we instantiate number of blocks and threads along with the size of the array and the size in bytes.
+The host's arrays are declared and the input array, \ttt{h\_in}, is populated.
+Then the device's arrays are declared and memory is allocated for them with \ttt{cudaMalloc()}.
+The contents of \ttt{h\_in} is copied to \ttt{d\_in} where the transfer is from host to device, which is dictated by the \ttt{cudaMemcpyHostToDevice} keyword.
+The actual kernel is then called with \ttt{NUM\_BLOCKS, NUM\_THREADS} and the given arguments.
+The kernel is called with a total of 256 threads.
+Finally, the output in \ttt{d\_out} is copied to the host's array \ttt{h\_out}, where the transfer is from device to host.
+The contents is printed, the GPU's memory is freed, and the main function returns 0, indicating everything went well.
+
+A kernel takes up to three arguments within the triple chevrons.
+The first and second arguments are of type \ttt{dim3}, and the third and optional argument determines how much shared memory to allocate on the device.
+When we pass in a single integer it is equal to a declaration of \ttt{dim3 gridSize(NUM\_BLOCKS, 1, 1)}.
