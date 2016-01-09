@@ -1,18 +1,24 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <cuda_runtime.h>
+#include <iostream>
+#include <fstream>
 
 /* -------- KERNEL -------- */
-__global__ void reduce_kernel(int * d_out, int * d_in, int size)
+__global__ void reduce_kernel(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE)
 {
   // position and threadId
-  int pos = blockIdx.x * blockDim.x + threadIdx.x;
-  int tid = threadIdx.x;
+  unsigned int pos = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int tid = threadIdx.x;
+
+
 
   // do reduction in global memory
   for (unsigned int s = blockDim.x / 2; s>0; s>>=1)
   {
     if (tid < s)
     {
-      if (pos+s < size) // Handling out of bounds
+      if (pos+s < SIZE) // Handling out of bounds
       {
         d_in[pos] = d_in[pos] + d_in[pos+s];
       }
@@ -21,95 +27,121 @@ __global__ void reduce_kernel(int * d_out, int * d_in, int size)
   }
 
   // only thread 0 writes result, as thread
-  if ((tid==0) && (pos < size))
+  if ((tid==0) && (pos < SIZE))
+  {
+    d_out[blockIdx.x] = d_in[pos];
+  }
+}
+
+/* -------- KERNEL -------- */
+__global__ void reduce_kernel_volatile(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE)
+{
+  // position and threadId
+  unsigned int pos = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int tid = threadIdx.x;
+
+  volatile unsigned int a = blockDim.x / 2;
+
+  // do reduction in global memory
+  for (unsigned int s = a; s>0; s>>=1)
+  {
+    if (tid < s)
+    {
+      if (pos+s < SIZE) // Handling out of bounds
+      {
+        d_in[pos] = d_in[pos] + d_in[pos+s];
+      }
+    }
+    __syncthreads();
+  }
+
+  // only thread 0 writes result, as thread
+  if ((tid==0) && (pos < SIZE))
   {
     d_out[blockIdx.x] = d_in[pos];
   }
 }
 
 /* -------- KERNEL WRAPPER -------- */
-void reduce(int * d_out, int * d_in, int size, int num_threads)
+void reduce(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsigned int NUM_THREADS)
 {
-  // setting up blocks and intermediate result holder
-  
-  int num_blocks;
-  if(((size) % num_threads))
-    {
-      num_blocks = ((size) / num_threads) + 1;    
-    }
-    else
-    {
-      num_blocks = (size) / num_threads;
-    }
-  int * d_intermediate;
-  cudaMalloc(&d_intermediate, sizeof(int)*num_blocks);
-  cudaMemset(d_intermediate, 0, sizeof(int)*num_blocks);
-  int prev_num_blocks;
-  int i = 1;
-  int size_rest = 0;
-  // recursively solving, will run approximately log base num_threads times.
+  // Setting up blocks and intermediate result holder
+  unsigned int NUM_BLOCKS = SIZE/NUM_THREADS + ((SIZE % NUM_THREADS)?1:0);
+  unsigned int * d_intermediate_in;
+  unsigned int * d_intermediate_out;
+  cudaMalloc(&d_intermediate_in, sizeof(unsigned int)*SIZE);
+  cudaMalloc(&d_intermediate_out, sizeof(unsigned int)*NUM_BLOCKS);
+  cudaMemcpy(d_intermediate_in, d_in, sizeof(unsigned int)*SIZE, cudaMemcpyDeviceToDevice);
+
+  // Recursively solving, will run approximately log base NUM_THREADS times.
   do
   {
+    reduce_kernel<<<NUM_BLOCKS, NUM_THREADS>>>(d_intermediate_out, d_intermediate_in, SIZE);
 
-    reduce_kernel<<<num_blocks, num_threads>>>(d_intermediate, d_in, size);
+    // Updating SIZE
+    SIZE = NUM_BLOCKS;//SIZE / NUM_THREADS + SIZE_REST;
 
-    int * result = (int *)malloc(sizeof(int)*num_blocks);
-    cudaMemcpy(result, d_intermediate, sizeof(int)*num_blocks, cudaMemcpyDeviceToHost);
-    int sum=0;
-    for(int i=0; i<num_blocks; i++){ sum+=result[i];} 
-    printf("Round:%.d\n", i);
-    printf("NumBlocks:%.d\n", num_blocks);
-    printf("NumThreads:%.d\n", num_threads);
-    printf("size of array:%.d\n", size);
-    printf("sum is: %d\n", sum);
-    size_rest = size % num_threads;
-    size = size / num_threads + size_rest;
+    // Updating input to intermediate
+    cudaMemcpy(d_intermediate_in, d_intermediate_out, sizeof(unsigned int)*NUM_BLOCKS, cudaMemcpyDeviceToDevice);
 
-    // updating input to intermediate
-    cudaMemcpy(d_in, d_intermediate, sizeof(int)*num_blocks, cudaMemcpyDeviceToDevice);
+    // Updating NUM_BLOCKS to reflect how many blocks we now want to compute on
+    NUM_BLOCKS = SIZE/NUM_THREADS + ((SIZE % NUM_THREADS)?1:0);
 
-    // Updating num_blocks to reflect how many blocks we now want to compute on
-    prev_num_blocks = num_blocks;
-    if(size % num_threads)
-    {
-      num_blocks = size / num_threads + 1;      
-    }
-    else
-    {
-      num_blocks = size / num_threads;
-    }
-    // updating intermediate
-    cudaFree(d_intermediate);
-    cudaMalloc(&d_intermediate, sizeof(int)*num_blocks);
   }
-  while(size > num_threads); // if it is too small, compute rest.
+  while(SIZE > NUM_THREADS); // if it is too small, compute rest.
 
-  // computing rest
-  reduce_kernel<<<1, size>>>(d_out, d_in, prev_num_blocks);
-
+  // Computing rest
+  reduce_kernel<<<1, SIZE>>>(d_out, d_intermediate_out, SIZE);
+  cudaFree(d_intermediate_in);
+  cudaFree(d_intermediate_out);
 }
 
 /* -------- MAIN -------- */
 int main(int argc, char **argv)
 {
-  printf("@@STARTING@@ \n");
-  // Setting num_threads
-  int num_threads = 512;
-  // Making non-bogus data and setting it on the GPU
-  const int size = 1<<30;
-  const int size_out = 1;
-  int * d_in;
-  int * d_out;
-  cudaMalloc(&d_in, sizeof(int)*size);
-  cudaMalloc(&d_out, sizeof(int)*size_out);
+  std::ofstream myfile;
+  myfile.open ("par_reduce.csv");
+  // Setting NUM_THREADS
+  const unsigned int times = 10;
+  for (unsigned int rounds = 0; rounds<30; rounds++)
+  {
+    printf("Round: %d\n", rounds);
+    unsigned int NUM_THREADS = 1<<10;
+    // Making non-bogus data and setting it on the GPU
+    unsigned int SIZE = 1<<rounds;
+    unsigned int * d_in;
+    unsigned int * d_out;
+    cudaMalloc(&d_in, sizeof(unsigned int)*SIZE);
+    cudaMalloc(&d_out, sizeof(unsigned int)*SIZE);
+    unsigned int * h_in = (unsigned int *)malloc(SIZE*sizeof(int));
+    for (unsigned int i = 0; i <  SIZE; i++) h_in[i] = 1;
+    cudaMemcpy(d_in, h_in, sizeof(unsigned int)*SIZE, cudaMemcpyHostToDevice);
 
-  int * h_in = (int *)malloc(size*sizeof(int));
-  for (int i = 0; i <  size; i++) h_in[i] = 1;
-  cudaMemcpy(d_in, h_in, sizeof(int)*size, cudaMemcpyHostToDevice);
+    // Running kernel wrapper
+    // setting up time
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
 
-  // Running kernel wrapper
-  reduce(d_out, d_in, size, num_threads);
-  int result;
-  cudaMemcpy(&result, d_out, sizeof(int), cudaMemcpyDeviceToHost);
-  printf("\nFINAL SUM IS: %d\n", result);
+    // kernel time!!!
+    cudaEventRecord(start, 0);
+
+    for (unsigned int i = 0; i < times; i++)
+    {
+      reduce(d_out, d_in, SIZE, NUM_THREADS);
+    }
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+
+    // calculating time
+    float elapsedTime;
+    cudaEventElapsedTime(&elapsedTime, start, stop);    
+    elapsedTime = elapsedTime / ((float) times);
+    printf("time!: %.5f\n", elapsedTime);
+    unsigned int h_out;
+    cudaMemcpy(&h_out, d_out, sizeof(int), cudaMemcpyDeviceToHost);
+    myfile << elapsedTime << ",";
+  }
+  myfile.close();
+  return 0;
 }
