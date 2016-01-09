@@ -1,4 +1,36 @@
 \section{Grids, Blocks, and Threads}
 \label{sec:grids blocks threads}
 
+\Cref{tab:warp size testing} shows average elapsed time for launching different threads, to see the impact compared to the amount of warps are needed.
+One warp launches 32 threads at a time.
 
+\begin{table}[htb]%
+  \begin{minipage}{0.49\linewidth}
+    \centering
+    \begin{tabular}{lrr}
+      \toprule
+      threads (\#) & time (ms) & latency \\
+      \midrule
+      $32 \times 10$    & $5.321$ &          \\
+      $32 \times 10-1$  & $5.336$ & $+0.28\%$  \\
+      $32 \times 10-16$ & $5.600$ & $+5.24\%$  \\
+      $32 \times 10-31$ & $5.892$ & $+10.73\%$ \\
+      \bottomrule
+    \end{tabular}
+  \end{minipage}%
+  \begin{minipage}{0.49\linewidth}
+    \centering
+    \begin{tabular}{lrr}
+      \toprule
+      threads (\#) & time (ms) & latency \\
+      \midrule
+      $32 \times 9$     & $5.561$ & \\
+      $32 \times 9-1$   & $5.585$ & $+0.43\%$  \\
+      $32 \times 9-16$  & $5.892$ & $+5.95\%$  \\
+      $32 \times 9-31$  & $6.236$ & $+12.13\%$ \\
+      \bottomrule
+    \end{tabular}
+  \end{minipage}%
+  \caption{Testing different warp sizes}
+  \label{tab:warp size testing}
+\end{table}
