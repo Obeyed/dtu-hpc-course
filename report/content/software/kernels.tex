@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
   // set up host memory
   int h_in[size], h_out[size];
 
-  for(int i = 0; i < ARRAY_SIZE; i++) h_in[i] = 3;
+  for(int i = 0; i < size; i++) h_in[i] = 3;
 
   // set up device memory
   int * d_in; int * d_out;
