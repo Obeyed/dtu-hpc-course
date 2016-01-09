@@ -1,4 +1,15 @@
 \section{Motivation}
 \label{sec:motivation}
 
-\todo[inline]{write motivation section}
+So, we have that CPUs are general purpose processing units that perform very well on their own, but they are expensive in power.
+On the other hand, we have the GPU which is more simple and built for heavy computations.
+It is more power efficient, but the programming model is more restrictive.
+The developer must now think in parallel and make sure that the data is distributed in a proper fashion.
+
+Put another way, the CPU is built for optimising latency, and the GPU is built for optimising throughput.
+Latency describes how fast something was performed, i.e. how many seconds did the job take before finishing.
+Throughput describes how many jobs were performed within a time frame, i.e. how many jobs per hour were performed~\cite{farber2011cuda}.
+
+Beyond our personal interest in parallel computing, the modern information technology society is being faced with handling very large amounts of data.
+The buzzword is Big Data and with a lot of data the GPU gets very interesting, because it can crunch through a lot of data very quickly.
+Applications such as machine learning, numerical analysis, and graphics are well suited to be solved on a GPU because the problem's nature is easily made parallel~\cite{amdahlorgustafson2011,chen2014data}.
