@@ -1,4 +1,37 @@
 \section{Challenges with Parallel Programs}
 \label{sec:challenges with parallel programs}
 
-\todo[inline]{introduce deadlock, race conditions, etc.}
+Parallel computing does have some challenges, which are important to be aware of.
+We will briefly discuss deadlock and race conditions in this section.
+
+A program is in a deadlocked state if two or more threads are waiting for the other to finish, resulting in neither ever finishing.
+The program is simply never going to advance, and will be locked.
+Starvation occurs if a thread is denied access to one or more resources which it needs before it can continue execution.
+A race condition is a situation where two or more threads attempt to perform two or more operations at the same time, where these operations must be performed in a proper order to be correct.
+For instance, simultaneous write operations to the same memory address will cause a race condition.~\cite{farber2011cuda}
+
+To give an example on how a race condition arises we present a naive implementation of a histogram in \cref{lst:naive histo}.
+This kernel has a race condition because many threads will in fact try to increment the value at \ttt{d\_bins[bin]} simultaneously.
+The problem is that the operation is in fact three operations that are not atomic.
+The code at line 9 in fact does three operations; read value at \ttt{d\_bins[bin]}, increment value, rewrite value to memory.
+
+\begin{lstlisting}[caption={Naive histogram implementation with race condition}, label={lst:naive histo}]
+__global__
+void naive_histogram_kernel(int *d_bins, const int *d_in, const int SIZE) {
+  int tid  = threadIdx.x + blockDim.x * blockIdx.x;
+  // fetch item from input
+  int item = d_in[tid];
+  // compute where to put item wrt. bin count
+  int bin  = item % SIZE;
+  // update amount for that bin
+  d_bins[bin]++; // should be exchanged with atomicAdd(&(d_bins[bin]), 1);
+}
+\end{lstlisting}
+
+The simple solution to this problem is to use an atomic variant, where the given memory is locked while a thread is updating it, and unlocked when it is done.
+This way the threads will have to wait for each other to finish and thus limit the amount of parallelism, but the result will be correct.
+Line 9 should be exchanged with the code in line 10, which is does the same operations in an atomic fashion.
+
+Another solution is to us a reduce algorithm to avoid the \ttt{atomicAdd()}.
+Here each thread will manage a local copy of the histogram, and combine these histograms two and two, to end up with a complete histogram from the entire amount of launched threads.
+We present reduce algorithm in \cref{sec:reduce}.
