@@ -31,5 +31,5 @@ Model       Time
 - global read:  5.437(coalescled)
 - globla read:  5.437(not coalescled)
 - global read, shared write: 22.83
-- global read, shared write: 25.5
+- global read, global write: 25.5
 
