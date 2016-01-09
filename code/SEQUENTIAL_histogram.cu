@@ -12,16 +12,19 @@ int main(int argc,char **argv)
     std::ofstream myfile;
     myfile.open ("seq_histogram.csv");
 
-    // set these variables
-    const unsigned int times = 10;
-    //const unsigned int binCount = 10;
+    // setting variables
+    unsigned int times = 10;
+    unsigned int IN_SIZE;
+    unsigned int IN_BYTES;
+    unsigned int OUT_SIZE;
+    unsigned int OUT_BYTES;
 
     for (unsigned int rounds = 0; rounds<30; rounds++)
     {
-        const unsigned int IN_SIZE = 1<<29;
-        const unsigned int IN_BYTES = sizeof(unsigned int)*IN_SIZE;
-        const unsigned int OUT_SIZE = 1<<rounds;
-        const unsigned int OUT_BYTES = sizeof(unsigned int)*OUT_SIZE;
+        IN_SIZE = 1<<29;
+        IN_BYTES = sizeof(unsigned int)*IN_SIZE;
+        OUT_SIZE = 1<<rounds;
+        OUT_BYTES = sizeof(unsigned int)*OUT_SIZE;
         printf("\ni = %d\n", rounds);
         printf("\n  ARRAY_SIZE = %d\n", IN_SIZE);
         printf("  ARRAY_BYTES = %d\n", IN_BYTES);
@@ -33,7 +36,7 @@ int main(int argc,char **argv)
         cudaEventCreate(&start);
         cudaEventCreate(&stop);
         cudaEventRecord(start, 0);
-        // running the code on the CPU $times times        
+        // running the code on the CPU $times times     
         for (unsigned int k = 0; k<times; k++)
         {
             for (unsigned int j = 0; j<OUT_SIZE; j++) {h_out[j] = 0;}
@@ -42,7 +45,6 @@ int main(int argc,char **argv)
             {
                 h_out[computeBin(h_in, l, OUT_SIZE)]++;
             }
-            for (unsigned int x = 0; x<OUT_SIZE; x++) {printf("  h_out[%d] = %d\n", x, h_out[x]);}
         }
         cudaEventRecord(stop, 0);
         cudaEventSynchronize(stop);
@@ -51,7 +53,8 @@ int main(int argc,char **argv)
         cudaEventElapsedTime(&elapsedTime, start, stop);
         elapsedTime = elapsedTime / ((float) times);
         printf(" time: %.5f\n", elapsedTime);
-
+        free(h_in);
+        free(h_out);
         myfile << elapsedTime << ",";
     }
     myfile.close();

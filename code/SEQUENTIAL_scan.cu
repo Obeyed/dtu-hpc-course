@@ -41,7 +41,7 @@ int main(int argc,char **argv)
         float elapsedTime = .0f;
         cudaEventElapsedTime(&elapsedTime, start, stop);
         elapsedTime = elapsedTime / ((float) times);
-        printf(" time: %.f\n", elapsedTime);
+        printf(" time: %.5f\n", elapsedTime);
 
         myfile << elapsedTime << ",";
     }
