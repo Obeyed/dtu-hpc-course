@@ -10,15 +10,19 @@ int main(int argc,char **argv)
     myfile.open ("seq_mapping.csv");
 
     // set these variables
-    const unsigned int times = 10;
+    unsigned int times = 10;
+    unsigned int IN_SIZE;
+    unsigned int IN_BYTES;
+    unsigned int OUT_SIZE;
+    unsigned int OUT_BYTES;
 
     for (unsigned int rounds = 0; rounds<30; rounds++)
     {
         // Setting up variables
-        const unsigned int IN_SIZE = 1<<rounds;
-        const unsigned int IN_BYTES = sizeof(unsigned int)*IN_SIZE;
-        const unsigned int OUT_SIZE = IN_SIZE;
-        const unsigned int OUT_BYTES = IN_BYTES;
+        IN_SIZE = 1<<rounds;
+        IN_BYTES = sizeof(unsigned int)*IN_SIZE;
+        OUT_SIZE = IN_SIZE;
+        OUT_BYTES = IN_BYTES;
         printf("\ni = %d\n", rounds);
         printf("\n  ARRAY_SIZE = %d\n", IN_SIZE);
         printf("  ARRAY_BYTES = %d\n", IN_BYTES);
@@ -48,7 +52,8 @@ int main(int argc,char **argv)
         cudaEventElapsedTime(&elapsedTime, start, stop);
         elapsedTime = elapsedTime / ((float) times);
         printf(" time: %.5f\n", elapsedTime);
-
+        free(h_in);
+        free(h_out);
         myfile << elapsedTime << ",";
     }
     myfile.close();
