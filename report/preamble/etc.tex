@@ -15,14 +15,14 @@
     captionpos=b,                     % sets the caption-position to bottom
 %    morecomment=[l]{(*},              % trying to redefine comments, it's not working
 %    morecomment=[s]{(*}{*)},
-    morecomment=[n]{(*}{*)},
+%    morecomment=[n]{(*}{*)},
     commentstyle=\color{wpgreen},        % comment style
     deletekeywords={},                % if you want to delete keywords from the given language
     escapeinside={}{},           % if you want to add LaTeX within your code
     frame=single,                     % adds a frame around the code
     keywordstyle=\bfseries\ttfamily\color{s09}, % keyword style
-%    language=Python,                  % the language of the code
-    morekeywords={while, int, write, read, then, else, do, od, if, fi},             % if you want to add more keywords to the set
+    language=c++,                  % the language of the code
+    morekeywords={__global__,threadIdx,blockDim,blockIdx},             % if you want to add more keywords to the set
     numbers=left,                     % where to put the line-numbers; possible values are (none, left, right)
     numbersep=5pt,                    % how far the line-numbers are from the code
     numberstyle=\sffamily\tiny\color{dtugray}, % the style that is used for the line-numbers
@@ -34,7 +34,7 @@
     stringstyle=\color{s07},          % string literal style
     tabsize=2,                        % sets default tabsize to 2 spaces
     title=\lstname,                   % show the filename of files included with \lstinputlisting; also try caption instead of title
-%    xleftmargin=0.05\textwidth,        % margins to center listin%g
-%    xrightmargin=0.05\textwidth,
+    xleftmargin=0.05\textwidth,        % margins to center listin%g
+    xrightmargin=0.05\textwidth,
 }
 
