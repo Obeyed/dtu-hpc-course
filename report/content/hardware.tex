@@ -2,36 +2,12 @@
 \label{chap:hardware}
 
 This chapter presents the general architectures of a CPU and a GPU.
+Next, we present the memory architecture associated with GPU computing.
 Furthermore, we present Amdahl's Law and Gustafson-Barsis Law, which discuss two different aspects of parallel execution compared to sequential execution.
-We end the chapter by discussing why it is not a good idea to go all in with the GPU and no longer use a CPU.
-
-\begin{table}[htb]
-  \centering
-  \begin{tabular}{l r}
-    \toprule
-    memory & speed \\
-    \midrule
-    register & $\approx \SI{8000}{GB/s}$ \\
-    shared   & $\approx \SI{1600}{GB/s}$ \\
-    global   & $\SI{177}{GB/s}$ \\
-    mapped   & $\approx \SI{8}{GB/s}$ \\
-  \end{tabular}
-  \caption{GPU memory bandwidth~\cite{farber2011cuda}}
-  \label{tab:hardware connections transfer rates}
-\end{table}
-
-As a reference for this chapter, we present \cref{tab:hardware connections transfer rates} which summarises the transfer rates of different connections of the different types of hardware.
-\todo{is shared memory bandwidth the same for L1, L2, and SMEM?}
-We add \cref{fig:cpu gpu communication} to illustrate the connections these have.
-
-\begin{figure}[htb]
-  \centering
-  \includegraphics[height=7.5cm]{graphics/images/cuda-mem-hierarchy.png}
-  \caption{CUDA memory hierarchy~\cite{farber2011cuda}}
-  \label{fig:cpu gpu communication}
-\end{figure}
+We end the chapter with a brief discussion on the differences between CPU and GPU.
 
 \input{content/hardware/cpu}
 \input{content/hardware/gpu}
+\input{content/hardware/memory}
 \input{content/hardware/parallel-performance}
 \input{content/hardware/cpu-vs-gpu}
