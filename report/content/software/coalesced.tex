@@ -1,5 +1,22 @@
 \section{Coalesced Memory Access}
 \label{sec:coalesced}
 
-\todo[inline]{introduce SoA and AoS}
+In \cref{sec:cuda memory architecture} we introduced that the L1 cache is design to work in a spatial locality, where the neighbouring data is assumed to be used in the near future.
+Data can be structured in different ways.
+Consider an image that is represented with RGB.
+This can be represent with a Structure of Arrays (SoA) and a Array of Structures (AoS).
+These two structures are presented in \cref{lst:soa aos}.
 
+\begin{lstlisting}[caption={Example of SoA and AoS with RGB}, label={lst:soa aos}]
+struct {
+  int R, G, B;
+} AoS[N];
+
+struct {
+  int R[N], G[N], B[N];
+} SoA;
+\end{lstlisting}
+
+Coalesced memory access is where memory is access in a fashion that agrees with spatial lcality, and thus neighbouring data is accessed in the near future.
+This type of memory access is desired in GPU because of the structure of the caches inside the cores.
+The best suited structure is the SoA because the access to memory is done in a coalesced manner.
