@@ -1,17 +1,12 @@
-\section{Motivation}
+﻿\section{Motivation}
 \label{sec:motivation}
 
 Forty years ago, Gordon E. Moore predicted that the number of transistors will double every two years. Until now this prediction has been correct and is widely known as ``Moore's Law''. Previously, increasing the transistors and thus computational power was achieved by making smaller and faster transistors, which in turn was utilized for higher clock speed. However, within the last decade we have reached the ceiling for clock speed due to power and heat challenges. The current approach has thus been focussing on creating many simple and power efficient computational units and utilizing these in parallel.~\cite{udacity, schaller1997moore,bryant2003computer}
 
-So, we have that CPUs are general purpose processing units that perform very well on their own, but they are expensive in power.
-On the other hand, we have the GPU which is more simple and built for heavy computations.
-It is more power efficient, but the programming model is more restrictive.
-The developer must now think in parallel and make sure that the data is distributed in a proper fashion.
+The performance of processesors are often divided into two areas, latency and throughput. Latency is the speed of which a single task can be completed, whereas throughput is the total amount of computation produced over a given timeframe.~\cite{farber2011cuda}
 
-Put another way, the CPU is built for optimising latency, and the GPU is built for optimising throughput.
-Latency describes how fast something was performed, i.e. how many seconds did the job take before finishing.
-Throughput describes how many jobs were performed within a time frame, i.e. how many jobs per hour were performed~\cite{farber2011cuda}.
+The two different apporaches of building processesors translates to the CPU and GPGPU. The CPU is focussed on reducing latency by having a few complex processors maximixing clock speed for computing. The GPGPU on the other hand is designed for optimizing throughput using many simple and economical processors. The theoretical throughput that GPGPU's presents with its many simple processors, however, are based on the ability to utilize all of its simple processors at once.
 
-Beyond our personal interest in parallel computing, the modern information technology society is being faced with handling very large amounts of data.
-The buzzword is Big Data and with a lot of data the GPU gets very interesting, because it can crunch through a lot of data very quickly.
-Applications such as machine learning, numerical analysis, and graphics are well suited to be solved on a GPU because the problem's nature is easily made parallel~\cite{amdahlorgustafson2011,chen2014data}.
+To fully exploit the potential of the GPGPU a task has to be paralizable and instructions developed with parallization in mind, especially as the memory structure of current GPGPUs are often the bottleneck in achieving the theoretical throughput.
+
+The applicational interests, which is one of our reasons for taking this course, are often based on tasks requiring lineary algebra of massive matrices. Lineary algebra is by nature a very parallizable task as the problem can be reduced to smaller parallel subproblems using divide-and-conquer methods(Volker Strassen)~\cite{amdahlorgustafson2011,chen2014data}. As lineary algebra has been the corner stone of machine learning, numerical analysis and graphics for decades we find the challenge of developing parallel algorithms for GPGPUs appealing, why we are taking this course.
