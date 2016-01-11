@@ -17,7 +17,7 @@
 
     \addplot table [x=x, y=parallel] {data/histogram.csv};
     \addlegendentry{parallel};
-    \addplot table [x=x, y=sequential] {data/histogram.csv};
+    \addplot+[dashed] table [x=x, y=sequential] {data/histogram.csv};
     \addlegendentry{sequential};
   \end{axis}
 \end{tikzpicture}
