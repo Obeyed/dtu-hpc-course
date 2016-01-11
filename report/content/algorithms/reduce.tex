@@ -1,3 +1,60 @@
 \section{Reduce}
 \label{sec:reduce}
 
+\Cref{lst:reduce par} shows the reduce kernel.
+
+\begin{lstlisting}[caption={Reduce kernel}, label={lst:reduce par}]
+__global__
+void reduce_kernel(int *d_out, int *d_in, int SIZE) {
+  // position and thread id
+  int pos = threadIdx.x + blockIdx.x * blockDim.x,
+      tid = threadIdx.x;
+
+  for (int s = blockDim.x / 2; s > 0; s /= 2) {
+    if (tid < s)
+      if ((pos + s) < SIZE) // Handling out of bounds
+        d_in[pos] += d_in[pos + s];
+    __syncthreads();
+  }
+
+  if ((tid == 0) && (pos < SIZE)) // only thread 0 writes result
+    d_out[blockIdx.x] = d_in[pos];
+}
+\end{lstlisting}
+
+%\begin{lstlisting}[caption={Reduce kernel wrapper}, label={lst:reduce wrapper}]
+%void reduce(int *d_out, int *d_in, int SIZE, int NUM_THREADS) {
+%  int NUM_BLOCKS = SIZE/NUM_THREADS + ((SIZE % NUM_THREADS)?1:0);
+%  unsigned int IN_BYTES  = sizeof(int) * SIZE,
+%               OUT_BYTES = sizeof(int) * NUM_BLOCKS,
+%               NEW_BYTES = 0;
+%
+%  int *d_intm_in, *d_intm_out; // intermediate arrays
+%  cudaMalloc(&d_intm_in, IN_BYTES);
+%  cudaMalloc(&d_intm_out, OUT_BYTES);
+%  cudaMemcpy(d_intm_in, d_in, IN_BYTES, cudaMemcpyDeviceToDevice);
+%
+%  do {
+%    reduce_kernel<<<NUM_BLOCKS, NUM_THREADS>>>(d_intm_out, d_intm_in, SIZE);
+%    // Updating input to intermediate
+%    SIZE = NUM_BLOCKS;
+%    NEW_BYTES = sizeof(int) * SIZE;
+%    cudaMemcpy(d_intm_in, d_intm_out, NEW_BYTES, cudaMemcpyDeviceToDevice);
+%    // Updating to reflect how many blocks we now want to compute on
+%    NUM_BLOCKS = SIZE / NUM_THREADS + ((SIZE % NUM_THREADS)?1:0);
+%  } while(SIZE > NUM_THREADS);
+%
+%  // Compute the remainder
+%  reduce_kernel<<<1, SIZE>>>(d_out, d_intm_out, SIZE);
+%  cudaFree(d_intm_in); cudaFree(d_intm_out);
+%}
+%\end{lstlisting}
+
+\Cref{lst:reduce seq} shows the sequential code for reduce.
+
+\begin{lstlisting}[caption={Sequential reduce}, label={lst:reduce seq}]
+void reduce(int *h_in, int *h_out, int SIZE) {
+  for (int l = 0; l < SIZE; ++l) 
+    h_out[0] += h_in[l];
+}
+\end{lstlisting}

@@ -1,3 +1,22 @@
 \section{Map}
 \label{sec:map}
 
+\Cref{lst:map par} shows the map kernel.
+
+\begin{lstlisting}[caption={Map kernel}, label={lst:map par}]
+__global__ 
+void map_kernel(int *d_out, int *d_in, int SIZE) {
+  int tid = threadIdx.x + blockDim.x * blockIdx.x;
+  if (tid >= SIZE) return; // checking for out-of-bounds
+  d_out[tid] = d_in[tid];
+}
+\end{lstlisting}
+
+\Cref{lst:map seq} shows the sequential code for map.
+
+\begin{lstlisting}[caption={Sequential map}, label={lst:map seq}]
+void map(int *h_in, int *h_out, int SIZE) {
+  for (int j = 0; j < SIZE; j++) 
+    h_out[j] = h_in[j];
+}
+\end{lstlisting}

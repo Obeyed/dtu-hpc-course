@@ -1,3 +1,24 @@
 \section{Histogram}
 \label{sec:histogram}
 
+\Cref{lst:histo par} shows the histogram kernel.
+
+\begin{lstlisting}[caption={Simple parallel histogram implementation}, label={lst:histo par}]
+__global__ 
+void simple_histo(int *d_bins, int *d_in, int BIN_SIZE, int SIZE) {
+  int tid = threadIdx.x + blockDim.x * blockIdx.x;
+  if (tid >= SIZE) return; // checking for out-of-bounds
+  int item = d_in[tid], 
+      bin  = item % BIN_SIZE;
+  atomicAdd(&(d_bins[bin]), 1);
+}
+\end{lstlisting}
+
+\Cref{lst:hist seq} shows the sequential histogram code.
+
+\begin{lstlisting}[caption={Sequential histogram}, label={lst:hist seq}]
+void histogram(int *h_in, int *h_out, int IN_SIZE, int OUT_SIZE) {
+  for (int l = 0; l < IN_SIZE; l++) 
+    h_out[(h_in[l] % OUT_SIZE)]++;
+}
+\end{lstlisting}
