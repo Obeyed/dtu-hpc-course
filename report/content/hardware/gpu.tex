@@ -1,9 +1,10 @@
 \section{General GPU Architecture}
 \label{sec:gpu}
 
-The Graphical Processing Unit (GPU) is a device which is attached to a host machine.
-This means that the GPU is an attached piece of hardware, which then is a work horse that works together with the CPU to perform computations.
-We present \cref{fig:sm example} as a reference for this section.
+The \textbf{General-purpose computation on graphics processing units (GPGPU)} is a microprocesser that performs computation traditionally handled by the CPU.
+In our project we only work with CUDA-enabled devices, but we assume that the features of CUDA-enabled devices are equivalent to thoese of GPGPUs for the ease of notation.
+The GPGPU consists of a large amount of simple and economical processing units that individually are weaker than the CPU, but combined possess upto several magnitudes of larger throughput.
+The GPGPU is attached to the CPU, such that the CPU utilizes the GPGPU, to accelerate computation that the GPGPU is more suitable at handling, e.g. processes that are parallel.
 
 \begin{figure}[htb]
   \centering
@@ -12,14 +13,26 @@ We present \cref{fig:sm example} as a reference for this section.
   \label{fig:sm example}
 \end{figure}
 
-A GPU's basic building block is the streaming multiprocessor (SM), which is independently responsible for its own resources, cores, and memory.
-By making each SM independent memory access and computation are performed faster, because there is not global memory or special units that are shared among all the hardware.
-Each SM has Single Instruction Multiple Data (SIMD) Arithmetic Logic Units (ALU), which are commonly referred to as the cores.
-These cores will all run the same instruction, but may use different data.
+The GPGPU's architecture is based on a parallel scheme, which has promoted an architecture of independance among processing cores on the GPGPU.
+The basic building block of this architecture is the streaming multiprocessor (SM) shown in \cref{fig:sm example}, which is independently responsible for its own resources, cores, and memory.
+By making each SM independent, memory access and computation are performed faster as the memory is placed physically closer to the cores.
+The cores on each SM are Single Instruction, Multiple Data (SIMD) ALUs.
+As the cores are constrained to run the same piece of code, though with different data, the software paradigm of ``kernels'' has developed.
+A kernel is a describtion of a set of instruction that all cores across all SMs performs independantly of one another.
 
-The work given to the GPU is distributed to the SMs by the Giga-Thread global scheduler, which knows when the SMs are busy.
-CUDA-enabled devices are categorised by their compute capability which describes the amount of threads each block can have.
-Threads actually perform computations.
+The work given to the GPU is distributed to the SMs by the Giga-Thread global scheduler.
+The Giga-thread scheduler holds metainformation on the SMs, which allows it to optimize workloads across the GPGPU's independent processors.
+The scheduling of work on a GPGPU is computed through ``blocks'', containing ``threads'' and organized in ``grids''.
+The thread is an independant sequence of work, where the sequence is defined by instructions of the kernel.
+A kernel can use its ID, compared to it's number in a set of threads, which it uses to coordinate its own work.
+To organize threads and utilize the ability to communicate between threads on an SMs where memory access is fast, the concept of blocks has emerged.
+A block containts a set amount of threads, has a set amount of L1 cache on the SM reserved and is able to synchronize between threads at any point in the kernel.
+It further ensures that every thread is runned before terminating the block.
+The grid is a set of blocks
+The maximal number of threads a block can support is limited by hardware with 512 threads per block for older GPGPUs and 1024 for newer ones.
+
+As overhead is incurred using  through A block is an extension of the thread that allows the thre a collection of threads being runned on the same SM, further the block has a set amount of memory allocated at the
+theWhen a kernel is called from the host, the CPU, a Threads are the working unit of CUDA-enabled devicesThreads actually perform computations.
 They are organised into blocks and grids.
 These are described further in \cref{chap:software}.
 
