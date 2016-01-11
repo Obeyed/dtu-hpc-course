@@ -1,10 +1,9 @@
-\section{General Multi-core CPU Architecture}
+\section{CPU Architecture}
 \label{sec:cpu}
+The \textbf{Central Processing Unit (CPU)} is the processing unit in a modern day computer.
+The CPU handles processing and control of data in the computer's memory space.
+The CPU is usually made of a small amount of complex cores, known as Multiple Instruction, Multiple Data (MIMD) Arithmetic Logic Units (ALU) that are optimized on reducing the latency of a given task.
 
-We will consider the architecture of a general multi-core Central Processing Unit (CPU) and what memory it can communicate with.
-A multi-core CPU has two or more independent processing cores, which are Multiple Instructions Multiple Data (MIMD) cores.
-This means that they can work on different instructions with different data simultaneously.
-
-These cores have at least one layer of private cached memory.
-Furthermore, there is at least one layer of public memory, where the largest is called Random Access Memory (RAM), and it thus shared memory between all the cores.
-The further down the layered hierarchy the given memory is, the slower it is for the CPU to receive data from it~\cite{bryant2003computer}.
+The bottleneck of computation is often placed at the memory's ability to transfer data to/from the CPU, also known as I/Os.
+To increase the I/Os the CPU has a built-in memory architecture with high speed, but low storage capabilities.
+The optimized memory architecture allows the CPU the store, ``cache'', memory for later reuse and thus reduce the bottleneck.~\cite{bryant2003computer}
