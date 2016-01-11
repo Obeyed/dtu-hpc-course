@@ -1,4 +1,7 @@
 # High Performance Computing
+- 11'th-12'th, figure NSight and go through report
+- 13'th, go through rest of udacity
+
 ## Special Course
 ### The Technical University of Denmark - January, 2016
 This repository contains our documentation for a special course in high performance computing at The Technical University of Denmark.
