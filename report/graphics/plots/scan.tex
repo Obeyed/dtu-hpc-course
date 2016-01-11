@@ -1,0 +1,23 @@
+\begin{tikzpicture}
+  \begin{axis}[
+    ymajorgrids,
+    xmajorgrids,
+    ylabel={Time (ms)},
+    xlabel={Memory size ($2^x$)},
+    xmode=log,
+    log basis x={2},
+    legend style={
+      at={(0.05,0.95)},
+      anchor=north west,
+      column sep=1ex
+     },
+     no markers,
+     very thick 
+   ]
+
+    \addplot table [x=x, y=parallel] {data/scan.csv};
+    \addlegendentry{parallel};
+    \addplot table [x=x, y=sequential] {data/scan.csv};
+    \addlegendentry{sequential};
+  \end{axis}
+\end{tikzpicture}
