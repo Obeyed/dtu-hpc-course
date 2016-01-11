@@ -1,13 +1,13 @@
 % https://graphics.cg.uni-saarland.de/fileadmin/cguds/courses/ws1213/pp_cuda/slides/02_-_CUDA_Memory_Hierarchy.pdf
-\section{CUDA Memory Architecture}
-\label{sec:cuda memory architecture}
+\section{GPGPU Memory Architecture}
+\label{sec:gpgpu memory architecture}
 
-This section aims to give a brief overview of the memory architecture of CUDA-enabled GPUs.
+This section aims to give a brief overview of the memory architecture of GPGPUs.
 
 \Cref{fig:cpu gpu communication} illustrates the connections between the different layers of memory.
-Starting from the bottom, we have the mapped memory from the host machine to global memory on the GPU device.
-The global memory of the device is the slowest on the device.
-As the memory moves towards the cores, access to the memory is much faster.
+The data moves from the CPU's main memory, known as host memory, to the GPU's main memory, known as global memory.
+From the global memory the data is dispatched to the global various SMs.
+It is worth noticing that transfering data from host to global memory and from global memory to the SMs are very expensive operations as they are several magnitudes slower.
 
 \begin{figure}[htb]
   \centering
