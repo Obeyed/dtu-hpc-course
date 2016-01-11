@@ -1,16 +1,18 @@
 \section{Parallel Performance}
 \label{sec:parallel performance}
 
-This section presents two laws that aim to describe two different things when discussing performance speed up.
-The first is Amdahl's Law which describes how much faster a program can become with the same workload, and the second is Gustafson-Barsis Law which describes how much more work can be performed with the same running time.
-However, neither take into account that all computations have some overhead, e.g. reading and writing data, atomic operations where threads wait for each other, creating or deleting threads, etc.
+This section presents two models that aims to assess theoretical performance speed up with parallel computing.
+Both models ignores overhead costs, memory transfers and synchronization.
+
+The first is model i known as Amdahl's Law, which attempts to describes how much faster a program can execute while holding the workload constant.
+The second model is known as Gustafson-Barsis Law, which describes how much more work can be performed holding the running time constant.
 
 \subsection{Amdahl's Law}
 \label{sec:amdahls law}
 
-Amdahl's Law is an equation that aims to approximate the potential speed up of a serial program.
-The equation is presented in \cref{eq:amdahls law}, where $P$ is the portion of the serial code that can be parallelized, $(1-P)$ is the portion that cannot be made parallel, and we have $n$ processors.
-Thus, $S(n)$ approximates the speed up by making a program parallel.
+Amdahl's Law approximates the potential speed up of a serial program.
+The equation is presented in \cref{eq:amdahls law}, where $P$ is the portion of the serial code that can be parallelized, $(1-P)$ is the portion that cannot be parallelized and $n$ is the amount of processors available.
+Thus, $S(n)$ is the theoretical speed up achievable while holding the workload constant.
 
 \begin{equation}
   \label{eq:amdahls law}
@@ -19,7 +21,7 @@ Thus, $S(n)$ approximates the speed up by making a program parallel.
 
 Amdahl's Law only applies if the amount of work performed in the parallel version is not significantly different than the serial code's amount of work.
 An illustration of the potential speed up is presented in \cref{fig:amdahls law} with $n=1024$.
-It shows that the optimal solution is that the entire portion of code can be made parallel, and the code runs $n$ times faster compared to the serial code, when running $n$ processors~\cite{farber2011cuda}.
+The model thus theorize that given a fully parallizable problem, the problem should be executed $n$ times faster~\cite{farber2011cuda}.
 
 \begin{figure}[htb]
   \centering
@@ -28,21 +30,24 @@ It shows that the optimal solution is that the entire portion of code can be mad
   \label{fig:amdahls law}
 \end{figure}
 
-Notice how steep the curve is when the serial portion moves from 1\% to 0\%.
-With 1\% serial portion the speed up is about $91\times$, and $1024\times$ when everything can be made parallel.
+An important property of Amdahls is the decline of the curve as the solution moves from 0\% to 1\%.
+With parallel portion $P=0.99$ the speed up is approximately $91\times$, and $1024\times$ when $P=1.00$ and everything can be made parallel.
 According to Amdahl's Law, with just a tiny portion of the code that cannot become parallel, a high speed up is not likely to be achieved.
 
 \subsection{Gustafson-Barsis Law}
 \label{sec:gustafson-barsis law}
 
-The point that Gustafson makes is that many computational problems scale with the number of processors available, e.g. computing pi -- if we have more computational power, we compute more digits of pi~\cite{amdahlorgustafson2011}.
-Note, however that if the goal at hand is to compute pi quicker, then that is of course possible, this is just not what Gustafson-Barsis Law aims to describe.
+Gustafson and Barsis Law approximates how much more throughput can be achieved by increasing processor count in a defined amount of time.
+This type of formulation is often interesting when computing problems that are open ended such as computing pi -- given more computational power, the processors can compute more digits of pi in the same time~\cite{amdahlorgustafson2011}.
 
 \begin{equation}
   \label{eq:gustafson-barsis law}
   W(n) = n + (1-n) \times (1-P)
 \end{equation}
+Where $P$ is the amount of the program that can be parallelized and $W(n)$ is the theoretical increase in throughput over a defined period of time.
 
+\todo{rewrite below - Alex}
+ achievable,defines the amount of 
 So, the goal is to run a program in the same amount of time but with more work.
 This approximation is present in \cref{eq:gustafson-barsis law}.
 Thus, $W(n)$ gives the amount of work that can be further performed~\cite{gustafson1988reevaluating}.
