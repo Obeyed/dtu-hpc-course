@@ -1,2 +1,43 @@
 \section{Scan}
 \label{sec:scan}
+
+\Cref{lst:scan par} shows the scan kernel.
+
+\begin{lstlisting}[caption={Hillis and Steele kernel}, label={lst:scan par}]
+__global__
+void scan_kernel(int *d_out, int *d_in, int step, int SIZE) {
+  int tid = threadIdx.x + blockDim.x * blockIdx.x;
+  if (tid >= SIZE) return; // checking if out-of-bounds
+  int val = d_in[tid];
+  // finding the number to add, checking out-of-bounds
+  int toAdd = ((tid - step) < 0) ? 0 : d_in[tid - step];
+  d_out[tid] = val + toAdd; // setting output
+}
+\end{lstlisting}
+
+%\begin{lstlisting}[caption={Scan kernel wrapper}, label={lst:scan wrapper}]
+%void scan_kernel_wrapper(int *d_out, int *d_in, int SIZE, unsigned int BYTES, int NUM_THREADS) {
+%  int NUM_BLOCKS = (SIZE/NUM_THREADS) + ((SIZE % NUM_THREADS)?1:0);
+%
+%  // initializing intermediate value, so we do not edit d_in
+%  int *d_intm;
+%  cudaMalloc((void **) &d_intm, BYTES);
+%  cudaMemcpy(d_intm, d_in, BYTES, cudaMemcpyDeviceToDevice);
+%
+%  for (int step = 1; step < SIZE; step <<= 1) {
+%    scan_kernel<<<NUM_BLOCKS,NUM_THREADS>>>(d_out, d_intm, step, SIZE);
+%    cudaMemcpy(d_intm, d_out, BYTES, cudaMemcpyDeviceToDevice);
+%  }
+%  cudaFree(d_intm); // free GPU memory
+%}
+%\end{lstlisting}
+
+\Cref{lst:scan seq} shows the sequential code for scan.
+
+\begin{lstlisting}[caption={Sequential scan}, label={lst:scan seq}]
+void scan(int *h_int, int *h_out, int _SIZE) {
+  h_out[0] = h_in[0];
+  for (int l = 1; l < SIZE; ++l)
+    h_out[l] = h_out[l-1] + h_in[l];
+}
+\end{lstlisting}
