@@ -140,6 +140,7 @@ int main(int argc, char **argv)
     printf("time!: %.5f\n", elapsedTime);
     unsigned int h_out;
     cudaMemcpy(&h_out, d_out, sizeof(int), cudaMemcpyDeviceToHost);
+    printf("%d \n", h_out);
     myfile << elapsedTime << ",";
   }
   myfile.close();
