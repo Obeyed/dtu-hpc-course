@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 	for (int rounds = 0; rounds < 30; rounds++) {
     int NUM_THREADS = 1 << 10,
         SIZE = 1 << rounds,
-        TIMES = 1;
+        TIMES = 10;
     unsigned int BYTES = SIZE * sizeof(int);
     int *h_in, *h_out,
         *d_in, *d_out;
