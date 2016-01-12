@@ -70,15 +70,24 @@ int main(int argc, char **argv) {
 		cudaFree(d_out);
 	}
 
-  for (int i = 0; i < 5; i++)
-    printf("%d ", h_out[i]);
 
+  int exp_head[5] = { 1, 2, 3, 4, 5 };
+  int exp_tail[5] = { 536870908, 536870909, 536870910, 536870911, 536870912 };
+  bool failed = false;
+
+  for (int i = 0; i < 5; i++) {
+    printf("%d ", h_out[i]);
+    if (h_out[i] != exp_head[i])
+      failed = true;
+  }
   printf(" -- ");
-
-  for (int i = SIZE - 5; i < SIZE; i++)
+  for (int i = SIZE - 5; i < SIZE; i++) {
     printf("%d ", h_out[i]);
-
+    if (h_out[i] != exp_tail[i])
+      failed = true;
+  }
   printf("\n");
+  printf("%s", (failed ? "FAILURE" : "SUCCESS"));
 
 	return 0;
 }
