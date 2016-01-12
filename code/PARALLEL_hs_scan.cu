@@ -34,7 +34,7 @@ void hs_kernel_wrapper(unsigned int * d_out, unsigned int * d_in, unsigned int S
 }
 
 int main(int argc, char **argv) {
-	for (int rounds = 0; rounds<30; rounds++) {
+	for (int rounds = 29; rounds<30; rounds++) {
 		// defining vars
 		unsigned int NUM_THREADS = 1<<10, 
                  SIZE = 1 << rounds, 
