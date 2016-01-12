@@ -39,25 +39,27 @@ int main(int argc, char **argv) {
 
   int NUM_THREADS = 1 << 10,
       SIZE,
-      TIMES = 10;
+      TIMES = 10,
+      MAX = 29;
   unsigned int BYTES;
   int *h_in, *h_out,
       *d_in, *d_out;
 
-	for (int rounds = 0; rounds < 30; rounds++) {
+  // MAXIMUM SIZE: ALLOCATE ONCE!
+  BYTES = MAX * sizeof(int);
+  // setting host memory
+  h_in  = (int *)malloc(BYTES); 
+  h_out = (int *)malloc(BYTES);
+  // allocate GPU memory
+  cudaMalloc((void **) &d_in, BYTES);
+  cudaMalloc((void **) &d_out, BYTES);
+
+	for (int rounds = 0; rounds <= MAX; rounds++) {
     SIZE = 1 << rounds;
     BYTES = SIZE * sizeof(int);
 
-		// setting host memory
-		h_in  = (int *)malloc(BYTES); 
-		h_out = (int *)malloc(BYTES);
-
 		for(int i = 0; i < SIZE; i++)
       h_in[i] = 1;
-
-		// allocate GPU memory
-		cudaMalloc((void **) &d_in, BYTES);
-		cudaMalloc((void **) &d_out, BYTES);
 
 		// transfer arrays to GPU
 		cudaMemcpy(d_in, h_in, BYTES, cudaMemcpyHostToDevice);
@@ -82,15 +84,13 @@ int main(int argc, char **argv) {
     elapsedTime = elapsedTime / ((float) TIMES);
     printf("average time elapsed: %f\n", elapsedTime);
 
-		// back to host
-		cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
-
-		// free GPU memory allocation
-		cudaFree(d_in);
-		cudaFree(d_out);
-
     myfile << elapsedTime << ",";
 	}
+  // move last result back to host
+  cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
+  // free GPU memory allocation
+  cudaFree(d_in);
+  cudaFree(d_out);
 
   myfile.close();
 
