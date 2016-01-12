@@ -105,7 +105,7 @@ int main(int argc, char **argv)
   const unsigned int times = 10;
   for (unsigned int rounds = 0; rounds<30; rounds++)
   {
-    printf("Round: %d\n", rounds);
+//    printf("Round: %d\n", rounds);
     unsigned int NUM_THREADS = 1<<10;
     // Making non-bogus data and setting it on the GPU
     unsigned int SIZE = 1<<rounds;
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     float elapsedTime;
     cudaEventElapsedTime(&elapsedTime, start, stop);    
     elapsedTime = elapsedTime / ((float) times);
-    printf("time!: %.5f\n", elapsedTime);
+//    printf("time!: %.5f\n", elapsedTime);
     unsigned int h_out;
     cudaMemcpy(&h_out, d_out, sizeof(int), cudaMemcpyDeviceToHost);
     printf("%d \n", h_out);
