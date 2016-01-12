@@ -1,8 +1,5 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
-#include <iostream>
-#include <fstream>
 
 // Performs one step of the hillis and steele algorithm for integers
 __global__ void hs_kernel_global(unsigned int *d_out, unsigned int *d_in, int step, unsigned int SIZE) {
@@ -38,9 +35,6 @@ void hs_kernel_wrapper(unsigned int * d_out, unsigned int * d_in, unsigned int S
 
 int main(int argc, char **argv)
 {
-	std::ofstream myfile;
-    myfile.open ("par_scan.csv");
-	printf("Hillis and Steele ONLINE... \n");
 	unsigned int times = 10;
 	for (int rounds = 0; rounds<30; rounds++)
 	{
@@ -48,8 +42,6 @@ int main(int argc, char **argv)
 		unsigned int NUM_THREADS = 1<<10;
 		unsigned int SIZE = 1<<rounds;
 		unsigned int BYTES = SIZE * sizeof(unsigned int);
-		printf("num: %d\n", rounds);		
-		printf("SIZE: %d\n", SIZE);
 
 		// setting host in
 		unsigned int * h_in  = (unsigned int *)malloc(BYTES); // allocates to memory
@@ -88,13 +80,9 @@ int main(int argc, char **argv)
 		// back to host
 		cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
 
-		printf("average time elapsed: %f\n", elapsedTime);
-
 		// free GPU memory allocation
 		cudaFree(d_in);
 		cudaFree(d_out);
-        myfile << elapsedTime << ",";
 	}
-	myfile.close();
 	return 0;
 }
