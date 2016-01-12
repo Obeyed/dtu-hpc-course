@@ -33,17 +33,13 @@ void hs_kernel_wrapper(int * d_out, int * d_in, int SIZE, unsigned int BYTES, in
 }
 
 int main(int argc, char **argv) {
-  int NUM_THREADS = 1 << 10,
-      SIZE,
-      TIMES = 1;
-  unsigned int BYTES;
-  int *h_in, *h_out,
-      *d_in, *d_out;
-
 	for (int rounds = 29; rounds < 30; rounds++) {
-		// defining vars
-    SIZE  = 1 << rounds; 
-    BYTES = SIZE * sizeof(int);
+    int NUM_THREADS = 1 << 10,
+        SIZE = 1 << rounds;
+        TIMES = 1;
+    unsigned int BYTES = SIZE * sizeof(int);
+    int *h_in, *h_out,
+        *d_in, *d_out;
 
 		// setting host memory
 		h_in  = (int *)malloc(BYTES); 
@@ -69,17 +65,17 @@ int main(int argc, char **argv) {
 		// free GPU memory allocation
 		cudaFree(d_in);
 		cudaFree(d_out);
+
+    for (int i = 0; i < 5; i++)
+      printf("%d ", h_out[i]);
+
+    printf(" -- ");
+
+    for (int i = SIZE - 5; i < SIZE; i++)
+      printf("%d ", h_out[i]);
+
+    printf("\n");
 	}
-
-  for (int i = 0; i < 5; i++)
-    printf("%d ", h_out[i]);
-
-  printf(" -- ");
-
-  for (int i = SIZE - 5; i < SIZE; i++)
-    printf("%d ", h_out[i]);
-
-  printf("\n");
 
 	return 0;
 }
