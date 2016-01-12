@@ -1,14 +1,11 @@
 % cpu vs. gpu: http://superuser.com/questions/308771/why-are-we-still-using-cpus-instead-of-gpus
-\section{Do we ditch the CPU, and keep the GPU?}
+\section{Do we ditch the CPU, and keep the GPGPU?}
 \label{sec:cpu vs gpu}
 
-It is true that a GPU has many more cores than a CPU, but these cores are significantly slower than the ones in a CPU.
-These two processing units are developed with two different goals, and thus have different characteristics.
+It is true that a GPGPU has many more cores than a CPU, but the cores are significantly slower than the ones in a CPU.
+The GPGPU niether have features for more general computer such as interrupts and virtual memory (used in modern dat operating systems).
+As a result, the two processing units are developed with two different goals and thus have different characteristics.
 
-In general a CPU is a multi-purpose processing unit, whereas the GPU is a single-purpose compute-intensive processing unit.
-The GPU has many more cores than the CPU, but the CPU's cores are much faster.
-The memory hierarchy of a GPU enables it to efficiently compute instructions in parallel.
-The CPU excels at sequential problems, that are not easily made parallel, because it is much faster.
-
-Furthermore, GPUs do not have the features, e.g. interrupts and virtual memory, for modern operating systems.
-One must consider a GPU as a compute-intensive problem solver, and nothing else.
+As every type of problem might not have a parallel solution, and writing parallel code is a lot trickier than sequential code, the CPU is still very much needed.
+The role of the GPU has thus evolved to be an "accelerator" to the CPU, a specialized computing unit to accelerate parallelizable tasks.
+At runtime the CPU will thus initialize the GPU and send it data to process when faced with such parallelizable task, the relationship is called a HOST (CPU) to DEVICE (GPGPU) relationship.
