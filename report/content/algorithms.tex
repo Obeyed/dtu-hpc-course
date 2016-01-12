@@ -5,52 +5,53 @@ This chapter introduces four fundamental algorithms that are very useful in para
 We will be introducing map, reduce, scan, and histogram algorithms in sections \ref{sec:map} through \ref{sec:histogram}, respectively.
 Furthermore, we present figures \ref{fig:par seq 1} through \ref{fig:par seq 2} that show the development of the algorithms' running time, where we compare a sequential and parallel implementation.
 
-\begin{figure*}[t]
-  \centering
-  \begin{subfigure}[b]{.49\linewidth}
-    \centering
-    \resizebox{!}{.80\textwidth}{
-      \input{graphics/plots/map}
-    }
-    \caption{Map algorithm}
-    \label{fig:par seq map}
-  \end{subfigure}%
-  ~
-  \begin{subfigure}[b]{.49\linewidth}
-    \centering
-    \resizebox{!}{.80\textwidth}{
-      \input{graphics/plots/reduce}
-    }
-    \caption{Reduce algorithm}
-    \label{fig:par seq reduce}
-  \end{subfigure}%
-  \caption{Comparing parallel and sequential algorithms (1 of 2)}
-  \label{fig:par seq 1}
-\end{figure*}
+%\begin{figure*}[t]
+%  \centering
+%  \begin{subfigure}[b]{.49\linewidth}
+%    \centering
+%    \resizebox{!}{.80\textwidth}{
+%      \input{graphics/plots/map}
+%    }
+%    \caption{Map algorithm}
+%    \label{fig:par seq map}
+%  \end{subfigure}%
+%  ~
+%  \begin{subfigure}[b]{.49\linewidth}
+%    \centering
+%    \resizebox{!}{.80\textwidth}{
+%      \input{graphics/plots/reduce}
+%    }
+%    \caption{Reduce algorithm}
+%    \label{fig:par seq reduce}
+%  \end{subfigure}%
+%  \caption{Comparing parallel and sequential algorithms (1 of 2)}
+%  \label{fig:par seq 1}
+%\end{figure*}
 
-\begin{figure*}[t]
-  \centering
-  \begin{subfigure}[b]{.49\linewidth}
-    \centering
-    \resizebox{!}{.80\textwidth}{
-      \input{graphics/plots/scan}
-    }
-    \caption{Scan algorithm}
-    \label{fig:par seq scan}
-  \end{subfigure}%
-  ~
-  \begin{subfigure}[b]{.49\linewidth}
-    \centering
-    \resizebox{!}{.80\textwidth}{
-      \input{graphics/plots/histogram}
-    }
-    \caption{Histogram algorithm}
-    \label{fig:par seq histogram}
-  \end{subfigure}%
-  \caption{Comparing parallel and sequential algorithms (2 of 2)}
-  \label{fig:par seq 2}
-\end{figure*}
+%\begin{figure*}[t]
+%  \centering
+%  \begin{subfigure}[b]{.49\linewidth}
+%    \centering
+%    \resizebox{!}{.80\textwidth}{
+%      \input{graphics/plots/scan}
+%    }
+%    \caption{Scan algorithm}
+%    \label{fig:par seq scan}
+%  \end{subfigure}%
+%  ~
+%  \begin{subfigure}[b]{.49\linewidth}
+%    \centering
+%    \resizebox{!}{.80\textwidth}{
+%      \input{graphics/plots/histogram}
+%    }
+%    \caption{Histogram algorithm}
+%    \label{fig:par seq histogram}
+%  \end{subfigure}%
+%  \caption{Comparing parallel and sequential algorithms (2 of 2)}
+%  \label{fig:par seq 2}
+%\end{figure*}
 
+\input{content/algorithms/debugging}
 \input{content/algorithms/map}
 \input{content/algorithms/reduce}
 \input{content/algorithms/scan}
