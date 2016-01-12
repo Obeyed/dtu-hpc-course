@@ -71,12 +71,12 @@ int main(int argc, char **argv) {
 	}
 
   for (int i = 0; i < 5; i++)
-    printf("%d", h_out[i]);
+    printf("%d ", h_out[i]);
 
   printf(" -- ");
 
   for (int i = SIZE - 5; i < SIZE; i++)
-    printf("%d", h_out[i]);
+    printf("%d ", h_out[i]);
 
   printf("\n");
 
