@@ -3,24 +3,24 @@
 #include <cuda_runtime.h>
 
 // Performs one step of the hillis and steele algorithm for integers
-__global__ void hs_kernel_global(unsigned int *d_out, unsigned int *d_in, int step, unsigned int SIZE) {
+__global__ void hs_kernel_global(int *d_out, int *d_in, int step, int SIZE) {
 	// setting ID
 	int tid = threadIdx.x + blockDim.x * blockIdx.x;
 	// checking if out-of-bounds
 	if (tid >= SIZE) return;
 	// setting itself
-	unsigned int val = d_in[tid];
+	int val = d_in[tid];
 	// finding the number to add, checking out-of-bounds
-	unsigned int toAdd = (((tid - step) < 0) ? 0 : d_in[tid - step]);
+	int toAdd = (((tid - step) < 0) ? 0 : d_in[tid - step]);
 	// setting output
 	d_out[tid] = val + toAdd;
 }
 
-void hs_kernel_wrapper(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsigned int BYTES, unsigned int NUM_THREADS) {
+void hs_kernel_wrapper(int * d_out, int * d_in, int SIZE, unsigned int BYTES, int NUM_THREADS) {
 	// initializing starting variables
-	unsigned int NUM_BLOCKS = SIZE/NUM_THREADS + ((SIZE % NUM_THREADS)?1:0);
+	int NUM_BLOCKS = SIZE/NUM_THREADS + ((SIZE % NUM_THREADS)?1:0);
 	// initializing and allocating an "intermediate" value so we don't have to change anything in d_in
-	unsigned int * d_intermediate;
+	int *d_intermediate;
 	cudaMalloc((void **) &d_intermediate, BYTES);
 	cudaMemcpy(d_intermediate, d_in, BYTES, cudaMemcpyDeviceToDevice);
 
@@ -33,22 +33,23 @@ void hs_kernel_wrapper(unsigned int * d_out, unsigned int * d_in, unsigned int S
 }
 
 int main(int argc, char **argv) {
-	for (int rounds = 29; rounds<30; rounds++) {
+  int NUM_THREADS = 1 << 10,
+      SIZE,
+      TIMES = 1;
+  unsigned int BYTES;
+  int *h_in, *h_out,
+      *d_in, *d_out;
+	for (int rounds = 29; rounds < 30; rounds++) {
 		// defining vars
-		unsigned int NUM_THREADS = 1<<10, 
-                 SIZE = 1 << rounds, 
-                 BYTES = SIZE * sizeof(unsigned int);
+    SIZE  = 1 << rounds; 
+    BYTES = SIZE * sizeof(int);
 
-		// setting host in
-		unsigned int *h_in  = (unsigned int *)malloc(BYTES); // allocates to memory
-		unsigned int *h_out = (unsigned int *)malloc(BYTES);
+		// setting host memory
+		h_in  = (int *)malloc(BYTES); 
+		h_out = (int *)malloc(BYTES);
 
-		for(unsigned int i = 0; i < SIZE; i++)
+		for(int i = 0; i < SIZE; i++)
       h_in[i] = 1;
-
-		// setting device pointers
-		unsigned int *d_in;
-		unsigned int *d_out;
 
 		// allocate GPU memory
 		cudaMalloc((void **) &d_in, BYTES);
@@ -58,19 +59,26 @@ int main(int argc, char **argv) {
 		cudaMemcpy(d_in, h_in, BYTES, cudaMemcpyHostToDevice);
 
 		// kernel time!!!
-	  unsigned int TIMES = 1;
-		for (unsigned int i = 0; i < TIMES; i++)
+		for (int i = 0; i < TIMES; i++)
 	    hs_kernel_wrapper(d_out, d_in, SIZE, BYTES, NUM_THREADS);
 
 		// back to host
 		cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
 
-    for (int i = 0; i < rounds; i++)
-      printf("%d: %d\n", i, h_out[i]);
-
 		// free GPU memory allocation
 		cudaFree(d_in);
 		cudaFree(d_out);
 	}
+
+  for (int i = 0; i < 5; i++)
+    printf("%d", h_out[i]);
+
+  printf(" -- ");
+
+  for (int i = SIZE - 5; i < SIZE; i++)
+    printf("%d", h_out[i]);
+
+  printf("\n");
+
 	return 0;
 }
