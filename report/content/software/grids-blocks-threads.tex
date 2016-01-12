@@ -1,10 +1,8 @@
 \section{Grids, Blocks, and Threads}
 \label{sec:grids blocks threads}
 
-Threads are ordered into blocks.
-Blocks are ordered into grids.
-Each thread, block, and/or grid knows its own position in the grid/block ordering.
-These positions are fetched with the built-in variables presented in \cref{tab:built-in variables}, which all have three dimensions (\ttt{x, y, z}).
+In \cref{sec:gpgpu memory architecture} we introduced the notion of grids, blocks and threads.
+From a development perspective the position of each block within the grid and each thread within its block is fetched with the built-in variables presented in \cref{tab:built-in variables}, which all have three dimensions (\ttt{x, y, z}).
 \todo{nice to have illustration of grids of blocks of threads}
 
 \begin{table}[htb]
@@ -24,8 +22,8 @@ These positions are fetched with the built-in variables presented in \cref{tab:b
 \end{table}
 
 These built-in variables are of type \ttt{uint3} and \ttt{dim3}, which are integer vectors.
-They are used to specify dimensions.
-For the \ttt{dim3} variable all unspecified components are set to 1.
+The variables are used to specify dimensionality and receive position when running a kernel.
+When constructing the \ttt{dim3} variable all unspecified components are set to 1.
 As presented in \cref{sec:hardware specific numbers} the max number of threads per block is 1024 for the device we will be working with.~\cite{nvidia2015doc}
 
 \subsection{Testing Warp Sizes}
