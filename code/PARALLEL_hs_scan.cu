@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
   myfile.open ("par_scan.csv");
 
   int NUM_THREADS = 1 << 10,
-      SIZE;
+      SIZE,
       TIMES = 10;
   unsigned int BYTES;
   int *h_in, *h_out,
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     // calculating time
     float elapsedTime;
     cudaEventElapsedTime(&elapsedTime, start, stop);    
-    elapsedTime = elapsedTime / ((float) times);
+    elapsedTime = elapsedTime / ((float) TIMES);
 
 		// back to host
 		cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
