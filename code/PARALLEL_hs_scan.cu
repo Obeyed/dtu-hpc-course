@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
-#include <iostream>
-#include <fstream>
+//#include <iostream>
+//#include <fstream>
 
 // Performs one step of the hillis and steele algorithm for integers
 __global__ void hs_kernel_global(int *d_out, int *d_in, int step, int SIZE) {
@@ -35,8 +35,8 @@ void hs_kernel_wrapper(int * d_out, int * d_in, int SIZE, unsigned int BYTES, in
 }
 
 int main(int argc, char **argv) {
-  std::ofstream myfile;
-  myfile.open ("par_scan.csv");
+ // std::ofstream myfile;
+//  myfile.open ("par_scan.csv");
 
   int NUM_THREADS = 1 << 10,
       SIZE,
@@ -64,35 +64,35 @@ int main(int argc, char **argv) {
 		cudaMemcpy(d_in, h_in, BYTES, cudaMemcpyHostToDevice);
 
     // setting up time
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+//    cudaEvent_t start, stop;
+//    cudaEventCreate(&start);
+//    cudaEventCreate(&stop);
 
 		// kernel time!!!
 		for (int i = 0; i < TIMES; i++)
 	    hs_kernel_wrapper(d_out, d_in, SIZE, BYTES, NUM_THREADS);
    
     // stop recording
-    cudaEventRecord(stop, 0);
-    cudaEventSynchronize(stop);
+//    cudaEventRecord(stop, 0);
+//    cudaEventSynchronize(stop);
 
     // calculating time
-    float elapsedTime;
-    cudaEventElapsedTime(&elapsedTime, start, stop);    
-    elapsedTime = elapsedTime / ((float) TIMES);
+//    float elapsedTime;
+//    cudaEventElapsedTime(&elapsedTime, start, stop);    
+//    elapsedTime = elapsedTime / ((float) TIMES);
 
 		// back to host
 		cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
 
-    printf("average time elapsed: %f\n", elapsedTime);
+//    printf("average time elapsed: %f\n", elapsedTime);
 
 		// free GPU memory allocation
 		cudaFree(d_in);
 		cudaFree(d_out);
 
-    myfile << elapsedTime << ",";
+//    myfile << elapsedTime << ",";
 	}
-  myfile.close();
+//  myfile.close();
 
   for (int i = 0; i < 5; i++)
     printf("%d ", h_out[i]);
