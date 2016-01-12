@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 		cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < rounds; i++)
-      printf(h_out[i]);
+      printf("%d: %d\n", i, h_out[i]);
 
 		// free GPU memory allocation
 		cudaFree(d_in);
