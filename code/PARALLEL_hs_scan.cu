@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
       *d_in, *d_out;
 
   // MAXIMUM SIZE: ALLOCATE ONCE!
-  BYTES = MAX * sizeof(int);
+  BYTES = (1 << MAX) * sizeof(int);
   // setting host memory
   h_in  = (int *)malloc(BYTES); 
   h_out = (int *)malloc(BYTES);
