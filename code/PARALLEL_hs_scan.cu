@@ -18,17 +18,17 @@ __global__ void hs_kernel_global(unsigned int *d_out, unsigned int *d_in, int st
 void hs_kernel_wrapper(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsigned int BYTES, unsigned int NUM_THREADS) {
 	// initializing starting variables
 	unsigned int NUM_BLOCKS = SIZE/NUM_THREADS + ((SIZE % NUM_THREADS)?1:0);
-	int step = 1;
 	// initializing and allocating an "intermediate" value so we don't have to change anything in d_in
 	unsigned int * d_intermediate;
 	cudaMalloc((void **) &d_intermediate, BYTES);
 	cudaMemcpy(d_intermediate, d_in, BYTES, cudaMemcpyDeviceToDevice);
-	while(step<SIZE) // stops when step is larger than array size, happens at O(log2(SIZE))
-	{
+
+  // stops when step is larger than array size, happens at O(log2(SIZE))
+	int step = 1;
+	while (step < SIZE) {
 		hs_kernel_global<<<NUM_BLOCKS, NUM_THREADS>>>(d_out, d_intermediate, step, SIZE);
 		cudaMemcpy(d_intermediate, d_out, BYTES, cudaMemcpyDeviceToDevice);
 		step <<= 1; // double step size at each iteration
-
 	}
 	cudaFree(d_intermediate);
 }
