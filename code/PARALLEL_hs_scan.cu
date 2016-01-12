@@ -37,13 +37,16 @@ int main(int argc, char **argv) {
   std::ofstream myfile;
   myfile.open ("par_scan.csv");
 
+  int NUM_THREADS = 1 << 10,
+      SIZE,
+      TIMES = 10;
+  unsigned int BYTES;
+  int *h_in, *h_out,
+      *d_in, *d_out;
+
 	for (int rounds = 0; rounds < 30; rounds++) {
-    int NUM_THREADS = 1 << 10,
-        SIZE = 1 << rounds,
-        TIMES = 10;
-    unsigned int BYTES = SIZE * sizeof(int);
-    int *h_in, *h_out,
-        *d_in, *d_out;
+    SIZE = 1 << rounds;
+    BYTES = SIZE * sizeof(int);
 
 		// setting host memory
 		h_in  = (int *)malloc(BYTES); 
@@ -87,18 +90,16 @@ int main(int argc, char **argv) {
 		cudaFree(d_out);
 
     myfile << elapsedTime << ",";
-
-    if (rounds == 29) {
-      for (int i = 0; i < 5; i++)
-        printf("%d ", h_out[i]);
-      printf(" -- ");
-      for (int i = SIZE - 5; i < SIZE; i++)
-        printf("%d ", h_out[i]);
-      printf("\n");
-    }
 	}
 
   myfile.close();
+
+  for (int i = 0; i < 5; i++)
+    printf("%d ", h_out[i]);
+  printf(" -- ");
+  for (int i = SIZE - 5; i < SIZE; i++)
+    printf("%d ", h_out[i]);
+  printf("\n");
 
 	return 0;
 }
