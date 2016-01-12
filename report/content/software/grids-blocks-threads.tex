@@ -29,9 +29,9 @@ As presented in \cref{sec:hardware specific numbers} the max number of threads p
 \subsection{Testing Warp Sizes}
 \label{sec:testing warp sizes}
 
-In \cref{sec:gpu} we introduced the notion of a warp.
-\Cref{tab:warp size testing} shows the average elapsed time over 1,000 runs for launching different threads, to see the impact compared to the amount of warps are needed.
-One warp launches 32 threads at a time.
+In \cref{sec:gpu} we introduced the concept of a warp, a scheduler for launching threads within a kernel.
+\cref{tab:warp size testing} shows the average elapsed time over 1,000 runs for launching different threads, to see the impact compared to the amount of warps are needed.
+One warp launches 32 threads at a time, asserted from \cref{ap:tesla k40 specifications}.
 
 \begin{table}[htb]%
   \begin{minipage}{0.49\linewidth}
@@ -65,7 +65,6 @@ One warp launches 32 threads at a time.
 \end{table}
 
 We present the multiple of 32 as the base case for the two tables.
-By subtracting one and launching one thread less, the SM still launches an amount of threads that are a multiple of 32 and we have one idle thread.
-By subtracting 31, we have 31 idle threads.
-Our tests show that having idle threads actually increases the total latency.
-
+By using block size between $32 \times 8$ and $32 \times 9$ the SM still launched the same amount of warps (9 warps per block), but with idle threads in the 9'th warp as it must have 32 threads.
+As the amount of threads per block is reduced the total amount of blocks nessesary to complete the job must increase and thus increases runtime.
+\cref{tab:warp size testing} shows how the performance deteriorates as the amount of idle threads in the last warp increases.
