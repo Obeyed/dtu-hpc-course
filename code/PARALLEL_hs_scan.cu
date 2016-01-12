@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
@@ -24,11 +25,9 @@ void hs_kernel_wrapper(unsigned int * d_out, unsigned int * d_in, unsigned int S
 	cudaMemcpy(d_intermediate, d_in, BYTES, cudaMemcpyDeviceToDevice);
 
   // stops when step is larger than array size, happens at O(log2(SIZE))
-	int step = 1;
-	while (step < SIZE) {
+  for (int step = 1; step < SIZE; step <<= 1) {
 		hs_kernel_global<<<NUM_BLOCKS, NUM_THREADS>>>(d_out, d_intermediate, step, SIZE);
 		cudaMemcpy(d_intermediate, d_out, BYTES, cudaMemcpyDeviceToDevice);
-		step <<= 1; // double step size at each iteration
 	}
 	cudaFree(d_intermediate);
 }
@@ -59,12 +58,15 @@ int main(int argc, char **argv) {
 		cudaMemcpy(d_in, h_in, BYTES, cudaMemcpyHostToDevice);
 
 		// kernel time!!!
-	  unsigned int TIMES = 10;
+	  unsigned int TIMES = 1;
 		for (unsigned int i = 0; i < TIMES; i++)
 	    hs_kernel_wrapper(d_out, d_in, SIZE, BYTES, NUM_THREADS);
 
 		// back to host
 		cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
+
+    for (int i = 0; i < rounds; i++)
+      printf(h_out[i]);
 
 		// free GPU memory allocation
 		cudaFree(d_in);
