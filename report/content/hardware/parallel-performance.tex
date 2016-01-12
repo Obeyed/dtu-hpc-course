@@ -1,11 +1,11 @@
 \section{Parallel Performance}
 \label{sec:parallel performance}
 
-This section presents two models that aims to assess theoretical performance speed up with parallel computing.
+This section presents two models that aims to assess theoretical performance speed-up with parallel computing.
 Both models ignores overhead costs, memory transfers and synchronization.
 
-The first is model i known as Amdahl's Law, which attempts to describes how much faster a program can execute while holding the workload constant.
-The second model is known as Gustafson-Barsis Law, which describes how much more work can be performed holding the running time constant.
+The first is model is Amdahl's Law, which attempts to describes how much faster a program can execute while holding the workload constant.
+The second model is Gustafson-Barsis Law, which describes how much more work can be performed holding the running time constant.
 
 \subsection{Amdahl's Law}
 \label{sec:amdahls law}
@@ -31,24 +31,18 @@ The model thus theorize that given a fully parallizable problem, the problem sho
 \end{figure}
 
 An important property of Amdahls is the decline of the curve as the solution moves from 0\% to 1\%.
-With parallel portion $P=0.99$ the speed up is approximately $91\times$, and $1024\times$ when $P=1.00$ and everything can be made parallel.
-According to Amdahl's Law, with just a tiny portion of the code that cannot become parallel, a high speed up is not likely to be achieved.
+With parallel portion $P=0.99$ the speed up is approximately $91\times$, and $1024\times$ when $P=1.00$ and everything can be executed in parallel.
+According to Amdahl's Law, with just a tiny portion of the code that cannot be executed in parallel, a high speed up is not likely to be achieved.
 
 \subsection{Gustafson-Barsis Law}
 \label{sec:gustafson-barsis law}
 
-Gustafson and Barsis Law approximates how much more throughput can be achieved by increasing processor count in a defined amount of time.
+Gustafson and Barsis Law approximates how much more throughput can be achieved by increasing processor count given a constant amount of time.
 This type of formulation is often interesting when computing problems that are open ended such as computing pi -- given more computational power, the processors can compute more digits of pi in the same time~\cite{amdahlorgustafson2011}.
 
 \begin{equation}
   \label{eq:gustafson-barsis law}
   W(n) = n + (1-n) \times (1-P)
 \end{equation}
-Where $P$ is the amount of the program that can be parallelized and $W(n)$ is the theoretical increase in throughput over a defined period of time.
-
-\todo{rewrite below - Alex}
- achievable,defines the amount of 
-So, the goal is to run a program in the same amount of time but with more work.
-This approximation is present in \cref{eq:gustafson-barsis law}.
-Thus, $W(n)$ gives the amount of work that can be further performed~\cite{gustafson1988reevaluating}.
+Where $P$ is the amount of the program that can be parallelized and $W(n)$ is the theoretical increase in throughput over a defined period of time.~\cite{gustafson1988reevaluating}.
 
