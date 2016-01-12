@@ -5,37 +5,20 @@
 #include <fstream>
 
 // Performs one step of the hillis and steele algorithm for integers
-__global__ void hs_kernel_global(unsigned int * d_out, unsigned int * d_in, int step, unsigned int SIZE)
-{
+__global__ void hs_kernel_global(unsigned int *d_out, unsigned int *d_in, int step, unsigned int SIZE) {
 	// setting ID
-	int myId = threadIdx.x + blockDim.x * blockIdx.x;
-
+	int tid = threadIdx.x + blockDim.x * blockIdx.x;
 	// checking if out-of-bounds
-	if(myId >= SIZE)
-	{
-		return;
-	}
-
+	if (tid >= SIZE) return;
 	// setting itself
-	unsigned int myVal = d_in[myId];
-
+	unsigned int val = d_in[tid];
 	// finding the number to add, checking out-of-bounds
-	unsigned int myAdd;
-	if((myId - step)<0)
-	{
-		myAdd = 0;
-	}
-	else
-	{
-		myAdd = d_in[myId-step];
-	}
-
+	unsigned int toAdd = (((tid - step) < 0) ? 0 : d_in[tid - step]);
 	// setting output
-	d_out[myId] = myVal + myAdd;
+	d_out[tid] = val + toAdd;
 }
 
-void hs_kernel_wrapper(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsigned int BYTES, unsigned int NUM_THREADS)
-{
+void hs_kernel_wrapper(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsigned int BYTES, unsigned int NUM_THREADS) {
 	// initializing starting variables
 	unsigned int NUM_BLOCKS = SIZE/NUM_THREADS + ((SIZE % NUM_THREADS)?1:0);
 	int step = 1;
