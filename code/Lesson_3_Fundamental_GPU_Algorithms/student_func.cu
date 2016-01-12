@@ -85,7 +85,20 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 
-__global__ void simple_histo(int *d_bins, const int *d_in, const int BIN_COUNT, int ARRAY_SIZE, float min_logLum, float range_logLum)
+unsigned int set_grid(unsigned int SIZE, unsigned int BLOCK_SIZE)
+{
+  return SIZE/BLOCK_SIZE + (SIZE % BLOCK_SIZE)? 1 : 0;
+}
+
+__global__ void excluding_kernel(unsigned int * d_out, unsigned int * d_in, unsigned int size)
+{
+  mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if(mid >= size) return;
+  if(mid == 0){d_out[mid] = 0; return;}
+  d_out[mid] = d_in[mid]-1;
+}
+
+__global__ void simple_histo(unsigned int *d_bins, const float const *d_in, const int BIN_COUNT, int ARRAY_SIZE, float min_logLum, float range_logLum)
 {
   unsigned int myId = threadIdx.x + blockDim.x + blockIdx.x;
   // checking for out-of-bounds
@@ -108,43 +121,45 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
                                   const size_t numCols,
                                   const size_t numBins)
 {
+  unsigned int ARRAY_SIZE = numRows * numCols,
+               ARRAY_BYTES = sizeof(float) * ARRAY_SIZE,
+               BIN_BYTES = sizeof(float) * numBins,
+               BLOCK_SIZE = 1024,
+               GRID_SIZE_ARRAY = set_grid(ARRAY_SIZE, BLOCK_SIZE),
+               GRID_SIZE_BINS = set_grid(numBins, BLOCK_SIZE);
+
+  unsigned int * d_bins, *d_bins_excluding;
+
   // 1)
-  const size_t ARRAY_SIZE = numRows * numCols;
-  const size_t ARRAY_BYTES = sizeof(float) * ARRAY_SIZE;
   min_logLum = reduce_minmax(d_logLuminance, ARRAY_SIZE, 0);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   max_logLum = reduce_minmax(d_logLuminance, ARRAY_SIZE, 1);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 2)
-  float range_logLum = max_logLum - min_logLum;
-  printf("got min of %f\n", min_logLum);
-  printf("got max of %f\n", max_logLum);
-  printf("got range of %f\n", range_logLum);
+  const float range_logLum = max_logLum - min_logLum;
+
+  printf("got min of %.5f\n", min_logLum);
+  printf("got max of %.5f\n", max_logLum);
+  printf("got range of %.5f\n", range_logLum);
   printf("numBins %d\n", numBins);
 
   // 3)
-  unsigned int* d_bins;
-  const size_t BIN_BYTES = sizeof(unsigned int)*numBins;
   checkCudaErrors(cudaMalloc(&d_bins, BIN_BYTES));    
   checkCudaErrors(cudaMemset(d_bins, 0, BIN_BYTES));
-  num_threads = 1024;
-  simple_histo<<<ARRAY_SIZE/num_threads+1, num_threads>>>(d_bins, d_logLuminance, numBins, ARRAY_SIZE, min_logLum, range_logLum);
+  simple_histo<<<GRID_SIZE_ARRAY, BLOCK_SIZE>>>(d_bins, d_logLuminance, numBins, ARRAY_SIZE, min_logLum, range_logLum);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-  unsigned int h_out[numBins];
-  cudaMemcpy(&h_out, d_bins, BIN_BYTES, cudaMemcpyDeviceToHost);
-  for(int i = 0; i < 100; i++)
-  {
-      printf("hist out %d\n", h_out[i]);
-  }
+//  unsigned int h_out[numBins];
+//  cudaMemcpy(&h_out, d_bins, BIN_BYTES, cudaMemcpyDeviceToHost);
+//  for(int i = 0; i < 100; i++)
+//  {
+//      printf("hist out %d\n", h_out[i]);
+//  }
   // Using H&S, so making it "excluding"
-  for(int i = numBins-1; i > 0 ; i--)
-  {
-      h_out[i] = h_out[i-1];
-  }
-  h_out[i] = 0;
-  cudaMemcpy(d_bins, &h_out, BIN_BYTES, cudaMemcpyHostToDevice);
+  excluding_kernel<<<GRID_SIZE_BINS, BLOCK_SIZE>>>(d_bins_excluding, d_bins, numBins);
   // 4)
-  
+  hs_kernel_wrapper(d_cdf, d_bins, BIN_SIZE, BIN_BYTES, BLOCK_SIZE);
 
   //TODO
   /*Here are the steps you need to implement
