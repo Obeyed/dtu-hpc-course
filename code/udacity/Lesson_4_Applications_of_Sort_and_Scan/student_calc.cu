@@ -42,6 +42,25 @@
 
  */
 
+__global__
+void histo_kernel(unsigned int *d_binHisto, unsigned int *d_inputVals, int mask, size_t numElems, int i) {
+  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+
+  if (mid >= numElens) return;
+
+  unsigned int bin = (d_inputVals[mid] & mask) >> i;
+  atomicAdd(&(binHistogram[bin]), 1);
+}
+
+__global__
+void scan_kernel(unsigned int *d_binHisto, unsigned int *d_binScan, unsigned int step, int numBins) {
+  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+
+  if ((mid >= (numBins - 1)) || ((mid - step) < 1)) 
+    return;
+
+  d_binScan[mid] = d_binScan[mid - 1] + d_binHisto[mid - 1];
+}
 
 void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_inputPos,
@@ -52,8 +71,7 @@ void your_sort(unsigned int* const d_inputVals,
   const int numBits = 1;
   const int numBins = 1 << numBits;
   const int BITS_PER_BYTE = 8;
-
-  const unsigned int BIN_BYTES = sizeof(unsigned int) * numBins;
+  const int BIN_BYTES = sizeof(unsigned int) * numBins;
 
   // initialise device memory
   unsigned int *d_binHisto, *d_binScan;
@@ -65,8 +83,13 @@ void your_sort(unsigned int* const d_inputVals,
     unsigned int mask = (numBins - 1) << i;
     // reset all memory locations
     cudaMemset(d_binHisto, 0, BIN_BYTES);
-    cudaMemset(d_binScan, 0, BIN_BYTES);
+    cudaMemset(d_binScan,  0, BIN_BYTES);
 
+    histo_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_binHisto, d_inputVals, mask, numElems, i);
+    
+    for (int step = 1 << 0; step < numBins; step <<= 1) {
+      scan_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_binHisto, d_binScan, step, numBins);
+    }
   }
 }
 
