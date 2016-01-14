@@ -98,6 +98,12 @@ void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_outputPos,
                const size_t numElems)
 {
+
+  printf("INSIDE DEVICE CALL: \n");
+  for (int i = 0; i < numElems; i++)
+    printf("%u ", d_inputVals[i]);
+  printf("\n");
+
   const int numBits = 1;
   const int numBins = 1 << numBits;
   const int BITS_PER_BYTE = 8;
@@ -197,11 +203,6 @@ int main(void) {
 
   checkCudaErrors(cudaMemcpy(d_inputVals, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(d_inputPos,  h_pos,   ARRAY_BYTES, cudaMemcpyHostToDevice));
-
-  printf("BEFORE DEVICE CALL: \n");
-  for (int i = 0; i < numElems; i++)
-    printf("%u ", d_inputVals[i]);
-  printf("\n");
 
   your_sort(d_inputVals, d_inputPos, d_outputVals, d_outputPos, numElems);
 
