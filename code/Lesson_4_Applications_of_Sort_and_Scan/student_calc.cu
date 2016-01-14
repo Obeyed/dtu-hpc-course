@@ -134,7 +134,16 @@ void your_sort(unsigned int* const d_inputVals,
     // build histo
     histo_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_binHisto, d_valsSrc, mask, numElems, i);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+
+
+    checkCudaErrors(cudaMemcpy(h_test, d_binHisto, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
+
+    printf("HIST CALL: \n");
+    for (int i = 0; i < numBins; i++)
+      printf("%u ", h_test[i]);
+    printf("\n");
     
+
     // build scan
     for (int step = 1; step < numBins; step <<= 1) {
       scan_kernel<<<1, numBins>>>(d_binHisto, d_binScan, step, numBins);
@@ -142,8 +151,25 @@ void your_sort(unsigned int* const d_inputVals,
       checkCudaErrors(cudaMemcpy(d_binHisto, d_binScan, BIN_BYTES, cudaMemcpyDeviceToDevice));
     }
 
+    checkCudaErrors(cudaMemcpy(h_test, d_binScan, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
+
+    printf("SCAN CALL: \n");
+    for (int i = 0; i < numBins; i++)
+      printf("%u ", h_test[i]);
+    printf("\n");
+    
+
     map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_valsDst, d_posDst, d_valsSrc, d_posSrc, d_binScan, mask, numElems, i, numBins);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+
+
+    checkCudaErrors(cudaMemcpy(h_test, d_valsDst, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
+
+    printf("MAP CALL: \n");
+    for (int i = 0; i < numElems; i++)
+      printf("%u ", h_test[i]);
+    printf("\n");
+    
 
     // swap pointers
     std::swap(d_valsSrc, d_valsDst);
@@ -173,16 +199,16 @@ int main(void) {
   unsigned int *h_input = new unsigned int[numElems];
   unsigned int *h_pos = new unsigned int[numElems];
 
-  h_input[0] = 10;
-  h_input[1] = 5;
-  h_input[2] = 3;
-  h_input[3] = 4;
-  h_input[4] = 6;
-  h_input[5] = 1;
-  h_input[6] = 2;
-  h_input[7] = 9;
-  h_input[8] = 8;
-  h_input[9] = 7;
+  h_input[0] = 10; // 1010
+  h_input[1] = 5;  // 0101
+  h_input[2] = 3;  // 0011
+  h_input[3] = 4;  // 0100
+  h_input[4] = 6;  // 0110
+  h_input[5] = 1;  // 0001
+  h_input[6] = 2;  // 0010
+  h_input[7] = 9;  // 1001
+  h_input[8] = 8;  // 1000
+  h_input[9] = 7;  // 0111
 
   for (int i = 0; i < numElems; i++)
     h_pos[i] = i;
