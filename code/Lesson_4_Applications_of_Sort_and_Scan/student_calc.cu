@@ -88,6 +88,8 @@ void map_kernel(unsigned int * const d_valsDst,
   unsigned int bin = (d_valsSrc[mid] & mask) >> i;
   unsigned int pos = atomicAdd(&(d_binScan[bin]), 1);
 
+  printf("mid: %u, pos: %u, bin: %u", mid, pos, bin);
+
   d_valsDst[pos] = d_valsSrc[mid];
   d_posDst[pos]  = d_posSrc[mid];
 }
