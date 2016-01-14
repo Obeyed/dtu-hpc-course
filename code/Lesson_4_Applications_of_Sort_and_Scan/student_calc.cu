@@ -170,8 +170,19 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_inputPos,   ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_outputPos,  ARRAY_BYTES));
 
-  unsigned int h_input[numElems] = {10,5,3,4,6,1,2,9,8,7};
+  unsigned int *h_input = new unsigned int[numElems];
   unsigned int *h_pos = new unsigned int[numElems];
+
+  h_input[0] = 10;
+  h_input[1] = 5;
+  h_input[2] = 3;
+  h_input[3] = 4;
+  h_input[4] = 6;
+  h_input[5] = 1;
+  h_input[6] = 2;
+  h_input[7] = 9;
+  h_input[8] = 8;
+  h_input[9] = 7;
 
   for (int i = 0; i < numElems; i++)
     h_pos[i] = i;
