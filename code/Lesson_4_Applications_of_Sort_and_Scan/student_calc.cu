@@ -61,12 +61,12 @@ void scan_kernel(unsigned int *d_binHisto,
                  unsigned int *d_binScan,
                  unsigned int step,
                  const int numBins) {
-  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int tid = threadIdx.x;
 
-  if ((mid >= (numBins - 1)) || ((mid - step) < 1)) 
+  if ((tid == 0) || (tid > (numBins - 1)))
     return;
 
-  d_binScan[mid] = d_binScan[mid - 1] + d_binHisto[mid - 1];
+  d_binScan[tid] = d_binScan[tid - 1] + d_binHisto[tid - 1];
 }
 
 __global__
@@ -118,14 +118,17 @@ void your_sort(unsigned int* const d_inputVals,
 
     // build histo
     histo_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_binHisto, d_inputVals, mask, numElems, i);
+    cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     
     // build scan
     for (int step = 1; step < numBins; step <<= 1) {
       scan_kernel<<<1, numBins>>>(d_binHisto, d_binScan, step, numBins);
+      cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
       checkCudaErrors(cudaMemcpy(d_binHisto, d_binScan, BIN_BYTES, cudaMemcpyDeviceToDevice));
     }
 
     map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_outputVals, d_outputPos, d_inputVals, d_inputPos, d_binScan, mask, numElems, i, numBins);
+    cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
     checkCudaErrors(cudaMemcpy(d_inputVals, d_outputVals, ARRAY_BYTES, cudaMemcpyDeviceToDevice)); 
     checkCudaErrors(cudaMemcpy(d_inputPos,  d_outputPos,  ARRAY_BYTES, cudaMemcpyDeviceToDevice)); 
