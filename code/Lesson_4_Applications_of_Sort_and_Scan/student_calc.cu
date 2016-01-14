@@ -88,8 +88,6 @@ void map_kernel(unsigned int * const d_valsDst,
   unsigned int bin = (d_valsSrc[mid] & mask) >> i;
   unsigned int pos = atomicAdd(&(d_binScan[bin]), 1);
 
-  printf("mid: %u, bin: %u, pos: %u\n", mid, bin, pos);
-
   d_valsDst[pos] = d_valsSrc[mid];
   d_posDst[pos]  = d_posSrc[mid];
 }
@@ -113,7 +111,7 @@ void your_sort(unsigned int* const d_inputVals,
   const int numBins = 1 << numBits;
   const int BITS_PER_BYTE = 8;
   const int BIN_BYTES = sizeof(unsigned int) * numBins;
-  const int BLOCK_SIZE = 512;
+  const int BLOCK_SIZE = 2;
   const int GRID_SIZE  = (numElems / BLOCK_SIZE) + 1;
 
   // initialise device memory
@@ -138,14 +136,12 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
 
-    /*
     checkCudaErrors(cudaMemcpy(h_test, d_binHisto, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
 
     printf("HIST CALL: \n");
     for (int l = 0; l < numBins; l++)
       printf("%u ", h_test[l]);
     printf("\n");
-    */
     
 
     // build scan
@@ -155,28 +151,23 @@ void your_sort(unsigned int* const d_inputVals,
       checkCudaErrors(cudaMemcpy(d_binHisto, d_binScan, BIN_BYTES, cudaMemcpyDeviceToDevice));
     }
 
-    /*
     checkCudaErrors(cudaMemcpy(h_test, d_binScan, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
 
     printf("SCAN CALL: \n");
     for (int l = 0; l < numBins; l++)
       printf("%u ", h_test[l]);
     printf("\n");
-    */
     
-
     map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_valsDst, d_posDst, d_valsSrc, d_posSrc, d_binScan, mask, numElems, i, numBins);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
 
-/*
    checkCudaErrors(cudaMemcpy(h_test, d_valsDst, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
 
     printf("MAP CALL: \n");
     for (int l = 0; l < numElems; l++)
       printf("%u ", h_test[l]);
     printf("\n");
-*/
 
     // swap pointers
     std::swap(d_valsSrc, d_valsDst);
@@ -244,4 +235,3 @@ int main(void) {
 
   return 0;
 }
-
