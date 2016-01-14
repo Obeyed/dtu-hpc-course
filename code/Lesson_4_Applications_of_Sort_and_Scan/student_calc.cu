@@ -50,10 +50,10 @@ void histo_kernel(unsigned int *d_binHisto,
                   int i) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
 
-  if (mid >= numElens) return;
+  if (mid >= numElems) return;
 
   unsigned int bin = (d_inputVals[mid] & mask) >> i;
-  atomicAdd(&(binHistogram[bin]), 1);
+  atomicAdd(&(d_binHisto[bin]), 1);
 }
 
 __global__
@@ -86,8 +86,8 @@ void map_kernel(unsigned int * const d_outputVals,
   unsigned int bin = (d_inputVals[mid] & mask) >> i;
   unsigned int pos = atomicInc(&(d_binScan[bin]), 1);
 
-  d_outputVals[pos] = d_intputVals[mid];
-  d_outputPos[pos]  = d_intputPos[mid];
+  d_outputVals[pos] = d_inputVals[mid];
+  d_outputPos[pos]  = d_inputPos[mid];
 }
 
 void your_sort(unsigned int* const d_inputVals,
