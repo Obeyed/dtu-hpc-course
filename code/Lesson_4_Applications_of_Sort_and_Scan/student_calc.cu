@@ -43,7 +43,11 @@
  */
 
 __global__
-void histo_kernel(unsigned int *d_binHisto, unsigned int *d_inputVals, int mask, size_t numElems, int i) {
+void histo_kernel(unsigned int *d_binHisto, 
+                  unsigned int * const d_inputVals, 
+                  int mask, 
+                  const size_t numElems, 
+                  int i) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
 
   if (mid >= numElens) return;
@@ -53,13 +57,37 @@ void histo_kernel(unsigned int *d_binHisto, unsigned int *d_inputVals, int mask,
 }
 
 __global__
-void scan_kernel(unsigned int *d_binHisto, unsigned int *d_binScan, unsigned int step, int numBins) {
+void scan_kernel(unsigned int *d_binHisto,
+                 unsigned int *d_binScan,
+                 unsigned int step,
+                 const int numBins) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
 
   if ((mid >= (numBins - 1)) || ((mid - step) < 1)) 
     return;
 
   d_binScan[mid] = d_binScan[mid - 1] + d_binHisto[mid - 1];
+}
+
+__global__
+void map_kernel(unsigned int * const d_outputVals, 
+                unsigned int * const d_outputPos,
+                unsigned int * const d_inputVals, 
+                unsigned int * const d_inputPos,
+                unsigned int *d_binScan,
+                unsigned int mask,
+                const size_t numElems,
+                unsigned int i,
+                const int numBins) {
+  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+
+  if (mid >= numElems) return;
+
+  unsigned int bin = (d_inputVals[mid] & mask) >> i;
+  unsigned int pos = atomicInc(&(d_binScan[bin]), 1);
+
+  d_outputVals[pos] = d_intputVals[mid];
+  d_outputPos[pos]  = d_intputPos[mid];
 }
 
 void your_sort(unsigned int* const d_inputVals,
@@ -72,24 +100,36 @@ void your_sort(unsigned int* const d_inputVals,
   const int numBins = 1 << numBits;
   const int BITS_PER_BYTE = 8;
   const int BIN_BYTES = sizeof(unsigned int) * numBins;
+  const int ARRAY_BYTES = sizeof(unsigned int) * numElems;
+  const int BLOCK_SIZE = 512;
+  const int GRID_SIZE  = (numElems / BLOCK_SIZE) + 1;
 
   // initialise device memory
   unsigned int *d_binHisto, *d_binScan;
-  cudaMalloc((void **) &d_binHisto, BIN_BYTES);
-  cudaMalloc((void **) &d_binScan,  BIN_BYTES);
+  checkCudaErrors(cudaMalloc((void **) &d_binHisto, BIN_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_binScan,  BIN_BYTES));
 
   // loop through each bit
   for (unsigned int i = 0; i < BITS_PER_BYTE * sizeof(unsigned int); i += numBits) {
     unsigned int mask = (numBins - 1) << i;
     // reset all memory locations
-    cudaMemset(d_binHisto, 0, BIN_BYTES);
-    cudaMemset(d_binScan,  0, BIN_BYTES);
+    checkCudaErrors(cudaMemset(d_binHisto, 0, BIN_BYTES));
+    checkCudaErrors(cudaMemset(d_binScan,  0, BIN_BYTES));
 
+    // build histo
     histo_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_binHisto, d_inputVals, mask, numElems, i);
     
-    for (int step = 1 << 0; step < numBins; step <<= 1) {
-      scan_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_binHisto, d_binScan, step, numBins);
+    // build scan
+    for (int step = 1; step < numBins; step <<= 1) {
+      scan_kernel<<<1, numBins>>>(d_binHisto, d_binScan, step, numBins);
+      checkCudaErrors(cudaMemcpy(d_binHisto, d_binScan, BIN_BYTES, cudaMemcpyDeviceToDevice));
     }
-  }
-}
 
+    map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_outputVals, d_outputPos, d_inputVals, d_inputPos, d_binScan, mask, numElems, i, numBins);
+
+    checkCudaErrors(cudaMemcpy(d_inputVals, d_outputVals, ARRAY_BYTES, cudaMemcpyDeviceToDevice)); 
+    checkCudaErrors(cudaMemcpy(d_inputPos,  d_outputPos,  ARRAY_BYTES, cudaMemcpyDeviceToDevice)); 
+  }
+  checkCudaErrors(cudaFree(d_binScan)); 
+  checkCudaErrors(cudaFree(d_binHisto));
+}
