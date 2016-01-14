@@ -101,14 +101,14 @@ void your_sort(unsigned int* const d_inputVals,
                const size_t numElems)
 {
 
+/*
   unsigned int *h_test = new unsigned int[numElems];
   checkCudaErrors(cudaMemcpy(h_test, d_inputVals, sizeof(unsigned int) * numElems, cudaMemcpyDeviceToHost));
-
   printf("INSIDE DEVICE CALL: \n");
   for (int i = 0; i < numElems; i++)
     printf("%u ", h_test[i]);
   printf("\n");
-
+*/
   const int numBits = 1;
   const int numBins = 1 << numBits;
   const int BITS_PER_BYTE = 8;
@@ -138,12 +138,14 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
 
+    /*
     checkCudaErrors(cudaMemcpy(h_test, d_binHisto, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
 
     printf("HIST CALL: \n");
     for (int l = 0; l < numBins; l++)
       printf("%u ", h_test[l]);
     printf("\n");
+    */
     
 
     // build scan
@@ -153,25 +155,28 @@ void your_sort(unsigned int* const d_inputVals,
       checkCudaErrors(cudaMemcpy(d_binHisto, d_binScan, BIN_BYTES, cudaMemcpyDeviceToDevice));
     }
 
+    /*
     checkCudaErrors(cudaMemcpy(h_test, d_binScan, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
 
     printf("SCAN CALL: \n");
     for (int l = 0; l < numBins; l++)
       printf("%u ", h_test[l]);
     printf("\n");
+    */
     
 
     map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_valsDst, d_posDst, d_valsSrc, d_posSrc, d_binScan, mask, numElems, i, numBins);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
 
-    checkCudaErrors(cudaMemcpy(h_test, d_valsDst, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
+/*
+   checkCudaErrors(cudaMemcpy(h_test, d_valsDst, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
 
     printf("MAP CALL: \n");
     for (int l = 0; l < numElems; l++)
       printf("%u ", h_test[l]);
     printf("\n");
-    
+*/
 
     // swap pointers
     std::swap(d_valsSrc, d_valsDst);
@@ -184,7 +189,7 @@ void your_sort(unsigned int* const d_inputVals,
   checkCudaErrors(cudaFree(d_binScan)); 
   checkCudaErrors(cudaFree(d_binHisto));
 }
-
+/*
 int main(void) {
   size_t numElems = 10;
   unsigned int* d_inputVals;
@@ -239,3 +244,4 @@ int main(void) {
 
   return 0;
 }
+*/
