@@ -121,7 +121,7 @@ void your_sort(unsigned int* const d_inputVals,
   const int BITS_PER_BYTE = 8;
   const int BIN_BYTES   = sizeof(unsigned int) * numBins;
   const int ARRAY_BYTES = sizeof(unsigned int) * numElems;
-  const int BLOCK_SIZE = 8;
+  const int BLOCK_SIZE = 15;
   const int GRID_SIZE  = (numElems / BLOCK_SIZE) + 1;
 
   // host mem for debuggin
