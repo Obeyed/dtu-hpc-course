@@ -172,10 +172,10 @@ void your_sort(unsigned int* const d_inputVals,
     // debug
     printf("ROUND: %u\n", i);
     printf("HIST \t SCAN \t MAP \t POS\n");
-    printf("%u \t %u \t %u \t %u", h_test_histo[0], h_test_scan[0], h_test_map[0], h_test_map[0]); 
-    printf("%u \t %u \t %u \t %u", h_test_histo[1], h_test_scan[1], h_test_map[1], h_test_map[1]); 
+    printf("%u \t %u \t %u \t %u\n", h_test_histo[0], h_test_scan[0], h_test_map[0], h_test_map[0]); 
+    printf("%u \t %u \t %u \t %u\n", h_test_histo[1], h_test_scan[1], h_test_map[1], h_test_map[1]); 
     for (int l = 2; l < numElems; l++)
-      printf("NaN \t NaN \t %u \t %u", h_test_map[l], h_test_map[l]); 
+      printf("NaN \t NaN \t %u \t %u\n", h_test_map[l], h_test_map[l]); 
     printf("\n\n");
 
 
