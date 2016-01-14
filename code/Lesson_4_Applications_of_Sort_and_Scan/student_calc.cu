@@ -85,6 +85,21 @@ void map_kernel(unsigned int * const d_valsDst,
 
   if (mid >= numElems) return;
 
+// FROM GITHUB: https://github.com/ibebrett/CUDA-CS344/blob/master/Problem%20Sets/Problem%20Set%204/student_func.cu#L141
+/*  unsigned int scan = 0, base = 0;
+
+  if((d_valsSrc[mid] & (1<<i)) == (1<<i)) {
+      scan = SOMETHING HERE; 
+      base = d_binHisto[1];
+  } else {
+      scan = (mid) - d_binScan[mid];
+      base = 0;
+  }
+  
+  d_outputPos[base+scan]  = d_inputPos[mid];//d_inputPos[0];
+  d_outputVals[base+scan] = d_inputVals[mid];//base+scan;//d_inputVals[0];
+*/
+///////////
   unsigned int bin = (d_valsSrc[mid] & mask) >> i;
   unsigned int pos = atomicAdd(&(d_binScan[bin]), 1);
 
@@ -101,25 +116,26 @@ void your_sort(unsigned int* const d_inputVals,
                const size_t numElems)
 {
 
-  unsigned int *h_test = new unsigned int[numElems];
-  checkCudaErrors(cudaMemcpy(h_test, d_inputVals, sizeof(unsigned int) * numElems, cudaMemcpyDeviceToHost));
-/*  printf("INSIDE DEVICE CALL: \n");
-  for (int i = 0; i < numElems; i++)
-    printf("%u ", h_test[i]);
-  printf("\n");
-*/
   const int numBits = 1;
   const int numBins = 1 << numBits;
   const int BITS_PER_BYTE = 8;
-  const int BIN_BYTES = sizeof(unsigned int) * numBins;
+  const int BIN_BYTES   = sizeof(unsigned int) * numBins;
+  const int ARRAY_BYTES = sizeof(unsigned int) * numElems;
   const int BLOCK_SIZE = 15;
   const int GRID_SIZE  = (numElems / BLOCK_SIZE) + 1;
+
+  // host mem for debuggin
+  unsigned int *h_test_map   = new unsigned int[numElems];
+  unsigned int *h_test_histo = new unsigned int[numBins];
+  unsigned int *h_test_scan  = new unsigned int[numBins];
+  unsigned int *h_test_pos   = new unsigned int[numElems];
 
   // initialise device memory
   unsigned int *d_binHisto, *d_binScan;
   checkCudaErrors(cudaMalloc((void **) &d_binHisto, BIN_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_binScan,  BIN_BYTES));
 
+  // copy pointers, so we can change them
   unsigned int * d_valsSrc = d_inputVals; 
   unsigned int * d_valsDst = d_outputVals;
   unsigned int * d_posSrc  = d_inputPos;
@@ -137,15 +153,6 @@ void your_sort(unsigned int* const d_inputVals,
     histo_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_binHisto, d_valsSrc, mask, numElems, i);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-
-    checkCudaErrors(cudaMemcpy(h_test, d_binHisto, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
-
-    printf("HIST CALL: \n");
-    for (int l = 0; l < numBins; l++)
-      printf("%u ", h_test[l]);
-    printf("\n");
-    
-
     // build scan
     for (int step = 1; step < numBins; step <<= 1) {
       scan_kernel<<<1, numBins>>>(d_binHisto, d_binScan, step, numBins);
@@ -153,31 +160,32 @@ void your_sort(unsigned int* const d_inputVals,
       checkCudaErrors(cudaMemcpy(d_binHisto, d_binScan, BIN_BYTES, cudaMemcpyDeviceToDevice));
     }
 
-    checkCudaErrors(cudaMemcpy(h_test, d_binScan, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
-
-    printf("SCAN CALL: \n");
-    for (int l = 0; l < numBins; l++)
-      printf("%u ", h_test[l]);
-    printf("\n");
-    
     map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_valsDst, d_posDst, d_valsSrc, d_posSrc, d_binScan, mask, numElems, i, numBins);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
+    // copy mem to host
+    checkCudaErrors(cudaMemcpy(h_test_map,   d_valsDst,  sizeof(unsigned int) * numElems, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_test_pos,   d_posDst,   sizeof(unsigned int) * numElems, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_test_scan,  d_binScan,  sizeof(unsigned int) * numBins,  cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_test_histo, d_binHisto, sizeof(unsigned int) * numBins,  cudaMemcpyDeviceToHost));
 
-   checkCudaErrors(cudaMemcpy(h_test, d_valsDst, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
+    // debug
+    printf("ROUND: %u\n", i);
+    printf("HIST \t SCAN \t MAP \t POS\n");
+    printf("%u \t %u \t %u \t %u", h_test_histo[0], h_test_scan[0], h_test_map[0], h_test_map[0]); 
+    printf("%u \t %u \t %u \t %u", h_test_histo[1], h_test_scan[1], h_test_map[1], h_test_map[1]); 
+    for (int l = 2; l < numElems; l++)
+      printf("NaN \t NaN \t %u \t %u", h_test_map[l], h_test_map[l]); 
+    printf("\n\n");
 
-    printf("MAP CALL: \n");
-    for (int l = 0; l < numElems; l++)
-      printf("%u ", h_test[l]);
-    printf("\n");
 
     // swap pointers
     std::swap(d_valsSrc, d_valsDst);
     std::swap(d_posSrc, d_posDst);
   }
   // copy values to output (not sure why this is necessary)
-  cudaMemcpy(d_outputVals, d_inputVals, BIN_BYTES, cudaMemcpyDeviceToDevice);
-  cudaMemcpy(d_outputPos, d_inputPos, BIN_BYTES, cudaMemcpyDeviceToDevice);
+  cudaMemcpy(d_outputVals, d_inputVals, ARRAY_BYTES, cudaMemcpyDeviceToDevice);
+  cudaMemcpy(d_outputPos, d_inputPos, ARRAY_BYTES, cudaMemcpyDeviceToDevice);
              
   checkCudaErrors(cudaFree(d_binScan)); 
   checkCudaErrors(cudaFree(d_binHisto));
