@@ -112,7 +112,7 @@ void your_sort(unsigned int* const d_inputVals,
   const int numBins = 1 << numBits;
   const int BITS_PER_BYTE = 8;
   const int BIN_BYTES = sizeof(unsigned int) * numBins;
-  const int BLOCK_SIZE = 2;
+  const int BLOCK_SIZE = 15;
   const int GRID_SIZE  = (numElems / BLOCK_SIZE) + 1;
 
   // initialise device memory
