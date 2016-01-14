@@ -143,11 +143,11 @@ void your_sort(unsigned int* const d_inputVals,
 
   printf("INP_VALS: \n");
   for (int i = 0; i < numElems; i++)
-    printf("%u %s", d_inputVals[i], (i % 4 == 3 ? "\t" : "\n"));
+    printf("%u ");
   
   printf("OUT_VALS: \n");
   for (int i = 0; i < numElems; i++)
-    printf("%u %s", d_outputVals[i], (i % 4 == 3 ? "\t" : "\n"));
+    printf("%u ", d_outputVals[i]);
 
   // copy values to output (not sure why this is necessary)
   cudaMemcpy(d_outputVals, d_inputVals, BIN_BYTES, cudaMemcpyDeviceToDevice);
@@ -189,7 +189,7 @@ int main(void) {
 
   printf("INITIAL: \n");
   for (int i = 0; i < numElems; i++)
-    printf("%u %s", h_input[i], (i % 4 == 3 ? "\t" : "\n"));
+    printf("%u ", h_input[i]);
 
 
   checkCudaErrors(cudaMemcpy(d_inputVals, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
@@ -205,7 +205,7 @@ int main(void) {
     
   printf("RESULTS: \n");
   for (int i = 0; i < numElems; i++)
-    printf("%u %s", h_result[i], (i % 4 == 3 ? "\t" : "\n"));
+    printf("%u ", h_result[i]);
 
   return 0;
 }
