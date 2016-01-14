@@ -192,7 +192,7 @@ int main(void) {
     
   printf("RESULTS: \n");
   for (int i = 0; i < numElems; i++)
-    printf("%u", h_result[i]);
+    printf("%u\n", h_result[i]);
 
   return 0;
 }
