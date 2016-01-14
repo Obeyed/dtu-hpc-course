@@ -99,10 +99,12 @@ void your_sort(unsigned int* const d_inputVals,
                const size_t numElems)
 {
 
+  unsigned int *h_test = new unsigned int[numElems];
+  checkCudaErrors(cudaMemcpy(h_test, d_inputVals, sizeof(unsigned int) * numElems, cudaMemcpyDeviceToHost));
+
   printf("INSIDE DEVICE CALL: \n");
-  printf("%d\n", d_inputVals);
-  printf("%u ", d_inputVals[0]);
-  printf("%u ", d_inputVals[1]);
+  for (int i = 0; i < numElems; i++)
+    printf("%u ", d_inputVals[i]);
   printf("\n");
 
   const int numBits = 1;
@@ -147,17 +149,6 @@ void your_sort(unsigned int* const d_inputVals,
     std::swap(d_valsSrc, d_valsDst);
     std::swap(d_posSrc, d_posDst);
   }
-
-  printf("INP_VALS: \n");
-  for (int i = 0; i < numElems; i++)
-    printf("%u ");
-  printf("\n");
-  
-  printf("OUT_VALS: \n");
-  for (int i = 0; i < numElems; i++)
-    printf("%u ", d_outputVals[i]);
-  printf("\n");
-
   // copy values to output (not sure why this is necessary)
   cudaMemcpy(d_outputVals, d_inputVals, BIN_BYTES, cudaMemcpyDeviceToDevice);
   cudaMemcpy(d_outputPos, d_inputPos, BIN_BYTES, cudaMemcpyDeviceToDevice);
