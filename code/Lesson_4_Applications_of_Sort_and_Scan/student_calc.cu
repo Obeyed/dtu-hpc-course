@@ -103,7 +103,7 @@ void map_kernel(unsigned int * const d_valsDst,
   unsigned int bin = (d_valsSrc[mid] & mask) >> i;
   unsigned int pos = atomicAdd(&(d_binScan[bin]), 1);
 
-  printf("mid: %u, pos: %u, bin: %u\n", mid, pos, bin);
+//  printf("mid: %u, pos: %u, bin: %u\n", mid, pos, bin);
 
   d_valsDst[pos] = d_valsSrc[mid];
   d_posDst[pos]  = d_posSrc[mid];
@@ -142,8 +142,8 @@ void your_sort(unsigned int* const d_inputVals,
   unsigned int * d_posDst  = d_outputPos;
 
   // loop through each bit
-//  for (unsigned int i = 0; i < BITS_PER_BYTE * sizeof(unsigned int); i += numBits) {
-  for (unsigned int i = 0; i < 1; i += numBits) {
+  for (unsigned int i = 0; i < BITS_PER_BYTE * sizeof(unsigned int); i += numBits) {
+//  for (unsigned int i = 0; i < 1; i += numBits) {
     unsigned int mask = (numBins - 1) << i;
     // reset all memory locations
     checkCudaErrors(cudaMemset(d_binHisto, 0, BIN_BYTES));
@@ -227,11 +227,11 @@ int main(void) {
   for (int i = 0; i < numElems; i++)
     h_pos[i] = i;
 
-  printf("INITIAL: \n");
+/*  printf("INITIAL: \n");
   for (int i = 0; i < numElems; i++)
     printf("%u \t", h_input[i]);
   printf("\n");
-
+*/
   checkCudaErrors(cudaMemcpy(d_inputVals, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(d_inputPos,  h_pos,   ARRAY_BYTES, cudaMemcpyHostToDevice));
 
@@ -245,8 +245,7 @@ int main(void) {
     
   printf("RESULTS: \n");
   for (int i = 0; i < numElems; i++)
-    printf("%u \t", h_result[i]);
-  printf("\n");
+    printf("%u ", h_result[i]);
 
   return 0;
 }
