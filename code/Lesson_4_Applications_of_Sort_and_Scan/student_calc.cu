@@ -99,14 +99,13 @@ void your_sort(unsigned int* const d_inputVals,
                const size_t numElems)
 {
 
-/*
   unsigned int *h_test = new unsigned int[numElems];
   checkCudaErrors(cudaMemcpy(h_test, d_inputVals, sizeof(unsigned int) * numElems, cudaMemcpyDeviceToHost));
   printf("INSIDE DEVICE CALL: \n");
   for (int i = 0; i < numElems; i++)
     printf("%u ", h_test[i]);
   printf("\n");
-*/
+
   const int numBits = 1;
   const int numBins = 1 << numBits;
   const int BITS_PER_BYTE = 8;
