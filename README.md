@@ -1,6 +1,8 @@
 # High Performance Computing
 - 11'th-12'th, figure NSight and go through report
 - 13'th, go through rest of udacity
+- avoid thread divergence
+- maximize math per memory operation
 
 ## Special Course
 ### The Technical University of Denmark - January, 2016
