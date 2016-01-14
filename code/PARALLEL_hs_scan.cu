@@ -3,6 +3,11 @@
 #include <cuda_runtime.h>
 #include <fstream>
 
+int set_grid(int SIZE, int BLOCK_SIZE)
+{
+  return SIZE/BLOCK_SIZE + ((SIZE % BLOCK_SIZE)? 1 : 0);
+}
+
 // Performs one step of the hillis and steele algorithm for integers
 __global__ void hs_kernel_global(int *d_out, int *d_in, int step, int SIZE) {
 	// setting ID
@@ -19,7 +24,7 @@ __global__ void hs_kernel_global(int *d_out, int *d_in, int step, int SIZE) {
 
 void hs_kernel_wrapper(int * d_out, int * d_in, int SIZE, unsigned int BYTES, int NUM_THREADS) {
 	// initializing starting variables
-	int NUM_BLOCKS = SIZE/NUM_THREADS + ((SIZE % NUM_THREADS)?1:0);
+	int NUM_BLOCKS = SIZE/NUM_THREADS + 1;
 	// initializing and allocating an "intermediate" value so we don't have to change anything in d_in
 	int *d_intermediate;
 	cudaMalloc((void **) &d_intermediate, BYTES);
@@ -54,7 +59,7 @@ int main(int argc, char **argv) {
   cudaMalloc((void **) &d_in, BYTES);
   cudaMalloc((void **) &d_out, BYTES);
 
-	for (int rounds = 0; rounds <= MAX; rounds++) {
+	for (int rounds = 29; rounds <= MAX; rounds++) {
     SIZE = 1 << rounds;
     BYTES = SIZE * sizeof(int);
 

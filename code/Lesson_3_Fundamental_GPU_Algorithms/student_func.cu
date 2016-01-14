@@ -87,30 +87,91 @@
 
 unsigned int set_grid(unsigned int SIZE, unsigned int BLOCK_SIZE)
 {
-  return SIZE/BLOCK_SIZE + (SIZE % BLOCK_SIZE)? 1 : 0;
+  return SIZE/BLOCK_SIZE + 1;//((SIZE % BLOCK_SIZE)? 1 : 0);
 }
 
 __global__ void excluding_kernel(unsigned int * d_out, unsigned int * d_in, unsigned int size)
 {
-  mid = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if(mid >= size) return;
   if(mid == 0){d_out[mid] = 0; return;}
   d_out[mid] = d_in[mid]-1;
 }
 
-__global__ void simple_histo(unsigned int *d_bins, const float const *d_in, const int BIN_COUNT, int ARRAY_SIZE, float min_logLum, float range_logLum)
+__global__ void simple_histo(unsigned int *d_bins, const float * const d_in, const int BIN_COUNT, int ARRAY_SIZE, float min_logLum, float range_logLum)
 {
-  unsigned int myId = threadIdx.x + blockDim.x + blockIdx.x;
+  unsigned int mid = threadIdx.x + blockDim.x + blockIdx.x;
   // checking for out-of-bounds
-  if (myId>=ARRAY_SIZE)
+  if (mid>=ARRAY_SIZE) return;
+
+  unsigned int myBin = min(static_cast<unsigned int>(BIN_COUNT - 1),
+                           static_cast<unsigned int>(((d_in[mid]-min_logLum) / range_logLum) * BIN_COUNT));
+  atomicAdd(&(d_bins[myBin]), 1);
+}
+
+__global__ void reduce_minmax_kernel(float * d_out, float * d_in, unsigned int SIZE, int choice)
+{
+  unsigned int mid = blockIdx.x * blockDim.x + threadIdx.x, tid = threadIdx.x;
+  for (unsigned int s = blockDim.x / 2; s>0; s>>=1)
   {
-    return;
+    if ((tid < s) && (mid+s < SIZE))
+    {
+      if(choice)
+        d_in[mid] = max(d_in[mid], d_in[mid+s]);
+      else
+        d_in[mid] = min(d_in[mid], d_in[mid+s]);
+    }
+    __syncthreads();
   }
 
-  unsigned int myItem = d_in[myId];
-  unsigned int myBin = min(static_cast<unsigned int>(BIN_COUNT - 1),
-               static_cast<unsigned int>(((d_in[mid]-min_logLum) / range_logLum) * bin_count));
-  atomicAdd(&(d_bins[myBin]), 1);
+  // only thread 0 writes result, as thread
+  if ((tid==0) && (mid < SIZE))
+    d_out[blockIdx.x] = d_in[mid];
+}
+
+float reduce_minmax(const float * const d_logLuminance, unsigned int SIZE, unsigned int BYTES,unsigned int BLOCK_SIZE, int choice)
+{
+  unsigned int GRID_SIZE = set_grid(SIZE, BLOCK_SIZE);
+  float * d_intermediate_in;
+  float * d_intermediate_out;
+  cudaMalloc(&d_intermediate_in, BYTES);
+  cudaMalloc(&d_intermediate_out, BYTES);
+  cudaMemcpy(d_intermediate_in, d_logLuminance, BYTES, cudaMemcpyDeviceToDevice);
+
+  do{
+     reduce_minmax_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_intermediate_out, d_intermediate_in, SIZE, choice);
+     SIZE = GRID_SIZE;
+     cudaMemcpy(d_intermediate_in, d_intermediate_out, SIZE*sizeof(float), cudaMemcpyDeviceToDevice);
+     GRID_SIZE = set_grid(SIZE, BLOCK_SIZE);
+  }while(SIZE>BLOCK_SIZE);
+
+  reduce_minmax_kernel<<<1, SIZE>>>(d_intermediate_out, d_intermediate_in, SIZE, choice);
+  float minmax;
+  cudaMemcpy(&minmax, d_intermediate_out, sizeof(float), cudaMemcpyDeviceToHost);
+  cudaFree(d_intermediate_in);
+  cudaFree(d_intermediate_out);
+  return minmax;
+}
+
+__global__ void hs_kernel_global(unsigned int * d_out, unsigned int * d_in, int step, unsigned int SIZE)
+{
+  int myId = threadIdx.x + blockDim.x * blockIdx.x;
+  if(myId >= SIZE) return;
+  d_out[myId] = d_in[myId] + (((myId - step)<0) ? 0 : d_in[myId-step]);
+}
+
+void hs_kernel_wrapper(unsigned int * const d_out, unsigned int * d_in, unsigned int SIZE, unsigned int BYTES, unsigned int BLOCK_SIZE)
+{
+  unsigned int GRID_SIZE = set_grid(SIZE, BLOCK_SIZE);
+//  unsigned int * d_intermediate;
+//  cudaMalloc((void **) &d_intermediate, BYTES);
+//  cudaMemcpy(d_intermediate, d_in, BYTES, cudaMemcpyDeviceToDevice);
+
+  for(int step = 1; step < SIZE; step<<=1)
+  {
+    hs_kernel_global<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_in, step, SIZE);
+    checkCudaErrors(cudaMemcpy(d_in, d_out, BYTES, cudaMemcpyDeviceToDevice));
+  }
 }
 
 void your_histogram_and_prefixsum(const float* const d_logLuminance,
@@ -131,9 +192,9 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   unsigned int * d_bins, *d_bins_excluding;
 
   // 1)
-  min_logLum = reduce_minmax(d_logLuminance, ARRAY_SIZE, 0);
+  min_logLum = reduce_minmax(d_logLuminance, ARRAY_SIZE, ARRAY_BYTES, BLOCK_SIZE, 0);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  max_logLum = reduce_minmax(d_logLuminance, ARRAY_SIZE, 1);
+  max_logLum = reduce_minmax(d_logLuminance, ARRAY_SIZE, ARRAY_BYTES, BLOCK_SIZE, 1);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 2)
@@ -150,17 +211,22 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   simple_histo<<<GRID_SIZE_ARRAY, BLOCK_SIZE>>>(d_bins, d_logLuminance, numBins, ARRAY_SIZE, min_logLum, range_logLum);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-//  unsigned int h_out[numBins];
-//  cudaMemcpy(&h_out, d_bins, BIN_BYTES, cudaMemcpyDeviceToHost);
-//  for(int i = 0; i < 100; i++)
-//  {
-//      printf("hist out %d\n", h_out[i]);
-//  }
+  unsigned int h_out[numBins];
+  cudaMemcpy(&h_out, d_bins, BIN_BYTES, cudaMemcpyDeviceToHost);
+  for(int i = 0; i < 100; i++)
+  {
+      printf("hist out %d\n", h_out[i]);
+  }
   // Using H&S, so making it "excluding"
+  cudaMalloc(&d_bins_excluding, BIN_BYTES);
   excluding_kernel<<<GRID_SIZE_BINS, BLOCK_SIZE>>>(d_bins_excluding, d_bins, numBins);
   // 4)
-  hs_kernel_wrapper(d_cdf, d_bins, BIN_SIZE, BIN_BYTES, BLOCK_SIZE);
-
+  hs_kernel_wrapper(d_cdf, d_bins, numBins, BIN_BYTES, BLOCK_SIZE);
+  cudaMemcpy(h_out, d_cdf, BIN_BYTES, cudaMemcpyDeviceToHost);
+  for(int i = 0; i < 100; i++)
+  {
+      printf("hist out %d\n", h_out[i]);
+  }
   //TODO
   /*Here are the steps you need to implement
     1) find the minimum and maximum value in the input logLuminance channel
