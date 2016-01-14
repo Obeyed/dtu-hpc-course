@@ -101,11 +101,11 @@ void your_sort(unsigned int* const d_inputVals,
 
   unsigned int *h_test = new unsigned int[numElems];
   checkCudaErrors(cudaMemcpy(h_test, d_inputVals, sizeof(unsigned int) * numElems, cudaMemcpyDeviceToHost));
-  printf("INSIDE DEVICE CALL: \n");
+/*  printf("INSIDE DEVICE CALL: \n");
   for (int i = 0; i < numElems; i++)
     printf("%u ", h_test[i]);
   printf("\n");
-
+*/
   const int numBits = 1;
   const int numBins = 1 << numBits;
   const int BITS_PER_BYTE = 8;
@@ -124,7 +124,8 @@ void your_sort(unsigned int* const d_inputVals,
   unsigned int * d_posDst  = d_outputPos;
 
   // loop through each bit
-  for (unsigned int i = 0; i < BITS_PER_BYTE * sizeof(unsigned int); i += numBits) {
+//  for (unsigned int i = 0; i < BITS_PER_BYTE * sizeof(unsigned int); i += numBits) {
+  for (unsigned int i = 0; i < 1; i += numBits) {
     unsigned int mask = (numBins - 1) << i;
     // reset all memory locations
     checkCudaErrors(cudaMemset(d_binHisto, 0, BIN_BYTES));
@@ -181,7 +182,7 @@ void your_sort(unsigned int* const d_inputVals,
 }
 
 int main(void) {
-  size_t numElems = 10;
+  size_t numElems = 15;
   unsigned int* d_inputVals;
   unsigned int* d_inputPos;
   unsigned int* d_outputVals;
@@ -206,6 +207,11 @@ int main(void) {
   h_input[7] = 9;  // 1001
   h_input[8] = 8;  // 1000
   h_input[9] = 7;  // 0111
+  h_input[10] = 11;// 0001
+  h_input[11] = 13;// 0010
+  h_input[12] = 12;// 1001
+  h_input[13] = 15;// 1000
+  h_input[14] = 14;// 0111
 
   for (int i = 0; i < numElems; i++)
     h_pos[i] = i;
