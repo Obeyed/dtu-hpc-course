@@ -139,8 +139,8 @@ void your_sort(unsigned int* const d_inputVals,
     checkCudaErrors(cudaMemcpy(h_test, d_binHisto, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
 
     printf("HIST CALL: \n");
-    for (int i = 0; i < numBins; i++)
-      printf("%u ", h_test[i]);
+    for (int l = 0; l < numBins; l++)
+      printf("%u ", h_test[l]);
     printf("\n");
     
 
@@ -154,8 +154,8 @@ void your_sort(unsigned int* const d_inputVals,
     checkCudaErrors(cudaMemcpy(h_test, d_binScan, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
 
     printf("SCAN CALL: \n");
-    for (int i = 0; i < numBins; i++)
-      printf("%u ", h_test[i]);
+    for (int l = 0; l < numBins; l++)
+      printf("%u ", h_test[l]);
     printf("\n");
     
 
@@ -166,8 +166,8 @@ void your_sort(unsigned int* const d_inputVals,
     checkCudaErrors(cudaMemcpy(h_test, d_valsDst, sizeof(unsigned int) * numBins, cudaMemcpyDeviceToHost));
 
     printf("MAP CALL: \n");
-    for (int i = 0; i < numElems; i++)
-      printf("%u ", h_test[i]);
+    for (int l = 0; l < numElems; l++)
+      printf("%u ", h_test[l]);
     printf("\n");
     
 
