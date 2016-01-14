@@ -100,8 +100,9 @@ void your_sort(unsigned int* const d_inputVals,
 {
 
   printf("INSIDE DEVICE CALL: \n");
-  for (int i = 0; i < numElems; i++)
-    printf("%u ", d_inputVals[i]);
+  printf("%d\n", d_inputVals);
+  printf("%u ", d_inputVals[0]);
+  printf("%u ", d_inputVals[1]);
   printf("\n");
 
   const int numBits = 1;
