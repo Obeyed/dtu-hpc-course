@@ -165,6 +165,7 @@ void add_splitter_map_kernel(unsigned int* d_out,
 }
 
 int main(void) {
+  printf("HELLO");
   size_t numElems = 16;
   int GRID_SIZE = 2;
   int BLOCK_SIZE = 8;
