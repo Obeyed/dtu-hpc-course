@@ -11,11 +11,11 @@
  * 1 if true, 0 otherwise.
  */
 __global__
-void predicate_kernel(unsigned int *d_predicate,
-                      unsigned int *d_val_src,
+void predicate_kernel(unsigned int* const d_predicate,
+                      const unsigned int* const d_val_src,
                       const size_t numElems,
-                      unsigned int i) {
-  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+                      const unsigned int i) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
   d_predicate[mid] = (int)(((d_val_src[mid] & (1 << i)) >> i) == 0);
