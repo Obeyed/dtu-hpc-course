@@ -172,7 +172,7 @@ void allocateDeviceMemory(unsigned int* const device_arr,
 }
 
 int main(void) {
-  size_t numElems = 1 << 20;
+  size_t numElems = 1 << 10;
   int BLOCK_SIZE = 512;
   int GRID_SIZE = numElems / BLOCK_SIZE + 1;
   unsigned int ARRAY_BYTES = sizeof(unsigned int) * numElems;
