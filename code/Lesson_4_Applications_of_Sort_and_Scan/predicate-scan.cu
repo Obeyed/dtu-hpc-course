@@ -47,9 +47,7 @@ int main(void) {
   int ARRAY_BYTES = sizeof(unsigned int) * numElems;
 
   // device memory
-  unsigned int* d_val_src;
-  unsigned int* d_predicate;
-  unsigned int* d_sum_scan;
+  unsigned int *d_val_src, *d_predicate, *d_sum_scan;
   checkCudaErrors(cudaMalloc((void **) &d_val_src,   ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_sum_scan,  ARRAY_BYTES));
@@ -73,12 +71,16 @@ int main(void) {
   // set all elements to zero 
   checkCudaErrors(cudaMemset(d_sum_scan, 0, ARRAY_BYTES));
 
+  printf("PREDICATE:\n");
   DEBUG(d_predicate_tmp, ARRAY_BYTES, numElems);
+  printf("SCAN:\n");
+  DEBUG(d_sum_scan, ARRAY_BYTES, numElems);
  
   // sum scan call
   for (int step = 1; step < numElems; step *= 2) {
     exclusive_sum_scan_kernel<<<1, 16>>>(d_sum_scan, d_predicate_tmp, step, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+    printf("round %d\n", i);
     DEBUG(d_sum_scan, ARRAY_BYTES, numElems);
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   }
