@@ -128,7 +128,6 @@ void exclusive_sum_scan(unsigned int* d_out,
                         int BLOCK_SIZE) {
   // copy predicate values to new array
   checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
-
   // set all elements to zero 
   checkCudaErrors(cudaMemset(d_sum_scan, 0, ARRAY_BYTES));
 
@@ -141,7 +140,7 @@ void exclusive_sum_scan(unsigned int* d_out,
 
   // shift to get exclusive scan
   checkCudaErrors(cudaMemcpy(d_out, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
-  right_shift_array<<<GRID_SIZE,BLOCK_SIZE>>>(d_sum_scan, d_out, numElems);
+  right_shift_array<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, numElems);
 }
 
 __global__
