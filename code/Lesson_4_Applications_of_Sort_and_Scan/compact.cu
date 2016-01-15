@@ -53,13 +53,15 @@ void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems
 }
 
 __global__ 
-void reduce_kernel(unsigned int * d_out, unsigned int * d_in, int numElems) {
+void reduce_kernel(unsigned int* const d_out,
+                   unsigned int* const d_in,
+                   const size_t numElems) {
   unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int tid = threadIdx.x;
 
-  for (unsigned int s = blockDim.x / 2; s>0; s>>=1) {
-    if ((tid < s) && (pos+s < numElems))
-      d_in[pos] = d_in[pos] + d_in[pos+s];
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>=1) {
+    if ((tid < s) && ((pos + s) < numElems))
+      d_in[pos] = d_in[pos] + d_in[pos + s];
     __syncthreads();
   }
 
