@@ -71,20 +71,15 @@ int main(void) {
   // set all elements to zero 
   checkCudaErrors(cudaMemset(d_sum_scan, 0, ARRAY_BYTES));
 
-  printf("PREDICATE:\n");
-  DEBUG(d_predicate_tmp, ARRAY_BYTES, numElems);
-  printf("SCAN:\n");
-  DEBUG(d_sum_scan, ARRAY_BYTES, numElems);
- 
   // sum scan call
   for (int step = 1; step < numElems; step *= 2) {
     exclusive_sum_scan_kernel<<<1, 16>>>(d_sum_scan, d_predicate_tmp, step, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+    checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+
     printf("round %d\n", step);
     DEBUG(d_sum_scan, ARRAY_BYTES, numElems);
-    printf("predicate_tmp:\n", step);
     DEBUG(d_predicate_tmp, ARRAY_BYTES, numElems);
-    checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   }
 
   // debugging
