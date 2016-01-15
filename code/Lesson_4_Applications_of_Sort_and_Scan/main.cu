@@ -5,7 +5,7 @@
 
 int main(void) {
   const size_t numElems = 16;
-  unsigned int* vals[numElems] = new unsigned int[numElems];
+  unsigned int* vals = new unsigned int[numElems];
 
   srand(time(NULL));
   for (unsigned int i = 0; i < numElems; i++)
