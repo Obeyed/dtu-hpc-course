@@ -166,36 +166,37 @@ void add_splitter_map_kernel(unsigned int* d_out,
   d_out[mid] += shift[0];
 }
 
-void allocateDeviceMemory(unsigned int** const device_arr,
-                          const unsigned int bytes) {
-  checkCudaErrors(cudaMalloc((void **) &device_arr, bytes));
-}
-
 int main(void) {
-  size_t numElems = 1 << 10;
-  int BLOCK_SIZE = 512;
-  int GRID_SIZE = numElems / BLOCK_SIZE + 1;
-  unsigned int ARRAY_BYTES = sizeof(unsigned int) * numElems;
+  const size_t numElems = 1 << 10;
+  const int BLOCK_SIZE = 512;
+  const int GRID_SIZE = numElems / BLOCK_SIZE + 1;
+  const unsigned int ARRAY_BYTES = sizeof(unsigned int) * numElems;
+  const unsigned int BITS_PER_BYTE = 8;
 
-  // device memory
-  unsigned int *d_val_src, *d_predicate, *d_sum_scan, *d_predicate_tmp;
-  allocateDeviceMemory(&d_val_src,       ARRAY_BYTES);
-  allocateDeviceMemory(&d_predicate,     ARRAY_BYTES);
-  allocateDeviceMemory(&d_sum_scan,      ARRAY_BYTES);
-  allocateDeviceMemory(&d_predicate_tmp, ARRAY_BYTES);
+  // host memory
+  unsigned int* const h_input  = new unsigned int[numElems];
+  unsigned int* const h_output = new unsigned int[numElems];
+  unsigned int h_reduce_result;
 
-  /* initialize random seed: */
-  srand (time(NULL));
-  // input array
-  unsigned int* h_input = new unsigned int[numElems];
+  srand(time(NULL));
   for (unsigned int i = 0; i < numElems; i++)
     h_input[i] = rand(); 
 
+  // device memory
+  unsigned int *d_val_src, *d_predicate, *d_sum_scan, *d_predicate_tmp, *d_sum_scan_0, *d_sum_scan_1, *d_predicate_toggle, *d_reduce, *d_map;
+  checkCudaErrors(cudaMalloc((void **) &d_val_src, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_map,     ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_predicate,        ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp,    ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_predicate_toggle, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan,   ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_0, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_1, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)));
+
+  // copy host array to device
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
-  const unsigned int BITS_PER_BYTE = 8;
-
-  // LOOP START
   for (unsigned int i = 0; i < (BITS_PER_BYTE * sizeof(unsigned int)); i++) {
     //##########
     // predicate call
@@ -204,30 +205,21 @@ int main(void) {
 
     //##########
     // LSB == 0
-    unsigned int* d_sum_scan_0;
-    checkCudaErrors(cudaMalloc((void **) &d_sum_scan_0, ARRAY_BYTES));
     exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
     //##########
 
     //##########
-    // reduce to get amount of LSB equal to 0
-    unsigned int* d_reduce;
-    checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)));
     // copy contents 
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+    // reduce to get amount of LSB equal to 0
     reduce_wrapper(d_reduce, d_predicate_tmp, numElems, BLOCK_SIZE);
-    unsigned int h_result;
-    checkCudaErrors(cudaMemcpy(&h_result, d_reduce, sizeof(int), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(&h_reduce_result, d_reduce, sizeof(int), cudaMemcpyDeviceToHost));
     //##########
 
     //##########
-    // LSB == 1
-    unsigned int* d_sum_scan_1;
-    unsigned int* d_predicate_toggle;
-    checkCudaErrors(cudaMalloc((void **) &d_sum_scan_1,       ARRAY_BYTES));
-    checkCudaErrors(cudaMalloc((void **) &d_predicate_toggle, ARRAY_BYTES));
     // flip predicate values
     toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, numElems);
+    // LSB == 1
     exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
     // map sum_scan_1 to add splitter
     add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, numElems);
@@ -235,8 +227,6 @@ int main(void) {
 
     //##########
     // move elements accordingly
-    unsigned int* d_map;
-    checkCudaErrors(cudaMalloc((void **) &d_map, ARRAY_BYTES));
     map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan_0, d_sum_scan_1, numElems);
     //##########
 
@@ -245,11 +235,10 @@ int main(void) {
   // LOOP END
 
   // debugging
-  unsigned int *h_map = new unsigned int[numElems];
-  checkCudaErrors(cudaMemcpy(h_map, d_val_src, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_output, d_val_src, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
   for (int i = 0; i < numElems; i++)
-    printf("%u%s", h_map[i], ((i % 8 == 7) ? "\n" : "\t"));
+    printf("%u%s", h_output[i], ((i % 8 == 7) ? "\n" : "\t"));
 
   return 0;
 }
