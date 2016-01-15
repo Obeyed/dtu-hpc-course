@@ -20,12 +20,12 @@ void predicate_kernel(unsigned int *d_predicate,
 }
 
 __global__
-void exclusive_sum_scan_kernel(unsigned int* d_sum_scan,
+void inclusive_sum_scan_kernel(unsigned int* d_sum_scan,
                                unsigned int* d_predicate,
                                int step,
                                const size_t numElems) {
   int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if ((mid == 0) || (mid > numElems))
+  if (mid >= numElems)
     return;
 
 	// finding the number to add, checking out-of-bounds
