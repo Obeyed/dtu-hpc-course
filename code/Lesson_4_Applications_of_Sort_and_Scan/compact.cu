@@ -166,7 +166,7 @@ void add_splitter_map_kernel(unsigned int* d_out,
   d_out[mid] += shift[0];
 }
 
-void allocateDeviceMemory(unsigned int* const device_arr,
+void allocateDeviceMemory(unsigned int** const device_arr,
                           const unsigned int bytes) {
   checkCudaErrors(cudaMalloc((void **) &device_arr, bytes));
 }
