@@ -176,7 +176,7 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_val_src,   ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_sum_scan,  ARRAY_BYTES));
-  unsigned int* d_predicate_tmp;
+/*  unsigned int* d_predicate_tmp;
   checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp, ARRAY_BYTES));
 
   // input array
@@ -255,6 +255,6 @@ int main(void) {
     printf("%u \t %u \t %u \t %u\n", h_input[i], h_predicate[i], h_sum_scan[i], h_map[i]);
 
   printf("sum: \t %u\n", h_result);
-
+*/
   return 0;
 }
