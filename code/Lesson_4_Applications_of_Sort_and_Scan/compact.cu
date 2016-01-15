@@ -194,8 +194,7 @@ int main(void) {
   predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, numElems);
   //##########
 
-/*
-  printf("HEJ 11");
+  printf("HEJ 2\n");
   //##########
   // LSB == 0
   unsigned int* d_sum_scan_0;
@@ -203,9 +202,9 @@ int main(void) {
   exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
   //##########
 
+  printf("HEJ 3\n");
 
-  printf("HEJ 1");
-
+/*
   //##########
   // reduce to get amount of LSB equal to 0
   unsigned int* d_reduce;
