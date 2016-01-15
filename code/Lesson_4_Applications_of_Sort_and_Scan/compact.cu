@@ -198,6 +198,9 @@ int main(void) {
   exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
   //##########
 
+
+  printf("HEJ 1");
+
   //##########
   // reduce to get amount of LSB equal to 0
   unsigned int* d_reduce;
@@ -208,6 +211,8 @@ int main(void) {
   unsigned int h_result;
   checkCudaErrors(cudaMemcpy(&h_result, d_reduce, sizeof(int), cudaMemcpyDeviceToHost));
   //##########
+
+  printf("HEJ");
 
   //##########
   // LSB == 1
@@ -221,6 +226,8 @@ int main(void) {
   // map sum_scan_1 to add splitter
   add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce[0], numElems);
   //##########
+
+  printf("HEJ 2");
 
   //##########
   // move elements accordingly
