@@ -11,11 +11,12 @@
 __global__
 void predicate_kernel(unsigned int *d_predicate,
                       unsigned int *d_val_src,
-                      const size_t numElems) {
+                      const size_t numElems,
+                      unsigned int i) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
-  d_predicate[mid] = (int)((d_val_src[mid] & 1) == 0);
+  d_predicate[mid] = (int)(((d_val_src[mid] & (1 << i)) >> i) == 0);
 }
 
 __global__
@@ -164,7 +165,6 @@ void add_splitter_map_kernel(unsigned int* d_out,
 }
 
 int main(void) {
-  printf("HELLO\n");
   size_t numElems = 16;
   int GRID_SIZE = 2;
   int BLOCK_SIZE = 8;
@@ -186,77 +186,70 @@ int main(void) {
   h_input[12] = 74; h_input[13] = 8;  h_input[14] = 44; h_input[15] = 53;
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
-  printf("HEJ 1\n");
+  // LOOP START
+  for (unsigned int i = 0; BITS_PER_BYTE * sizeof(unsigned int); i++) {
+    //##########
+    // predicate call
+    predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, numElems, i);
+    //##########
 
-  //##########
-  // predicate call
-  predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, numElems);
-  //##########
+    //##########
+    // LSB == 0
+    unsigned int* d_sum_scan_0;
+    checkCudaErrors(cudaMalloc((void **) &d_sum_scan_0, ARRAY_BYTES));
+    exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
+    //##########
 
-  printf("HEJ 2\n");
-  //##########
-  // LSB == 0
-  unsigned int* d_sum_scan_0;
-  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_0, ARRAY_BYTES));
-  exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
-  //##########
+    //##########
+    // reduce to get amount of LSB equal to 0
+    unsigned int* d_reduce;
+    checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)));
+    // copy contents 
+    checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+    reduce_wrapper(d_reduce, d_predicate_tmp, numElems, BLOCK_SIZE);
+    unsigned int h_result;
+    checkCudaErrors(cudaMemcpy(&h_result, d_reduce, sizeof(int), cudaMemcpyDeviceToHost));
+    //##########
 
-  printf("HEJ 3\n");
+    //##########
+    // LSB == 1
+    unsigned int* d_sum_scan_1;
+    unsigned int* d_predicate_toggle;
+    checkCudaErrors(cudaMalloc((void **) &d_sum_scan_1,       ARRAY_BYTES));
+    checkCudaErrors(cudaMalloc((void **) &d_predicate_toggle, ARRAY_BYTES));
+    // flip predicate values
+    toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, numElems);
+    exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
+    // map sum_scan_1 to add splitter
+    add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, numElems);
+    //##########
 
-  //##########
-  // reduce to get amount of LSB equal to 0
-  unsigned int* d_reduce;
-  checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)));
-  // copy contents 
-  checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
-  reduce_wrapper(d_reduce, d_predicate_tmp, numElems, BLOCK_SIZE);
-  unsigned int h_result;
-  checkCudaErrors(cudaMemcpy(&h_result, d_reduce, sizeof(int), cudaMemcpyDeviceToHost));
-  //##########
+    //##########
+    // move elements accordingly
+    unsigned int* d_map;
+    checkCudaErrors(cudaMalloc((void **) &d_map, ARRAY_BYTES));
+    map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan_0, d_sum_scan_1, numElems);
+    //##########
 
-  printf("HEJ 4\n");
+    // debugging
+    unsigned int *h_predicate   = new unsigned int[numElems];
+    unsigned int *h_predicate_toggle = new unsigned int[numElems];
+    unsigned int *h_sum_scan_0  = new unsigned int[numElems];
+    unsigned int *h_sum_scan_1  = new unsigned int[numElems];
+    unsigned int *h_map         = new unsigned int[numElems];
+    checkCudaErrors(cudaMemcpy(h_predicate,   d_predicate,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_predicate_toggle, d_predicate_toggle,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_sum_scan_0,  d_sum_scan_0, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_sum_scan_1,  d_sum_scan_1, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_map,         d_map,        ARRAY_BYTES, cudaMemcpyDeviceToHost));
+   
+    printf("INPUT\tPRED\tPRED_T\tSCAN_0\tSCAN_1\tMAP\n");
+    for (int i = 0; i < numElems; i++)
+      printf("%u\t%u\t%u\t%u\t%u\t%u\n", h_input[i], h_predicate[i], h_predicate_toggle[i], h_sum_scan_0[i], h_sum_scan_1[i], h_map[i]);
 
-  //##########
-  // LSB == 1
-  unsigned int* d_sum_scan_1;
-  unsigned int* d_predicate_toggle;
-  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_1,       ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_predicate_toggle, ARRAY_BYTES));
-  // flip predicate values
-  toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, numElems);
-  printf("HEJ 5\n");
-  exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
-  printf("HEJ 6\n");
-  // map sum_scan_1 to add splitter
-  add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, numElems);
-  //##########
-
-  printf("HEJ 7\n");
-
-  //##########
-  // move elements accordingly
-  unsigned int* d_map;
-  checkCudaErrors(cudaMalloc((void **) &d_map, ARRAY_BYTES));
-  map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan_0, d_sum_scan_1, numElems);
-  //##########
-
-  // debugging
-  unsigned int *h_predicate   = new unsigned int[numElems];
-  unsigned int *h_predicate_toggle = new unsigned int[numElems];
-  unsigned int *h_sum_scan_0  = new unsigned int[numElems];
-  unsigned int *h_sum_scan_1  = new unsigned int[numElems];
-  unsigned int *h_map         = new unsigned int[numElems];
-  checkCudaErrors(cudaMemcpy(h_predicate,   d_predicate,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(h_predicate_toggle, d_predicate_toggle,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(h_sum_scan_0,  d_sum_scan_0, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(h_sum_scan_1,  d_sum_scan_1, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(h_map,         d_map,        ARRAY_BYTES, cudaMemcpyDeviceToHost));
- 
-  printf("INPUT\tPRED\tPRED_T\tSCAN_0\tSCAN_1\tMAP\n");
-  for (int i = 0; i < numElems; i++)
-    printf("%u\t%u\t%u\t%u\t%u\t%u\n", h_input[i], h_predicate[i], h_predicate_toggle[i], h_sum_scan_0[i], h_sum_scan_1[i], h_map[i]);
-
-  printf("sum: \t %u\n", h_result);
+    printf("sum: \t %u\n", h_result);
+  }
+  // LOOP END
 
   return 0;
 }
