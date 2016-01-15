@@ -120,14 +120,13 @@ void map_kernel(unsigned int* d_out,
 
 void exclusive_sum_scan(unsigned int* d_out,
                         unsigned int* d_predicate,
+                        unsigned int* d_predicate_tmp
                         unsigned int* d_sum_scan,
                         unsigned int ARRAY_BYTES,
                         size_t numElems,
                         int GRID_SIZE,
                         int BLOCK_SIZE) {
   // copy predicate values to new array
-  unsigned int* d_predicate_tmp;
-  checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp, ARRAY_BYTES));
   checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
 
   // set all elements to zero 
@@ -176,6 +175,8 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_val_src,   ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_sum_scan,  ARRAY_BYTES));
+  unsigned int* d_predicate_tmp;
+  checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp, ARRAY_BYTES));
 
   // input array
   unsigned int* h_input = new unsigned int[numElems];
