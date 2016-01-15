@@ -179,10 +179,10 @@ int main(void) {
 
   // device memory
   unsigned int *d_val_src, *d_predicate, *d_sum_scan, *d_predicate_tmp;
-  allocateDeviceMemory(d_val_src,       ARRAY_BYTES);
-  allocateDeviceMemory(d_predicate,     ARRAY_BYTES);
-  allocateDeviceMemory(d_sum_scan,      ARRAY_BYTES);
-  allocateDeviceMemory(d_predicate_tmp, ARRAY_BYTES);
+  allocateDeviceMemory(&d_val_src,       ARRAY_BYTES);
+  allocateDeviceMemory(&d_predicate,     ARRAY_BYTES);
+  allocateDeviceMemory(&d_sum_scan,      ARRAY_BYTES);
+  allocateDeviceMemory(&d_predicate_tmp, ARRAY_BYTES);
 
   /* initialize random seed: */
   srand (time(NULL));
