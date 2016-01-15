@@ -27,9 +27,18 @@ void inclusive_sum_scan_kernel(unsigned int* d_out,
   int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
-	// finding the number to add, checking out-of-bounds
 	int toAdd = (((mid - step) < 0) ? 0 : d_in[mid - step]);
   d_out[mid] = d_in[mid] + toAdd;
+}
+
+__global__
+void right_shift_array(unsigned int* d_in,
+                       unsigned int* d_out,
+                       size_t numElems) {
+  int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= numElems) return;
+
+  d_out[mid] = (mid == 0) ? 0 : d_in[mid - 1];
 }
 
 void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems) {
@@ -75,11 +84,12 @@ int main(void) {
     inclusive_sum_scan_kernel<<<1, 16>>>(d_sum_scan, d_predicate_tmp, step, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
-
-//    printf("round %d\n", step);
-//    DEBUG(d_sum_scan, ARRAY_BYTES, numElems);
-//    DEBUG(d_predicate_tmp, ARRAY_BYTES, numElems);
   }
+
+  unsigned int* d_sum_scan_tmp;
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_tmp, ARRAY_BYTES));
+  checkCudaErrors(cudaMemcpy(d_sum_scan_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+  right_shift_array<<<1,16>>>(d_sum_scan_tmp, d_sum_scan, numElems);
 
   // debugging
   unsigned int *h_predicate = new unsigned int[numElems];
