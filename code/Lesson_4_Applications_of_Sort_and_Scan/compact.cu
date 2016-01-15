@@ -234,12 +234,10 @@ int main(void) {
 
   printf("HEJ 7\n");
 
-/*
   //##########
   // move elements accordingly
   unsigned int* d_map;
   checkCudaErrors(cudaMalloc((void **) &d_map, ARRAY_BYTES));
-
   map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan_0, d_sum_scan_1, numElems);
   //##########
 
@@ -256,6 +254,6 @@ int main(void) {
     printf("%u \t %u \t %u \t %u\n", h_input[i], h_predicate[i], h_sum_scan[i], h_map[i]);
 
   printf("sum: \t %u\n", h_result);
-*/
+
   return 0;
 }
