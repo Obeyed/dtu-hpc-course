@@ -1,10 +1,5 @@
 // Create predicate array for HW4
-
-#include "utils.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <cuda_runtime.h>
+#include "radix_sort.h"
 
 /*
  * Calculate if LSB is 0.
@@ -95,16 +90,6 @@ void map_kernel(unsigned int* const d_out,
   d_out[pos] = d_in[mid];
 }
 
-/* if we want to print something for debugging */
-void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems) {
-  unsigned int *h_test  = new unsigned int[numElems];
-  checkCudaErrors(cudaMemcpy(h_test, device_array, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-
-  for (int i = 0; i < numElems; i++)
-    printf("%u ", h_test[i]);
-  printf("\n");
-}
-
 void reduce_wrapper(unsigned int* const d_out,
                     unsigned int* const d_in,
                     size_t numElems,
@@ -165,20 +150,15 @@ void exclusive_sum_scan(unsigned int* const d_out,
   right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, numElems);
 }
 
-int main(void) {
-  const size_t numElems = 1 << 10;
+unsigned int* radix_sort(unsigned int* h_input,
+                         const size_t numElems) {
   const int BLOCK_SIZE  = 512;
   const int GRID_SIZE   = numElems / BLOCK_SIZE + 1;
   const unsigned int ARRAY_BYTES = sizeof(unsigned int) * numElems;
   const unsigned int BITS_PER_BYTE = 8;
 
   // host memory
-  unsigned int* const h_input  = new unsigned int[numElems];
   unsigned int* const h_output = new unsigned int[numElems];
-
-  srand(time(NULL));
-  for (unsigned int i = 0; i < numElems; i++)
-    h_input[i] = rand(); 
 
   // device memory
   unsigned int *d_val_src, *d_predicate, *d_sum_scan, *d_predicate_tmp, *d_sum_scan_0, *d_sum_scan_1, *d_predicate_toggle, *d_reduce, *d_map;
@@ -228,5 +208,5 @@ int main(void) {
   for (int i = 0; i < numElems; i++)
     printf("%u%s", h_output[i], ((i % 8 == 7) ? "\n" : "\t"));
 
-  return 0;
+  return h_output;
 }
