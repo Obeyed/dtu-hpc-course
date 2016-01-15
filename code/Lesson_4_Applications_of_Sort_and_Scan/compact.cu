@@ -186,6 +186,8 @@ int main(void) {
   h_input[12] = 74; h_input[13] = 8;  h_input[14] = 44; h_input[15] = 53;
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
+  const unsigned int BITS_PER_BYTE = 8;
+
   // LOOP START
   for (unsigned int i = 0; BITS_PER_BYTE * sizeof(unsigned int); i++) {
     //##########
