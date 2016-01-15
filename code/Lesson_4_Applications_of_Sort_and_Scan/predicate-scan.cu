@@ -147,9 +147,7 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)));
   // copy contents 
   checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
-
   reduce_wrapper(d_reduce, d_predicate_tmp, numElems, BLOCK_SIZE);
-
   unsigned int h_result;
   checkCudaErrors(cudaMemcpy(&h_result, d_reduce, sizeof(int), cudaMemcpyDeviceToHost));
 
@@ -163,7 +161,7 @@ int main(void) {
   for (int i = 0; i < numElems; i++)
     printf("%u \t %u \t %u\n", h_input[i], h_predicate[i], h_sum_scan[i]);
 
-  printf("LSB == 0 amount: %u\n", h_result);
+  printf("sum: \t %u\n", h_result);
 
   return 0;
 }
