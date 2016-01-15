@@ -156,12 +156,12 @@ void toggle_predicate_kernel(unsigned int* d_out,
 
 __global__
 void add_splitter_map_kernel(unsigned int* d_out,
-                             unsigned int shift, 
+                             unsigned int* shift, 
                              size_t numElems) {
   int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
-  d_out[mid] += shift;
+  d_out[mid] += shift[0];
 }
 
 int main(void) {
@@ -229,7 +229,7 @@ int main(void) {
   exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
   printf("HEJ 6\n");
   // map sum_scan_1 to add splitter
-  add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce[0], numElems);
+  add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, numElems);
   //##########
 
   printf("HEJ 7\n");
