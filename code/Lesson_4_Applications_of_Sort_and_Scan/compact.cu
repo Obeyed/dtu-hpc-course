@@ -34,7 +34,7 @@ void inclusive_sum_scan_kernel(unsigned int* d_out,
 }
 
 __global__
-void right_shift_array(unsigned int* const d_out,
+void right_shift_array_kernel(unsigned int* const d_out,
                        const unsigned int* const d_in,
                        const size_t numElems) {
   const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -143,7 +143,7 @@ void exclusive_sum_scan(unsigned int* const d_out,
 
   // shift to get exclusive scan
   checkCudaErrors(cudaMemcpy(d_out, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
-  right_shift_array<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, numElems);
+  right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, numElems);
 }
 
 __global__
