@@ -151,7 +151,7 @@ void toggle_predicate_kernel(unsigned int* d_out,
   int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
-  d_out[mid] = (d_predicate[mid] ? 0 : 1);
+  d_out[mid] = ((d_predicate[mid]) ? 0 : 1);
 }
 
 __global__
@@ -220,17 +220,19 @@ int main(void) {
   //##########
   // LSB == 1
   unsigned int* d_sum_scan_1;
-  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_1, ARRAY_BYTES));
   unsigned int* d_predicate_toggle;
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_1,       ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_predicate_toggle, ARRAY_BYTES));
   // flip predicate values
   toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, numElems);
+  printf("HEJ 5\n");
   exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
+  printf("HEJ 6\n");
   // map sum_scan_1 to add splitter
   add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce[0], numElems);
   //##########
 
-  printf("HEJ 5\n");
+  printf("HEJ 7\n");
 
 /*
   //##########
