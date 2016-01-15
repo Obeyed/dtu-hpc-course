@@ -70,7 +70,7 @@ void reduce_kernel(unsigned int * d_out, unsigned int * d_in, int numElems) {
 
 void reduce_wrapper(unsigned int* const d_out,
                     unsigned int* const d_in,
-                    int numElems,
+                    size_t numElems,
                     int block_size) {
   unsigned int grid_size = numElems / block_size + 1;
 
