@@ -166,6 +166,11 @@ void add_splitter_map_kernel(unsigned int* d_out,
   d_out[mid] += shift[0];
 }
 
+void allocateDeviceMemory(unsigned int* const device_arr,
+                          const unsigned int bytes) {
+  checkCudaErrors(cudaMalloc((void **) &device_arr, bytes));
+}
+
 int main(void) {
   size_t numElems = 1 << 20;
   int BLOCK_SIZE = 512;
@@ -173,12 +178,11 @@ int main(void) {
   unsigned int ARRAY_BYTES = sizeof(unsigned int) * numElems;
 
   // device memory
-  unsigned int *d_val_src, *d_predicate, *d_sum_scan;
-  checkCudaErrors(cudaMalloc((void **) &d_val_src,   ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_sum_scan,  ARRAY_BYTES));
-  unsigned int* d_predicate_tmp;
-  checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp, ARRAY_BYTES));
+  unsigned int *d_val_src, *d_predicate, *d_sum_scan, *d_predicate_tmp;
+  allocateDeviceMemory(d_val_src,       ARRAY_BYTES);
+  allocateDeviceMemory(d_predicate,     ARRAY_BYTES);
+  allocateDeviceMemory(d_sum_scan,      ARRAY_BYTES);
+  allocateDeviceMemory(d_predicate_tmp, ARRAY_BYTES);
 
   /* initialize random seed: */
   srand (time(NULL));
