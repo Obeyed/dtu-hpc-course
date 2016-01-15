@@ -204,7 +204,6 @@ int main(void) {
 
   printf("HEJ 3\n");
 
-/*
   //##########
   // reduce to get amount of LSB equal to 0
   unsigned int* d_reduce;
@@ -216,8 +215,9 @@ int main(void) {
   checkCudaErrors(cudaMemcpy(&h_result, d_reduce, sizeof(int), cudaMemcpyDeviceToHost));
   //##########
 
-  printf("HEJ");
+  printf("HEJ 4\n");
 
+/*
   //##########
   // LSB == 1
   unsigned int* d_sum_scan_1;
