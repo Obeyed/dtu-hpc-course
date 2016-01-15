@@ -120,7 +120,7 @@ void map_kernel(unsigned int* d_out,
 
 void exclusive_sum_scan(unsigned int* d_out,
                         unsigned int* d_predicate,
-                        unsigned int* d_predicate_tmp
+                        unsigned int* d_predicate_tmp,
                         unsigned int* d_sum_scan,
                         unsigned int ARRAY_BYTES,
                         size_t numElems,
