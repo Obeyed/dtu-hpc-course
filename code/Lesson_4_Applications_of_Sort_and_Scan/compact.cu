@@ -110,9 +110,9 @@ void map_kernel(unsigned int* d_out,
   int pos;
 
   if (d_predicate[mid])
-    pos = atomicAdd(d_splitter[0], 1);
+    pos = atomicAdd(&(d_splitter[0]), 1);
   else 
-    pos = atomicAdd(d_splitter[1], 1);
+    pos = atomicAdd(&(d_splitter[1]), 1);
 
   d_out[pos] = d_in[mid];
 }
