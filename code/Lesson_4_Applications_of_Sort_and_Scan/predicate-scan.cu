@@ -29,7 +29,7 @@ void exclusive_sum_scan_kernel(unsigned int* d_sum_scan,
     return;
 
 	// finding the number to add, checking out-of-bounds
-	int toAdd = (((mid - step) < 0) ? 0 : d_predicate[mid - 1]);
+	int toAdd = (((mid - step) < 0) ? 0 : d_predicate[mid]);
   d_sum_scan[mid] = d_sum_scan[mid] + toAdd;
 }
 
