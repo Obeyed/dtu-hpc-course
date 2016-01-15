@@ -2,6 +2,8 @@
 
 #include "utils.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <cuda_runtime.h>
 
 /*
@@ -165,9 +167,9 @@ void add_splitter_map_kernel(unsigned int* d_out,
 }
 
 int main(void) {
-  size_t numElems = 16;
-  int GRID_SIZE = 2;
-  int BLOCK_SIZE = 8;
+  size_t numElems = 1 << 29;
+  int BLOCK_SIZE = 512;
+  int GRID_SIZE = numElems / BLOCK_SIZE + 1;
   unsigned int ARRAY_BYTES = sizeof(unsigned int) * numElems;
 
   // device memory
@@ -178,12 +180,13 @@ int main(void) {
   unsigned int* d_predicate_tmp;
   checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp, ARRAY_BYTES));
 
+  /* initialize random seed: */
+  srand (time(NULL));
   // input array
   unsigned int* h_input = new unsigned int[numElems];
-  h_input[0]  = 39; h_input[1]  = 21; h_input[2]  = 84; h_input[3]  = 40;
-  h_input[4]  = 78; h_input[5]  = 85; h_input[6]  = 13; h_input[7]  = 4;
-  h_input[8]  = 47; h_input[9]  = 45; h_input[10] = 91; h_input[11] = 60;
-  h_input[12] = 74; h_input[13] = 8;  h_input[14] = 44; h_input[15] = 53;
+  for (unsigned int i = 0; i < numElems; i++)
+    h_input[i] = rand(); 
+
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   const unsigned int BITS_PER_BYTE = 8;
@@ -233,27 +236,16 @@ int main(void) {
     map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan_0, d_sum_scan_1, numElems);
     //##########
 
-    // debugging
-    unsigned int *h_predicate   = new unsigned int[numElems];
-    unsigned int *h_predicate_toggle = new unsigned int[numElems];
-    unsigned int *h_sum_scan_0  = new unsigned int[numElems];
-    unsigned int *h_sum_scan_1  = new unsigned int[numElems];
-    unsigned int *h_map         = new unsigned int[numElems];
-    checkCudaErrors(cudaMemcpy(h_predicate,   d_predicate,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(h_predicate_toggle, d_predicate_toggle,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(h_sum_scan_0,  d_sum_scan_0, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(h_sum_scan_1,  d_sum_scan_1, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(h_map,         d_map,        ARRAY_BYTES, cudaMemcpyDeviceToHost));
-   
-    printf("INPUT\tPRED\tPRED_T\tSCAN_0\tSCAN_1\tMAP\n");
-    for (int i = 0; i < numElems; i++)
-      printf("%u\t%u\t%u\t%u\t%u\t%u\n", h_input[i], h_predicate[i], h_predicate_toggle[i], h_sum_scan_0[i], h_sum_scan_1[i], h_map[i]);
-
-    printf("sum: \t %u\n", h_result);
-
     std::swap(d_val_src, d_map);
   }
   // LOOP END
+
+  // debugging
+  unsigned int *h_map = new unsigned int[numElems];
+  checkCudaErrors(cudaMemcpy(h_map, d_val_src, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+
+  for (int i = 0; i < numElems; i++)
+    printf("%u%s", h_map[i], ((i % 8 == 7) ? "\n" : "\t"));
 
   return 0;
 }
