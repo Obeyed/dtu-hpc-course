@@ -51,7 +51,7 @@ void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems
 }
 
 __global__ 
-void reduce_kernel(unsigned int * d_out, unsigned int * d_in, unsigned int size) {
+void reduce_kernel(unsigned int * d_out, unsigned int * d_in, int size) {
   unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int tid = threadIdx.x;
 
@@ -69,7 +69,7 @@ void reduce_kernel(unsigned int * d_out, unsigned int * d_in, unsigned int size)
 void reduce_wrapper(unsigned int * d_out, unsigned int * d_in, int size, int num_threads) {
   int num_blocks = size / num_threads + 1;
 
-  int * d_tmp;
+  unsigned int * d_tmp;
   checkCudaErrors(cudaMalloc(&d_tmp, sizeof(int)*num_blocks));
   checkCudaErrors(cudaMemset(d_tmp, 0, sizeof(int)*num_blocks));
 
