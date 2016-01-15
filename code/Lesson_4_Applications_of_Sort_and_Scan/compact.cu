@@ -217,7 +217,6 @@ int main(void) {
 
   printf("HEJ 4\n");
 
-/*
   //##########
   // LSB == 1
   unsigned int* d_sum_scan_1;
@@ -231,8 +230,9 @@ int main(void) {
   add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce[0], numElems);
   //##########
 
-  printf("HEJ 2");
+  printf("HEJ 5\n");
 
+/*
   //##########
   // move elements accordingly
   unsigned int* d_map;
