@@ -189,7 +189,7 @@ int main(void) {
   const unsigned int BITS_PER_BYTE = 8;
 
   // LOOP START
-  for (unsigned int i = 0; BITS_PER_BYTE * sizeof(unsigned int); i++) {
+  for (unsigned int i = 0; i < (BITS_PER_BYTE * sizeof(unsigned int)); i++) {
     //##########
     // predicate call
     predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, numElems, i);
@@ -250,6 +250,8 @@ int main(void) {
       printf("%u\t%u\t%u\t%u\t%u\t%u\n", h_input[i], h_predicate[i], h_predicate_toggle[i], h_sum_scan_0[i], h_sum_scan_1[i], h_map[i]);
 
     printf("sum: \t %u\n", h_result);
+
+    std::swap(d_val_src, d_map);
   }
   // LOOP END
 
