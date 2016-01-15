@@ -43,14 +43,24 @@ void right_shift_array_kernel(unsigned int* const d_out,
   d_out[mid] = (mid == 0) ? 0 : d_in[mid - 1];
 }
 
-/* if we want to print something for debugging */
-void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems) {
-  unsigned int *h_test  = new unsigned int[numElems];
-  checkCudaErrors(cudaMemcpy(h_test, device_array, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+__global__
+void toggle_predicate_kernel(unsigned int* const d_out, 
+                             const unsigned int* const d_predicate,
+                             const size_t numElems) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= numElems) return;
 
-  for (int i = 0; i < numElems; i++)
-    printf("%u ", h_test[i]);
-  printf("\n");
+  d_out[mid] = ((d_predicate[mid]) ? 0 : 1);
+}
+
+__global__
+void add_splitter_map_kernel(unsigned int* const d_out,
+                             const unsigned int* const shift, 
+                             const size_t numElems) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= numElems) return;
+
+  d_out[mid] += shift[0];
 }
 
 __global__ 
@@ -69,6 +79,30 @@ void reduce_kernel(unsigned int* const d_out,
   // only thread 0 writes result, as thread
   if ((tid == 0) && (pos < numElems))
     d_out[blockIdx.x] = d_in[pos];
+}
+
+__global__
+void map_kernel(unsigned int* const d_out,
+                const unsigned int* const d_in,
+                const unsigned int* const d_predicate,
+                const unsigned int* const d_sum_scan_0,
+                const unsigned int* const d_sum_scan_1,
+                const size_t numElems) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= numElems) return;
+
+  const unsigned int pos = ((d_predicate[mid]) ? d_sum_scan_0[mid] : d_sum_scan_1[mid]);
+  d_out[pos] = d_in[mid];
+}
+
+/* if we want to print something for debugging */
+void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems) {
+  unsigned int *h_test  = new unsigned int[numElems];
+  checkCudaErrors(cudaMemcpy(h_test, device_array, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+
+  for (int i = 0; i < numElems; i++)
+    printf("%u ", h_test[i]);
+  printf("\n");
 }
 
 void reduce_wrapper(unsigned int* const d_out,
@@ -106,21 +140,6 @@ void reduce_wrapper(unsigned int* const d_out,
   reduce_kernel<<<1, numElems>>>(d_out, d_in, prev_grid_size);
 }
 
-__global__
-void map_kernel(unsigned int* const d_out,
-                const unsigned int* const d_in,
-                const unsigned int* const d_predicate,
-                const unsigned int* const d_sum_scan_0,
-                const unsigned int* const d_sum_scan_1,
-                const size_t numElems) {
-  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (mid >= numElems) return;
-
-  const unsigned int pos = ((d_predicate[mid]) ? d_sum_scan_0[mid] : d_sum_scan_1[mid]);
-  d_out[pos] = d_in[mid];
-}
-
-
 void exclusive_sum_scan(unsigned int* const d_out,
                         const unsigned int* const d_predicate,
                         unsigned int* const d_predicate_tmp,
@@ -144,26 +163,6 @@ void exclusive_sum_scan(unsigned int* const d_out,
   // shift to get exclusive scan
   checkCudaErrors(cudaMemcpy(d_out, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, numElems);
-}
-
-__global__
-void toggle_predicate_kernel(unsigned int* const d_out, 
-                             const unsigned int* const d_predicate,
-                             const size_t numElems) {
-  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (mid >= numElems) return;
-
-  d_out[mid] = ((d_predicate[mid]) ? 0 : 1);
-}
-
-__global__
-void add_splitter_map_kernel(unsigned int* const d_out,
-                             const unsigned int* const shift, 
-                             const size_t numElems) {
-  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (mid >= numElems) return;
-
-  d_out[mid] += shift[0];
 }
 
 int main(void) {
