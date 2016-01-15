@@ -66,7 +66,7 @@ void reduce_kernel(unsigned int * d_out, unsigned int * d_in, unsigned int size)
     d_out[blockIdx.x] = d_in[pos];
 }
 
-void reduce_wrapper(int * d_out, int * d_in, int size, int num_threads) {
+void reduce_wrapper(unsigned int * d_out, unsigned int * d_in, int size, int num_threads) {
   int num_blocks = size / num_threads + 1;
 
   int * d_tmp;
