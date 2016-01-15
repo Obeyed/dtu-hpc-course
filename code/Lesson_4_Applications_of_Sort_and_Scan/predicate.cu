@@ -37,7 +37,7 @@ int main(void) {
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   // kernel call
-  predicate_kernel<<<1,16>>>(d_predicate, d_val_src, numElems);
+  predicate_kernel<<<2,8>>>(d_predicate, d_val_src, numElems);
 
   // debugging
   unsigned int *h_predicate = new unsigned int[numElems];
