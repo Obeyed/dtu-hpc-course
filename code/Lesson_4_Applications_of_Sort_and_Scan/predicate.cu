@@ -29,7 +29,7 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
 
   // input array
-  unsigned int h_input = new unsigned int[numElems];
+  unsigned int* h_input = new unsigned int[numElems];
   h_input[0]  = 39; h_input[1]  = 21; h_input[2]  = 84; h_input[3]  = 40;
   h_input[4]  = 78; h_input[5]  = 85; h_input[6]  = 13; h_input[7]  = 4;
   h_input[8]  = 47; h_input[9]  = 45; h_input[10] = 91; h_input[11] = 60;
