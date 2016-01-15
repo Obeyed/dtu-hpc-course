@@ -34,15 +34,16 @@ void inclusive_sum_scan_kernel(unsigned int* d_out,
 }
 
 __global__
-void right_shift_array(unsigned int* d_out,
-                       unsigned int* d_in,
-                       size_t numElems) {
-  int mid = threadIdx.x + blockIdx.x * blockDim.x;
+void right_shift_array(unsigned int* const d_out,
+                       const unsigned int* const d_in,
+                       const size_t numElems) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
   d_out[mid] = (mid == 0) ? 0 : d_in[mid - 1];
 }
 
+/* if we want to print something for debugging */
 void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems) {
   unsigned int *h_test  = new unsigned int[numElems];
   checkCudaErrors(cudaMemcpy(h_test, device_array, ARRAY_BYTES, cudaMemcpyDeviceToHost));
