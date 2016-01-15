@@ -147,10 +147,10 @@ void exclusive_sum_scan(unsigned int* d_out,
 }
 
 __global__
-void toggle_predicate_kernel(unsigned int* d_out, 
-                             unsigned int* d_predicate,
-                             size_t numElems) {
-  int mid = threadIdx.x + blockIdx.x * blockDim.x;
+void toggle_predicate_kernel(unsigned int* const d_out, 
+                             const unsigned int* const d_predicate,
+                             const size_t numElems) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
   d_out[mid] = ((d_predicate[mid]) ? 0 : 1);
@@ -160,7 +160,7 @@ __global__
 void add_splitter_map_kernel(unsigned int* const d_out,
                              const unsigned int* const shift, 
                              const size_t numElems) {
-  const int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
   d_out[mid] += shift[0];
