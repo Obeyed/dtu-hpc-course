@@ -29,7 +29,11 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
 
   // input array
-  std::vector<unsigned int> h_input = {39,21,84,40,78,85,13,4,47,45,91,60,74,8,44,53};
+  unsigned int h_input = new unsigned int[numElems];
+  h_input[0]  = 39; h_input[1]  = 21; h_input[2]  = 84; h_input[3]  = 40;
+  h_input[4]  = 78; h_input[5]  = 85; h_input[6]  = 13; h_input[7]  = 4;
+  h_input[8]  = 47; h_input[9]  = 45; h_input[10] = 91; h_input[11] = 60;
+  h_input[12] = 74; h_input[13] = 8;  h_input[14] = 44; h_input[15] = 53;
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   // kernel call
