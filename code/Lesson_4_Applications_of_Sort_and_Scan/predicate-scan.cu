@@ -80,7 +80,7 @@ int main(void) {
   for (int step = 1; step < numElems; step *= 2) {
     exclusive_sum_scan_kernel<<<1, 16>>>(d_sum_scan, d_predicate_tmp, step, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-    printf("round %d\n", i);
+    printf("round %d\n", step);
     DEBUG(d_sum_scan, ARRAY_BYTES, numElems);
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   }
