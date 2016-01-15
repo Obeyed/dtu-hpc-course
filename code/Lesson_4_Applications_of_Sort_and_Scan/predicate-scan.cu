@@ -33,7 +33,7 @@ void exclusive_sum_scan_kernel(unsigned int* d_sum_scan,
   d_sum_scan[mid] = d_sum_scan[mid - 1] + toAdd;
 }
 
-void DEBUG(unsigned int device_array, unsigned int ARRAY_BYTES, size_t numElems) {
+void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems) {
   unsigned int *h_test  = new unsigned int[numElems];
   checkCudaErrors(cudaMemcpy(h_test, device_array, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
