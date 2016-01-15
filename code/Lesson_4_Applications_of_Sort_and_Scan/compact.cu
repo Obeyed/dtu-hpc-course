@@ -101,22 +101,16 @@ void reduce_wrapper(unsigned int * d_out, unsigned int * d_in, int size, int num
 }
 
 __global__
-void map_kernel(unsigned int* d_out,
-                unsigned int* d_in,
-                unsigned int* d_predicate,
-                unsigned int* d_sum_scan_0,
-                unsigned int* d_sum_scan_1,
-                size_t numElems) {
-  int mid = threadIdx.x + blockIdx.x * blockDim.x;
+void map_kernel(unsigned int* const d_out,
+                const unsigned int* const d_in,
+                const unsigned int* const d_predicate,
+                const unsigned int* const d_sum_scan_0,
+                const unsigned int* const d_sum_scan_1,
+                const size_t numElems) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
-  int pos;
-
-  if (d_predicate[mid])
-    pos = d_sum_scan_0[mid];
-  else 
-    pos = d_sum_scan_1[mid];
-
+  const unsigned int pos = ((d_predicate[mid]) ? d_sum_scan_0[mid] : d_sum_scan_1[mid]);
   d_out[pos] = d_in[mid];
 }
 
