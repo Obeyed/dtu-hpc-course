@@ -2,6 +2,7 @@
 
 #include "utils.h"
 #include <stdio.h>
+#include <vector>
 #include <cuda_runtime.h>
 
 /*
@@ -28,7 +29,7 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
 
   // input array
-  unsigned int h_input[numElems] = {39,21,84,40,78,85,13,4,47,45,91,60,74,8,44,53};
+  std::vector<unsigned int> h_input = {39,21,84,40,78,85,13,4,47,45,91,60,74,8,44,53};
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   // kernel call
