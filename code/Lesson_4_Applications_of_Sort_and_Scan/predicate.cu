@@ -14,7 +14,7 @@ void predicate_kernel(unsigned int *d_predicate,
                       const size_t numElems) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
-  d_predicate[mid] = (int)((input[mid] & 1) == 0);
+  d_predicate[mid] = (int)((d_val_src[mid] & 1) == 0);
 }
 
 int main(void) {
@@ -28,7 +28,7 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
 
   // input array
-  unsigned int h_input { 39, 21, 84, 40, 78, 85, 13, 4, 47, 45, 91, 60, 74, 8, 44, 53 };
+  unsigned int h_input[numElems] = {39,21,84,40,78,85,13,4,47,45,91,60,74,8,44,53};
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   // kernel call
