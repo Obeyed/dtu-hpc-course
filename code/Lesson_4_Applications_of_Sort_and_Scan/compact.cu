@@ -53,51 +53,54 @@ void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems
 }
 
 __global__ 
-void reduce_kernel(unsigned int * d_out, unsigned int * d_in, int size) {
+void reduce_kernel(unsigned int * d_out, unsigned int * d_in, int numElems) {
   unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int tid = threadIdx.x;
 
   for (unsigned int s = blockDim.x / 2; s>0; s>>=1) {
-    if ((tid < s) && (pos+s < size))
+    if ((tid < s) && (pos+s < numElems))
       d_in[pos] = d_in[pos] + d_in[pos+s];
     __syncthreads();
   }
 
   // only thread 0 writes result, as thread
-  if ((tid == 0) && (pos < size))
+  if ((tid == 0) && (pos < numElems))
     d_out[blockIdx.x] = d_in[pos];
 }
 
-void reduce_wrapper(unsigned int * d_out, unsigned int * d_in, int size, int num_threads) {
-  int num_blocks = size / num_threads + 1;
+void reduce_wrapper(unsigned int* const d_out,
+                    unsigned int* const d_in,
+                    int numElems,
+                    int block_size) {
+  unsigned int grid_size = numElems / block_size + 1;
 
-  unsigned int * d_tmp;
-  checkCudaErrors(cudaMalloc(&d_tmp, sizeof(int)*num_blocks));
-  checkCudaErrors(cudaMemset(d_tmp, 0, sizeof(int)*num_blocks));
+  unsigned int* const d_tmp;
+  checkCudaErrors(cudaMalloc(&d_tmp, sizeof(unsigned int) * grid_size));
+  checkCudaErrors(cudaMemset(d_tmp, 0, sizeof(unsigned int) * grid_size));
 
-  int prev_num_blocks;
-  int remainder = 0;
-  // recursively solving, will run approximately log base num_threads times.
+  unsigned int prev_grid_size;
+  unsigned int remainder = 0;
+  // recursively solving, will run approximately log base block_size times.
   do {
-    reduce_kernel<<<num_blocks, num_threads>>>(d_tmp, d_in, size);
+    reduce_kernel<<<grid_size, block_size>>>(d_tmp, d_in, numElems);
 
-    remainder = size % num_threads;
-    size = size / num_threads + remainder;
+    remainder = numElems % block_size;
+    numElems  = numElems / block_size + remainder;
 
     // updating input to intermediate
-    checkCudaErrors(cudaMemcpy(d_in, d_tmp, sizeof(int)*num_blocks, cudaMemcpyDeviceToDevice));
+    checkCudaErrors(cudaMemcpy(d_in, d_tmp, sizeof(int) * grid_size, cudaMemcpyDeviceToDevice));
 
-    // Updating num_blocks to reflect how many blocks we now want to compute on
-    prev_num_blocks = num_blocks;
-    num_blocks = size / num_threads + 1;      
+    // Updating grid_size to reflect how many blocks we now want to compute on
+    prev_grid_size = grid_size;
+    grid_size = numElems / block_size + 1;      
 
     // updating intermediate
     checkCudaErrors(cudaFree(d_tmp));
-    checkCudaErrors(cudaMalloc(&d_tmp, sizeof(int)*num_blocks));
-  } while(size > num_threads);
+    checkCudaErrors(cudaMalloc(&d_tmp, sizeof(int) * grid_size));
+  } while(numElems > block_size);
 
   // computing rest
-  reduce_kernel<<<1, size>>>(d_out, d_in, prev_num_blocks);
+  reduce_kernel<<<1, numElems>>>(d_out, d_in, prev_grid_size);
 }
 
 __global__
