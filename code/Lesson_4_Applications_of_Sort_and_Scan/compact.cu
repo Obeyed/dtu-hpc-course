@@ -101,45 +101,30 @@ __global__
 void map_kernel(unsigned int* d_out,
                 unsigned int* d_in,
                 unsigned int* d_predicate,
-                unsigned int* d_sum_scan,
-                size_t numElems,
-                unsigned int* d_splitter) {
+                unsigned int* d_sum_scan_0,
+                unsigned int* d_sum_scan_1,
+                size_t numElems) {
   int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
   int pos;
 
   if (d_predicate[mid])
-    pos = atomicAdd(&(d_splitter[0]), 1);
+    pos = d_sum_scan_0[mid];
   else 
-    pos = atomicAdd(&(d_splitter[1]), 1);
+    pos = d_sum_scan_1[mid];
 
   d_out[pos] = d_in[mid];
 }
 
-int main(void) {
-  size_t numElems = 16;
-  int GRID_SIZE = 2;
-  int BLOCK_SIZE = 8;
-  int ARRAY_BYTES = sizeof(unsigned int) * numElems;
 
-  // device memory
-  unsigned int *d_val_src, *d_predicate, *d_sum_scan;
-  checkCudaErrors(cudaMalloc((void **) &d_val_src,   ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_sum_scan,  ARRAY_BYTES));
-
-  // input array
-  unsigned int* h_input = new unsigned int[numElems];
-  h_input[0]  = 39; h_input[1]  = 21; h_input[2]  = 84; h_input[3]  = 40;
-  h_input[4]  = 78; h_input[5]  = 85; h_input[6]  = 13; h_input[7]  = 4;
-  h_input[8]  = 47; h_input[9]  = 45; h_input[10] = 91; h_input[11] = 60;
-  h_input[12] = 74; h_input[13] = 8;  h_input[14] = 44; h_input[15] = 53;
-  checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
-
-  // predicate call
-  predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, numElems);
-
+void exclusive_sum_scan(unsigned int* d_out,
+                        unsigned int* d_predicate,
+                        unsigned int* d_sum_scan,
+                        unsigned int ARRAY_BYTES,
+                        size_t numElems,
+                        int GRID_SIZE,
+                        int BLOCK_SIZE) {
   // copy predicate values to new array
   unsigned int* d_predicate_tmp;
   checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp, ARRAY_BYTES));
@@ -156,11 +141,63 @@ int main(void) {
   }
 
   // shift to get exclusive scan
-  unsigned int* d_sum_scan_tmp;
-  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_tmp, ARRAY_BYTES));
-  checkCudaErrors(cudaMemcpy(d_sum_scan_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
-  right_shift_array<<<GRID_SIZE,BLOCK_SIZE>>>(d_sum_scan, d_sum_scan_tmp, numElems);
+  checkCudaErrors(cudaMemcpy(d_out, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+  right_shift_array<<<GRID_SIZE,BLOCK_SIZE>>>(d_sum_scan, d_out, numElems);
+}
 
+__global__
+void toggle_predicate_kernel(unsigned int* d_out, 
+                             unsigned int* d_predicate,
+                             size_t numElems) {
+  int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= numElems) return;
+
+  d_out[mid] = (d_predicate[mid] ? 0 : 1);
+}
+
+__global__
+void add_splitter_map_kernel(unsigned int* d_out,
+                             unsigned int shift, 
+                             size_t numElems) {
+  int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= numElems) return;
+
+  d_out[mid] += shift;
+}
+
+int main(void) {
+  size_t numElems = 16;
+  int GRID_SIZE = 2;
+  int BLOCK_SIZE = 8;
+  unsigned int ARRAY_BYTES = sizeof(unsigned int) * numElems;
+
+  // device memory
+  unsigned int *d_val_src, *d_predicate, *d_sum_scan;
+  checkCudaErrors(cudaMalloc((void **) &d_val_src,   ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan,  ARRAY_BYTES));
+
+  // input array
+  unsigned int* h_input = new unsigned int[numElems];
+  h_input[0]  = 39; h_input[1]  = 21; h_input[2]  = 84; h_input[3]  = 40;
+  h_input[4]  = 78; h_input[5]  = 85; h_input[6]  = 13; h_input[7]  = 4;
+  h_input[8]  = 47; h_input[9]  = 45; h_input[10] = 91; h_input[11] = 60;
+  h_input[12] = 74; h_input[13] = 8;  h_input[14] = 44; h_input[15] = 53;
+  checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
+
+  //##########
+  // predicate call
+  predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, numElems);
+  //##########
+
+  //##########
+  // LSB == 0
+  unsigned int* d_sum_scan_0;
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_0, ARRAY_BYTES));
+  exclusive_sum_scan(d_sum_scan_0, d_predicate, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
+  //##########
+
+  //##########
   // reduce to get amount of LSB equal to 0
   unsigned int* d_reduce;
   checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)));
@@ -169,16 +206,28 @@ int main(void) {
   reduce_wrapper(d_reduce, d_predicate_tmp, numElems, BLOCK_SIZE);
   unsigned int h_result;
   checkCudaErrors(cudaMemcpy(&h_result, d_reduce, sizeof(int), cudaMemcpyDeviceToHost));
+  //##########
 
+  //##########
+  // LSB == 1
+  unsigned int* d_sum_scan_1;
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_1, ARRAY_BYTES));
+  unsigned int* d_predicate_toggle;
+  checkCudaErrors(cudaMalloc((void **) &d_predicate_toggle, ARRAY_BYTES));
+  // flip predicate values
+  toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, numElems);
+  exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
+  // map sum_scan_1 to add splitter
+  add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce[0], numElems);
+  //##########
+
+  //##########
   // move elements accordingly
   unsigned int* d_map;
   checkCudaErrors(cudaMalloc((void **) &d_map, ARRAY_BYTES));
-  // update splitter - expand to have splitter
-  checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)*2));
-  checkCudaErrors(cudaMemset(&(d_reduce[0]), 0, sizeof(unsigned int)));
-  checkCudaErrors(cudaMemcpy(&(d_reduce[1]), &h_result, sizeof(unsigned int), cudaMemcpyHostToDevice));
 
-  map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan, numElems, d_reduce);
+  map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan_0, d_sum_scan_1, numElems);
+  //##########
 
   // debugging
   unsigned int *h_predicate = new unsigned int[numElems];
