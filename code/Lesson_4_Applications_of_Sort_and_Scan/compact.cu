@@ -165,7 +165,7 @@ void add_splitter_map_kernel(unsigned int* d_out,
 }
 
 int main(void) {
-  printf("HELLO");
+  printf("HELLO\n");
   size_t numElems = 16;
   int GRID_SIZE = 2;
   int BLOCK_SIZE = 8;
@@ -176,7 +176,7 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_val_src,   ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_predicate, ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_sum_scan,  ARRAY_BYTES));
-/*  unsigned int* d_predicate_tmp;
+  unsigned int* d_predicate_tmp;
   checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp, ARRAY_BYTES));
 
   // input array
@@ -187,14 +187,14 @@ int main(void) {
   h_input[12] = 74; h_input[13] = 8;  h_input[14] = 44; h_input[15] = 53;
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
-  printf("HEJ 10");
+  printf("HEJ 1\n");
 
   //##########
   // predicate call
   predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, numElems);
   //##########
 
-
+/*
   printf("HEJ 11");
   //##########
   // LSB == 0
