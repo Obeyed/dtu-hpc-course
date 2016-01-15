@@ -74,7 +74,7 @@ void reduce_wrapper(unsigned int* const d_out,
                     int block_size) {
   unsigned int grid_size = numElems / block_size + 1;
 
-  unsigned int* const d_tmp;
+  unsigned int* d_tmp;
   checkCudaErrors(cudaMalloc(&d_tmp, sizeof(unsigned int) * grid_size));
   checkCudaErrors(cudaMemset(d_tmp, 0, sizeof(unsigned int) * grid_size));
 
