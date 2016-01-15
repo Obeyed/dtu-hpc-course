@@ -167,7 +167,7 @@ void add_splitter_map_kernel(unsigned int* d_out,
 }
 
 int main(void) {
-  size_t numElems = 1 << 29;
+  size_t numElems = 1 << 20;
   int BLOCK_SIZE = 512;
   int GRID_SIZE = numElems / BLOCK_SIZE + 1;
   unsigned int ARRAY_BYTES = sizeof(unsigned int) * numElems;
