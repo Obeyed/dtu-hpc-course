@@ -56,18 +56,29 @@ int main(void) {
   // predicate call
   predicate_kernel<<<2,8>>>(d_predicate, d_val_src, numElems);
 
-  // set all elements to zero 
-  checkCudaErrors(cudaMemset(d_sum_scan, 0, ARRAY_BYTES));
- 
   // copy predicate values to new array
   unsigned int* d_predicate_tmp;
   checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp, ARRAY_BYTES));
   checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
 
+  // set all elements to zero 
+  checkCudaErrors(cudaMemset(d_sum_scan, 0, ARRAY_BYTES));
+
+  unsigned int *h_test  = new unsigned int[numElems];
+  checkCudaErrors(cudaMemcpy(h_test, d_predicate_tmp, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+
+  for (int i = 0; i < numElems; i++)
+    printf("%u ", h_test[i]);
+ 
   // sum scan call
   for (int step = 1; step < numElems; step *= 2) {
-    exclusive_sum_scan_kernel<<<2, 8>>>(d_sum_scan, d_predicate_tmp, step, numElems);
+    exclusive_sum_scan_kernel<<<1, 16>>>(d_sum_scan, d_predicate_tmp, step, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+
+    checkCudaErrors(cudaMemcpy(h_test, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+    for (int i = 0; i < numElems; i++)
+      printf("%u ", h_test[i]);
+
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   }
 
