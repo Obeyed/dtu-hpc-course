@@ -145,8 +145,10 @@ int main(void) {
   // reduce to get amount of LSB equal to 0
   unsigned int* d_reduce;
   checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)));
+  // copy contents 
+  checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
 
-  reduce_wrapper(d_reduce, d_predicate, numElems, BLOCK_SIZE);
+  reduce_wrapper(d_reduce, d_predicate_tmp, numElems, BLOCK_SIZE);
 
   unsigned int h_result;
   checkCudaErrors(cudaMemcpy(&h_result, d_reduce, sizeof(int), cudaMemcpyDeviceToHost));
