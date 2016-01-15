@@ -242,16 +242,20 @@ int main(void) {
   //##########
 
   // debugging
-  unsigned int *h_predicate = new unsigned int[numElems];
-  unsigned int *h_sum_scan  = new unsigned int[numElems];
-  unsigned int *h_map       = new unsigned int[numElems];
-  checkCudaErrors(cudaMemcpy(h_predicate, d_predicate,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(h_sum_scan,  d_sum_scan,   ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(h_map,       d_map,        ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  unsigned int *h_predicate   = new unsigned int[numElems];
+  unsigned int *h_predicate_toggle = new unsigned int[numElems];
+  unsigned int *h_sum_scan_0  = new unsigned int[numElems];
+  unsigned int *h_sum_scan_1  = new unsigned int[numElems];
+  unsigned int *h_map         = new unsigned int[numElems];
+  checkCudaErrors(cudaMemcpy(h_predicate,   d_predicate,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_predicate_toggle, d_predicate_toggle,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_sum_scan_0,  d_sum_scan_0, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_sum_scan_1,  d_sum_scan_1, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_map,         d_map,        ARRAY_BYTES, cudaMemcpyDeviceToHost));
  
-  printf("INPUT \t PRED \t SCAN \t MAP \n");
+  printf("INPUT \t PRED \t PRED_T \t SCAN_0 \t SCAN_1 \t MAP \n");
   for (int i = 0; i < numElems; i++)
-    printf("%u \t %u \t %u \t %u\n", h_input[i], h_predicate[i], h_sum_scan[i], h_map[i]);
+    printf("%u \t %u \t %u \t %u \t %u \t %u\n", h_input[i], h_predicate[i], h_predicate_toggle[i], h_sum_scan_0[i], h_sum_scan_1[i], h_map[i]);
 
   printf("sum: \t %u\n", h_result);
 
