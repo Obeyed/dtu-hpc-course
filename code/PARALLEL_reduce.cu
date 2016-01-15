@@ -8,58 +8,20 @@
 __global__ void reduce_kernel(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE)
 {
   // position and threadId
-  unsigned int pos = threadIdx.x + blockIdx.x * blockDim.x;
   unsigned int tid = threadIdx.x;
-
-
+  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
 
   // do reduction in global memory
   for (unsigned int s = blockDim.x / 2; s>0; s>>=1)
   {
-    if (tid < s)
-    {
-      if (pos+s < SIZE) // Handling out of bounds
-      {
-        d_in[pos] = d_in[pos] + d_in[pos+s];
-      }
-    }
+    if ((tid < s) && (mid+s < SIZE)) // Handling out of bounds
+        d_in[mid] = d_in[mid] + d_in[mid+s];
     __syncthreads();
   }
 
   // only thread 0 writes result, as thread
-  if ((tid==0) && (pos < SIZE))
-  {
-    d_out[blockIdx.x] = d_in[pos];
-  }
-}
-
-/* -------- KERNEL -------- */
-__global__ void reduce_kernel_volatile(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE)
-{
-  // position and threadId
-  unsigned int pos = threadIdx.x + blockIdx.x * blockDim.x;
-  unsigned int tid = threadIdx.x;
-
-  volatile unsigned int a = blockDim.x / 2;
-
-  // do reduction in global memory
-  for (unsigned int s = a; s>0; s>>=1)
-  {
-    if (tid < s)
-    {
-      if (pos+s < SIZE) // Handling out of bounds
-      {
-        d_in[pos] = d_in[pos] + d_in[pos+s];
-      }
-    }
-    __syncthreads();
-  }
-
-  // only thread 0 writes result, as thread
-  if ((tid==0) && (pos < SIZE))
-  {
-    d_out[blockIdx.x] = d_in[pos];
-  }
+  if ((tid==0) && (mid < SIZE))
+    d_out[blockIdx.x] = d_in[mid];
 }
 
 /* -------- KERNEL WRAPPER -------- */
