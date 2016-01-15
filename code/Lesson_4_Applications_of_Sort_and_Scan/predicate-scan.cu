@@ -27,7 +27,9 @@ void exclusive_sum_scan_kernel(unsigned int* d_sum_scan,
   if ((mid == 0) || (mid > numElems))
     return;
 
-  d_sum_scan[mid] = d_sum_scan[mid - 1] + d_predicate[mid - 1];
+	// finding the number to add, checking out-of-bounds
+	int toAdd = (((mid - step) < 0) ? 0 : d_predicate[mid - 1]);
+  d_sum_scan[mid] = d_sum_scan[mid - 1] + toAdd;
 }
 
 int main(void) {
