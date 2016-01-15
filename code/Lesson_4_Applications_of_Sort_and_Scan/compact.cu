@@ -157,10 +157,10 @@ void toggle_predicate_kernel(unsigned int* d_out,
 }
 
 __global__
-void add_splitter_map_kernel(unsigned int* d_out,
-                             unsigned int* shift, 
-                             size_t numElems) {
-  int mid = threadIdx.x + blockIdx.x * blockDim.x;
+void add_splitter_map_kernel(unsigned int* const d_out,
+                             const unsigned int* const shift, 
+                             const size_t numElems) {
+  const int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
   d_out[mid] += shift[0];
