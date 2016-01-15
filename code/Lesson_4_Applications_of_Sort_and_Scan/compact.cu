@@ -186,11 +186,15 @@ int main(void) {
   h_input[12] = 74; h_input[13] = 8;  h_input[14] = 44; h_input[15] = 53;
   checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
+  printf("HEJ 10");
+
   //##########
   // predicate call
   predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, numElems);
   //##########
 
+
+  printf("HEJ 11");
   //##########
   // LSB == 0
   unsigned int* d_sum_scan_0;
