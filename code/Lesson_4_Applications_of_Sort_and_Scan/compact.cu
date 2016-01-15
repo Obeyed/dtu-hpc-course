@@ -2,7 +2,6 @@
 
 #include "utils.h"
 #include <stdio.h>
-#include <vector>
 #include <cuda_runtime.h>
 
 /*
