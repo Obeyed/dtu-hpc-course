@@ -121,21 +121,21 @@ void map_kernel(unsigned int* d_out,
 }
 
 
-void exclusive_sum_scan(unsigned int* d_out,
-                        unsigned int* d_predicate,
-                        unsigned int* d_predicate_tmp,
-                        unsigned int* d_sum_scan,
-                        unsigned int ARRAY_BYTES,
-                        size_t numElems,
-                        int GRID_SIZE,
-                        int BLOCK_SIZE) {
+void exclusive_sum_scan(unsigned int* const d_out,
+                        const unsigned int* const d_predicate,
+                        unsigned int* const d_predicate_tmp,
+                        unsigned int* const d_sum_scan,
+                        const unsigned int ARRAY_BYTES,
+                        const size_t numElems,
+                        const int GRID_SIZE,
+                        const int BLOCK_SIZE) {
   // copy predicate values to new array
   checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   // set all elements to zero 
   checkCudaErrors(cudaMemset(d_sum_scan, 0, ARRAY_BYTES));
 
   // sum scan call
-  for (int step = 1; step < numElems; step *= 2) {
+  for (unsigned int step = 1; step < numElems; step *= 2) {
     inclusive_sum_scan_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_sum_scan, d_predicate_tmp, step, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
