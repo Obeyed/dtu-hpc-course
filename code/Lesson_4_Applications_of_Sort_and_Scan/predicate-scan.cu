@@ -22,9 +22,9 @@ void predicate_kernel(unsigned int *d_predicate,
 __global__
 void exclusive_sum_scan_kernel(unsigned int* d_sum_scan,
                                unsigned int* d_predicate,
-                               unsigned int step,
+                               int step,
                                const size_t numElems) {
-  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if ((mid == 0) || (mid > numElems))
     return;
 
