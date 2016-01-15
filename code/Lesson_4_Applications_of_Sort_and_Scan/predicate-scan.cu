@@ -29,8 +29,8 @@ void inclusive_sum_scan_kernel(unsigned int* d_sum_scan,
     return;
 
 	// finding the number to add, checking out-of-bounds
-	int toAdd = (((mid - step) < 0) ? 0 : d_predicate[mid]);
-  d_sum_scan[mid] = d_sum_scan[mid] + toAdd;
+	int toAdd = (((mid - step) < 0) ? 0 : d_in[mid - step]);
+  d_out[mid] = d_in[mid] + toAdd;
 }
 
 void DEBUG(unsigned int *device_array, unsigned int ARRAY_BYTES, size_t numElems) {
