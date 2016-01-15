@@ -195,7 +195,7 @@ int main(void) {
   // LSB == 0
   unsigned int* d_sum_scan_0;
   checkCudaErrors(cudaMalloc((void **) &d_sum_scan_0, ARRAY_BYTES));
-  exclusive_sum_scan(d_sum_scan_0, d_predicate, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
+  exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
   //##########
 
   //##########
@@ -217,7 +217,7 @@ int main(void) {
   checkCudaErrors(cudaMalloc((void **) &d_predicate_toggle, ARRAY_BYTES));
   // flip predicate values
   toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, numElems);
-  exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
+  exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, numElems, GRID_SIZE, BLOCK_SIZE);
   // map sum_scan_1 to add splitter
   add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce[0], numElems);
   //##########
