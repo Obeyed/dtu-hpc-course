@@ -22,6 +22,7 @@ void predicate_kernel(unsigned int *d_predicate,
 __global__
 void exclusive_sum_scan_kernel(unsigned int* d_sum_scan,
                                unsigned int* d_predicate,
+                               unsigned int step,
                                const size_t numElems) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if ((mid == 0) || (mid > numElems))
@@ -65,7 +66,7 @@ int main(void) {
 
   // sum scan call
   for (int step = 1; step < numElems; step *= 2) {
-    exclusive_sum_scan_kernel<<<2, 8>>>(d_sum_scan, d_predicate_tmp, numElems);
+    exclusive_sum_scan_kernel<<<2, 8>>>(d_sum_scan, d_predicate_tmp, step, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   }
