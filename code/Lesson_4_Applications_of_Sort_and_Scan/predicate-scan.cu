@@ -82,7 +82,9 @@ int main(void) {
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     printf("round %d\n", step);
     DEBUG(d_sum_scan, ARRAY_BYTES, numElems);
-    checkCudaErrors(cudaMemcpy(d_sum_scan, d_predicate_tmp, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+    printf("predicate_tmp:\n", step);
+    DEBUG(d_predicate_tmp, ARRAY_BYTES, numElems);
+    checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   }
 
   // debugging
