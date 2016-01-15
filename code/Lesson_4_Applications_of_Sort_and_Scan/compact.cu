@@ -253,9 +253,9 @@ int main(void) {
   checkCudaErrors(cudaMemcpy(h_sum_scan_1,  d_sum_scan_1, ARRAY_BYTES, cudaMemcpyDeviceToHost));
   checkCudaErrors(cudaMemcpy(h_map,         d_map,        ARRAY_BYTES, cudaMemcpyDeviceToHost));
  
-  printf("INPUT \t PRED \t PRED_T \t SCAN_0 \t SCAN_1 \t MAP \n");
+  printf("INPUT\tPRED\tPRED_T\tSCAN_0\tSCAN_1\tMAP\n");
   for (int i = 0; i < numElems; i++)
-    printf("%u \t %u \t %u \t %u \t %u \t %u\n", h_input[i], h_predicate[i], h_predicate_toggle[i], h_sum_scan_0[i], h_sum_scan_1[i], h_map[i]);
+    printf("%u\t%u\t%u\t%u\t%u\t%u\n", h_input[i], h_predicate[i], h_predicate_toggle[i], h_sum_scan_0[i], h_sum_scan_1[i], h_map[i]);
 
   printf("sum: \t %u\n", h_result);
 
