@@ -100,8 +100,8 @@ void reduce_wrapper(unsigned int * d_out, unsigned int * d_in, int size, int num
 
 int main(void) {
   size_t numElems = 16;
-  int GRID_SIZE = 1;
-  int BLOCK_SIZE = 16;
+  int GRID_SIZE = 2;
+  int BLOCK_SIZE = 8;
   int ARRAY_BYTES = sizeof(unsigned int) * numElems;
 
   // device memory
