@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
   const int SIZE = 1<<8,
             BYTES = SIZE * sizeof(int);
   const dim3 BLOCK_SIZE(128),
-             GRID_SIZE(BLOCK_SIZE.x/SIZE + (BLOCK_SIZE.x % SIZE)? 1 : 0);
+             GRID_SIZE((BLOCK_SIZE.x/SIZE + ((BLOCK_SIZE.x % SIZE)?1:0)));
 
   // set up host memory
   int h_in[SIZE], h_out[SIZE];
