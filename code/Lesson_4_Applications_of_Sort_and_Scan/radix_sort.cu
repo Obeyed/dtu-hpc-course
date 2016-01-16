@@ -202,11 +202,8 @@ unsigned int* radix_sort(unsigned int* h_input,
     std::swap(d_val_src, d_map);
   }
 
-  // debugging
+  // copy contents back
   checkCudaErrors(cudaMemcpy(h_output, d_val_src, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-
-  for (int i = 0; i < numElems; i++)
-    printf("%u%s", h_output[i], ((i % 8 == 7) ? "\n" : "\t"));
 
   return h_output;
 }
