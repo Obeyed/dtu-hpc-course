@@ -21,7 +21,7 @@ void inclusive_sum_scan_kernel(unsigned int* const d_out,
                                const unsigned int* const d_in,
                                const int step,
                                const size_t numElems) {
-  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  const int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
 	int toAdd = (((mid - step) < 0) ? 0 : d_in[mid - step]);
