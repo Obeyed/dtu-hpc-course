@@ -1,6 +1,8 @@
 #ifndef UTILS_H__
 #define UTILS_H__
 
+// source: https://github.com/udacity/cs344/blob/master/Problem%20Sets/Problem%20Set%204/utils.h
+
 #include <iostream>
 #include <iomanip>
 #include <cuda.h>

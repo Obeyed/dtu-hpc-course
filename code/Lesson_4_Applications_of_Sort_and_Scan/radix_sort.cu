@@ -1,10 +1,150 @@
-// Create predicate array for HW4
+/**
+    High Performance Computing (special course)
+    radix_sort.cu
+    Location: Technical University of Denmark
+    Purpose: Uses GPU to sort series of unsigned integers using Radix Sort
+
+    @author Elias Obeid
+    @author Alexander Johansen
+    @version 1.0 16/01/2016
+*/
+
 #include "radix_sort.h"
 
-/*
- * Calculate if LSB is 0.
- * 1 if true, 0 otherwise.
- */
+/**
+    Populates array with 1/0 depending on Least Significant Bit is set.
+    If LSB is 0 then index is set to 1, otherwise 0.
+
+    @param d_predicate  Output array to be filled with values (predicates)
+    @param d_val_src    Values to run through
+    @param numElems     Number of elements in arrays
+    @param i            Used to calculate how much to shift to find the correct LSB
+*/
+__global__ 
+void predicate_kernel(unsigned int* const, 
+                      const unsigned int* const,
+                      const size_t,
+                      const unsigned int);
+/**
+    Performs one iteration of Hillis and Steele scan.
+    Inclusive sum scan.
+
+    @param d_out    Output array with summed values
+    @param d_in     Values to sum
+    @param step     Amount to look back in d_in
+    @param numElems Number of elements in arrays
+*/
+__global__
+void inclusive_sum_scan_kernel(unsigned int* const,
+                               const unsigned int* const,
+                               const int,
+                               const size_t);
+/**
+    Shifts all elements to the right.
+    Sets first index to 0.
+
+    @param d_out    Output array
+    @param d_in     Array to be shifted
+    @param numElems Number of elements in arrays
+*/
+__global__
+void right_shift_array_kernel(unsigned int* const,
+                              const unsigned int* const,
+                              const size_t);
+/**
+    Toggle array with values 1 and 0.
+
+    @param d_out        Array with toggled values
+    @param d_predicate  Array with initial values
+    @param numElems     Number of elements in arrays
+*/
+__global__
+void toggle_predicate_kernel(unsigned int* const, 
+                             const unsigned int* const,
+                             const size_t);
+/**
+    Adds an offset to the given array's values.
+
+    @param d_out      Input/Output array -- values will be added to offset
+    @param shift      Array with one element -- the offset to add
+    @param numElems   Number of elements in arrays
+*/
+__global__
+void add_splitter_map_kernel(unsigned int* const,
+                             const unsigned int* const, 
+                             const size_t);
+/**
+    Runs log_2(BLOCK_SIZE) iterations of the reduce.
+    Computes the sum of elements in d_in
+
+    @param d_out     Output array
+    @param d_in      Input array with values
+    @param numElems  Number of elements in arrays
+*/
+__global__ 
+void reduce_kernel(unsigned int* const,
+                   unsigned int* const,
+                   const size_t);
+/**
+    Maps values from d_in to d_out according to scatter addresses in d_sum_scan_0 or d_sum_scan_1.
+
+    @param d_out        Output array
+    @param d_in         Input array with values
+    @param d_predicate  Contains whether or not given value's LSB is 0
+    @param d_sum_scan_0 Scatter address for values with LSB 0
+    @param d_sum_scan_1 Scatter address for values with LSB 1
+    @param numElems     Number of elements in arrays
+*/
+__global__
+void map_kernel(unsigned int* const,
+                const unsigned int* const,
+                const unsigned int* const,
+                const unsigned int* const,
+                const unsigned int* const,
+                const size_t);
+/**
+    Calls reduce kernel to compute reduction.
+    Runs log_(BLOCK_SIZE)(numElems) times.
+
+    @param d_out      Output array
+    @param d_in       Input array with values
+    @param numElems   Number of elements in arrays
+    @param block_size Number of threads per block
+*/
+void reduce_wrapper(unsigned int* const,
+                    unsigned int* const,
+                    size_t,
+                    int);
+/**
+    Computes an exclusive sum scan of scatter addresses for the given predicate array.
+
+    @param d_out            Output array with scatter addresses
+    @param d_predicate      Input array with predicates to be summed
+    @param d_predicate_tmp  Temporary array so we do not change d_predicate
+    @param d_sum_scan       Inclusive sum scan
+    @param ARRAY_BYTES      Number of bytes for arrays
+    @param numElems         Number of elements in arrays
+    @param GRID_SIZE        Number of blocks in one grid
+    @param BLOCK_SIZE       Number of threads in one block
+*/
+void exclusive_sum_scan(unsigned int* const,
+                        const unsigned int* const,
+                        unsigned int* const,
+                        unsigned int* const,
+                        const unsigned int,
+                        const size_t,
+                        const int,
+                        const int);
+/**
+    Computes an exclusive sum scan of scatter addresses for the given predicate array.
+
+    @param h_input  Input values to be sorted (unsigned int)
+    @param numElems Number of elements in array
+    @return Pointer to sorted array
+*/
+unsigned int* radix_sort(unsigned int*,
+                         const size_t);
+// Populates array with 1/0 depending on Least Significant Bit is set.
 __global__
 void predicate_kernel(unsigned int* const d_predicate,
                       const unsigned int* const d_val_src,
@@ -16,18 +156,20 @@ void predicate_kernel(unsigned int* const d_predicate,
   d_predicate[mid] = (int)(((d_val_src[mid] & (1 << i)) >> i) == 0);
 }
 
+// Performs one iteration of Hillis and Steele scan.
 __global__
 void inclusive_sum_scan_kernel(unsigned int* const d_out,
                                const unsigned int* const d_in,
                                const int step,
                                const size_t numElems) {
-  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  const int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= numElems) return;
 
 	int toAdd = (((mid - step) < 0) ? 0 : d_in[mid - step]);
   d_out[mid] = d_in[mid] + toAdd;
 }
 
+// Shifts all elements to the right. Sets first index to 0.
 __global__
 void right_shift_array_kernel(unsigned int* const d_out,
                        const unsigned int* const d_in,
@@ -38,6 +180,7 @@ void right_shift_array_kernel(unsigned int* const d_out,
   d_out[mid] = (mid == 0) ? 0 : d_in[mid - 1];
 }
 
+// Toggle array with values 1 and 0.
 __global__
 void toggle_predicate_kernel(unsigned int* const d_out, 
                              const unsigned int* const d_predicate,
@@ -48,6 +191,7 @@ void toggle_predicate_kernel(unsigned int* const d_out,
   d_out[mid] = ((d_predicate[mid]) ? 0 : 1);
 }
 
+// Adds an offset to the given array's values.
 __global__
 void add_splitter_map_kernel(unsigned int* const d_out,
                              const unsigned int* const shift, 
@@ -58,6 +202,7 @@ void add_splitter_map_kernel(unsigned int* const d_out,
   d_out[mid] += shift[0];
 }
 
+// Computes the sum of elements in d_in
 __global__ 
 void reduce_kernel(unsigned int* const d_out,
                    unsigned int* const d_in,
@@ -76,6 +221,7 @@ void reduce_kernel(unsigned int* const d_out,
     d_out[blockIdx.x] = d_in[pos];
 }
 
+// Maps values from d_in to d_out according to scatter addresses in d_sum_scan_0 or d_sum_scan_1.
 __global__
 void map_kernel(unsigned int* const d_out,
                 const unsigned int* const d_in,
@@ -90,6 +236,7 @@ void map_kernel(unsigned int* const d_out,
   d_out[pos] = d_in[mid];
 }
 
+// Calls reduce kernel to compute reduction.
 void reduce_wrapper(unsigned int* const d_out,
                     unsigned int* const d_in,
                     size_t numElems,
@@ -125,6 +272,7 @@ void reduce_wrapper(unsigned int* const d_out,
   reduce_kernel<<<1, numElems>>>(d_out, d_in, prev_grid_size);
 }
 
+// Computes an exclusive sum scan of scatter addresses for the given predicate array.
 void exclusive_sum_scan(unsigned int* const d_out,
                         const unsigned int* const d_predicate,
                         unsigned int* const d_predicate_tmp,
@@ -150,6 +298,7 @@ void exclusive_sum_scan(unsigned int* const d_out,
   right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, numElems);
 }
 
+// Computes an exclusive sum scan of scatter addresses for the given predicate array.
 unsigned int* radix_sort(unsigned int* h_input,
                          const size_t numElems) {
   const int BLOCK_SIZE  = 512;
@@ -202,11 +351,8 @@ unsigned int* radix_sort(unsigned int* h_input,
     std::swap(d_val_src, d_map);
   }
 
-  // debugging
+  // copy contents back
   checkCudaErrors(cudaMemcpy(h_output, d_val_src, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-
-  for (int i = 0; i < numElems; i++)
-    printf("%u%s", h_output[i], ((i % 8 == 7) ? "\n" : "\t"));
 
   return h_output;
 }
