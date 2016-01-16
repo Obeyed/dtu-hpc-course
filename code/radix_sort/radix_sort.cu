@@ -17,7 +17,7 @@
 
     @param d_predicate  Output array to be filled with values (predicates)
     @param d_val_src    Values to run through
-    @param num_elems     Number of elements in arrays
+    @param NUM_ELEMS     Number of elements in arrays
     @param i            Used to calculate how much to shift to find the correct LSB
 */
 __global__ 
@@ -32,7 +32,7 @@ void predicate_kernel(unsigned int* const,
     @param d_out    Output array with summed values
     @param d_in     Values to sum
     @param step     Amount to look back in d_in
-    @param num_elems Number of elements in arrays
+    @param NUM_ELEMS Number of elements in arrays
 */
 __global__
 void inclusive_sum_scan_kernel(unsigned int* const,
@@ -45,7 +45,7 @@ void inclusive_sum_scan_kernel(unsigned int* const,
 
     @param d_out    Output array
     @param d_in     Array to be shifted
-    @param num_elems Number of elements in arrays
+    @param NUM_ELEMS Number of elements in arrays
 */
 __global__
 void right_shift_array_kernel(unsigned int* const,
@@ -56,7 +56,7 @@ void right_shift_array_kernel(unsigned int* const,
 
     @param d_out        Array with toggled values
     @param d_predicate  Array with initial values
-    @param num_elems     Number of elements in arrays
+    @param NUM_ELEMS     Number of elements in arrays
 */
 __global__
 void toggle_predicate_kernel(unsigned int* const, 
@@ -67,7 +67,7 @@ void toggle_predicate_kernel(unsigned int* const,
 
     @param d_out      Input/Output array -- values will be added to offset
     @param shift      Array with one element -- the offset to add
-    @param num_elems   Number of elements in arrays
+    @param NUM_ELEMS   Number of elements in arrays
 */
 __global__
 void add_splitter_map_kernel(unsigned int* const,
@@ -79,7 +79,7 @@ void add_splitter_map_kernel(unsigned int* const,
 
     @param d_out     Output array
     @param d_in      Input array with values
-    @param num_elems  Number of elements in arrays
+    @param NUM_ELEMS  Number of elements in arrays
 */
 __global__ 
 void reduce_kernel(unsigned int* const,
@@ -93,7 +93,7 @@ void reduce_kernel(unsigned int* const,
     @param d_predicate  Contains whether or not given value's LSB is 0
     @param d_sum_scan_0 Scatter address for values with LSB 0
     @param d_sum_scan_1 Scatter address for values with LSB 1
-    @param num_elems     Number of elements in arrays
+    @param NUM_ELEMS     Number of elements in arrays
 */
 __global__
 void map_kernel(unsigned int* const,
@@ -123,7 +123,7 @@ void reduce_wrapper(unsigned int* const,
     @param d_predicate_tmp  Temporary array so we do not change d_predicate
     @param d_sum_scan       Inclusive sum scan
     @param ARRAY_BYTES      Number of bytes for arrays
-    @param num_elems         Number of elements in arrays
+    @param NUM_ELEMS         Number of elements in arrays
     @param GRID_SIZE        Number of blocks in one grid
     @param BLOCK_SIZE       Number of threads in one block
 */
@@ -139,7 +139,7 @@ void exclusive_sum_scan(unsigned int* const,
     Sort values using radix sort.
 
     @param h_input  Input values to be sorted (unsigned int)
-    @param num_elems Number of elements in array
+    @param NUM_ELEMS Number of elements in array
     @return Pointer to sorted array
 */
 unsigned int* radix_sort(unsigned int*,
@@ -148,10 +148,10 @@ unsigned int* radix_sort(unsigned int*,
 __global__
 void predicate_kernel(unsigned int* const d_predicate,
                       const unsigned int* const d_val_src,
-                      const size_t num_elems,
+                      const size_t NUM_ELEMS,
                       const unsigned int i) {
   const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (mid >= num_elems) return;
+  if (mid >= NUM_ELEMS) return;
 
   d_predicate[mid] = (int)(((d_val_src[mid] & (1 << i)) >> i) == 0);
 }
@@ -161,9 +161,9 @@ __global__
 void inclusive_sum_scan_kernel(unsigned int* const d_out,
                                const unsigned int* const d_in,
                                const int step,
-                               const size_t num_elems) {
+                               const size_t NUM_ELEMS) {
   const int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (mid >= num_elems) return;
+  if (mid >= NUM_ELEMS) return;
 
 	int toAdd = (((mid - step) < 0) ? 0 : d_in[mid - step]);
   d_out[mid] = d_in[mid] + toAdd;
@@ -173,9 +173,9 @@ void inclusive_sum_scan_kernel(unsigned int* const d_out,
 __global__
 void right_shift_array_kernel(unsigned int* const d_out,
                        const unsigned int* const d_in,
-                       const size_t num_elems) {
+                       const size_t NUM_ELEMS) {
   const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (mid >= num_elems) return;
+  if (mid >= NUM_ELEMS) return;
 
   d_out[mid] = (mid == 0) ? 0 : d_in[mid - 1];
 }
@@ -184,9 +184,9 @@ void right_shift_array_kernel(unsigned int* const d_out,
 __global__
 void toggle_predicate_kernel(unsigned int* const d_out, 
                              const unsigned int* const d_predicate,
-                             const size_t num_elems) {
+                             const size_t NUM_ELEMS) {
   const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (mid >= num_elems) return;
+  if (mid >= NUM_ELEMS) return;
 
   d_out[mid] = ((d_predicate[mid]) ? 0 : 1);
 }
@@ -195,9 +195,9 @@ void toggle_predicate_kernel(unsigned int* const d_out,
 __global__
 void add_splitter_map_kernel(unsigned int* const d_out,
                              const unsigned int* const shift, 
-                             const size_t num_elems) {
+                             const size_t NUM_ELEMS) {
   const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (mid >= num_elems) return;
+  if (mid >= NUM_ELEMS) return;
 
   d_out[mid] += shift[0];
 }
@@ -206,18 +206,18 @@ void add_splitter_map_kernel(unsigned int* const d_out,
 __global__ 
 void reduce_kernel(unsigned int* const d_out,
                    unsigned int* const d_in,
-                   const size_t num_elems) {
+                   const size_t NUM_ELEMS) {
   unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int tid = threadIdx.x;
 
   for (unsigned int s = blockDim.x / 2; s > 0; s >>=1) {
-    if ((tid < s) && ((pos + s) < num_elems))
+    if ((tid < s) && ((pos + s) < NUM_ELEMS))
       d_in[pos] = d_in[pos] + d_in[pos + s];
     __syncthreads();
   }
 
   // only thread 0 writes result, as thread
-  if ((tid == 0) && (pos < num_elems))
+  if ((tid == 0) && (pos < NUM_ELEMS))
     d_out[blockIdx.x] = d_in[pos];
 }
 
@@ -228,9 +228,9 @@ void map_kernel(unsigned int* const d_out,
                 const unsigned int* const d_predicate,
                 const unsigned int* const d_sum_scan_0,
                 const unsigned int* const d_sum_scan_1,
-                const size_t num_elems) {
+                const size_t NUM_ELEMS) {
   const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (mid >= num_elems) return;
+  if (mid >= NUM_ELEMS) return;
 
   const unsigned int pos = ((d_predicate[mid]) ? d_sum_scan_0[mid] : d_sum_scan_1[mid]);
   d_out[pos] = d_in[mid];
@@ -278,7 +278,7 @@ void exclusive_sum_scan(unsigned int* const d_out,
                         unsigned int* const d_predicate_tmp,
                         unsigned int* const d_sum_scan,
                         const unsigned int ARRAY_BYTES,
-                        const size_t num_elems,
+                        const size_t NUM_ELEMS,
                         const int GRID_SIZE,
                         const int BLOCK_SIZE) {
   // copy predicate values to new array
@@ -287,27 +287,27 @@ void exclusive_sum_scan(unsigned int* const d_out,
   checkCudaErrors(cudaMemset(d_sum_scan, 0, ARRAY_BYTES));
 
   // sum scan call
-  for (unsigned int step = 1; step < num_elems; step *= 2) {
-    inclusive_sum_scan_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_sum_scan, d_predicate_tmp, step, num_elems);
+  for (unsigned int step = 1; step < NUM_ELEMS; step *= 2) {
+    inclusive_sum_scan_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_sum_scan, d_predicate_tmp, step, NUM_ELEMS);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   }
 
   // shift to get exclusive scan
   checkCudaErrors(cudaMemcpy(d_out, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
-  right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, num_elems);
+  right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, NUM_ELEMS);
 }
 
 // Sort values using radix sort
 unsigned int* radix_sort(unsigned int* h_input,
-                         const size_t num_elems) {
+                         const size_t NUM_ELEMS) {
   const int BLOCK_SIZE  = 512;
-  const int GRID_SIZE   = num_elems / BLOCK_SIZE + 1;
-  const unsigned int ARRAY_BYTES = sizeof(unsigned int) * num_elems;
+  const int GRID_SIZE   = NUM_ELEMS / BLOCK_SIZE + 1;
+  const unsigned int ARRAY_BYTES = sizeof(unsigned int) * NUM_ELEMS;
   const unsigned int BITS_PER_BYTE = 8;
 
   // host memory
-  unsigned int* const h_output = new unsigned int[num_elems];
+  unsigned int* const h_output = new unsigned int[NUM_ELEMS];
 
   // device memory
   unsigned int *d_val_src, *d_predicate, *d_sum_scan, *d_predicate_tmp, *d_sum_scan_0, *d_sum_scan_1, *d_predicate_toggle, *d_reduce, *d_map;
@@ -326,26 +326,26 @@ unsigned int* radix_sort(unsigned int* h_input,
 
   for (unsigned int i = 0; i < (BITS_PER_BYTE * sizeof(unsigned int)); i++) {
     // predicate is that LSB is 0
-    predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, num_elems, i);
+    predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, NUM_ELEMS, i);
 
     // calculate scatter addresses from predicates
-    exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, num_elems, GRID_SIZE, BLOCK_SIZE);
+    exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE);
 
     // copy contents of predicate, so we do not change its content
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
 
     // calculate how many elements had predicate equal to 1
-    reduce_wrapper(d_reduce, d_predicate_tmp, num_elems, BLOCK_SIZE);
+    reduce_wrapper(d_reduce, d_predicate_tmp, NUM_ELEMS, BLOCK_SIZE);
 
     // toggle predicate values, so we can compute scatter addresses for toggled predicates
-    toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, num_elems);
+    toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, NUM_ELEMS);
     // so we now have addresses for elements where LSB is equal to 1
-    exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, num_elems, GRID_SIZE, BLOCK_SIZE);
+    exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE);
     // shift scatter addresses according to amount of elements that had LSB equal to 0
-    add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, num_elems);
+    add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, NUM_ELEMS);
 
     // move elements accordingly
-    map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan_0, d_sum_scan_1, num_elems);
+    map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan_0, d_sum_scan_1, NUM_ELEMS);
 
     // swap pointers, instead of moving elements
     std::swap(d_val_src, d_map);
