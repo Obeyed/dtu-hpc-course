@@ -1,0 +1,215 @@
+\chapter{Radix Sort}
+\label{ap:radix sort}
+
+The Radix Sort code in \cref{lst:radix sort full} is a cut down version of the full implementation.
+We have removed function prototypes and documentation comments so it takes up less space.
+The entire code base for this implementation is public at \href{https://github.com/obeyed/dtu-hpc-course/tree/master/code/radix\_sort}{https://github.com/obeyed/dtu-hpc-course/tree/master/code/radix\_sort}.
+We use a helper function \ttt{checkCudaErrors()} to check if response is not \ttt{cudaSuccess} -- it is defined in \ttt{utils.h}.
+
+\begin{lstlisting}[captionpos=t, xleftmargin=0.0pt, xrightmargin=0.0pt, caption={Radix Sort implementation}, label={lst:radix sort full}]
+// Populates array with 1/0 depending on Least Significant Bit is set.
+__global__
+void predicate_kernel(unsigned int* const d_predicate,
+                      const unsigned int* const d_val_src,
+                      const size_t NUM_ELEMS,
+                      const unsigned int i) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= NUM_ELEMS) return;
+
+  d_predicate[mid] = (int)(((d_val_src[mid] & (1 << i)) >> i) == 0);
+}
+
+// Performs one iteration of Hillis and Steele scan.
+__global__
+void inclusive_sum_scan_kernel(unsigned int* const d_out,
+                               const unsigned int* const d_in,
+                               const int step,
+                               const size_t NUM_ELEMS) {
+  const int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= NUM_ELEMS) return;
+  int toAdd = (((mid - step) < 0) ? 0 : d_in[mid - step]);
+  d_out[mid] = d_in[mid] + toAdd;
+}
+
+// Shifts all elements to the right. Sets first index to 0.
+__global__
+void right_shift_array_kernel(unsigned int* const d_out,
+                       const unsigned int* const d_in,
+                       const size_t NUM_ELEMS) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= NUM_ELEMS) return;
+  d_out[mid] = (mid == 0) ? 0 : d_in[mid - 1];
+}
+
+// Toggle array with values 1 and 0.
+__global__
+void toggle_predicate_kernel(unsigned int* const d_out, 
+                             const unsigned int* const d_predicate,
+                             const size_t NUM_ELEMS) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= NUM_ELEMS) return;
+  d_out[mid] = ((d_predicate[mid]) ? 0 : 1);
+}
+
+// Adds an offset to the given array's values.
+__global__
+void add_splitter_map_kernel(unsigned int* const d_out,
+                             const unsigned int* const shift, 
+                             const size_t NUM_ELEMS) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= NUM_ELEMS) return;
+  d_out[mid] += shift[0];
+}
+
+// Computes the sum of elements in d_in
+__global__ 
+void reduce_kernel(unsigned int* const d_out,
+                   unsigned int* const d_in,
+                   const size_t NUM_ELEMS) {
+  unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned int tid = threadIdx.x;
+
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>=1) {
+    if ((tid < s) && ((pos + s) < NUM_ELEMS))
+      d_in[pos] = d_in[pos] + d_in[pos + s];
+    __syncthreads();
+  }
+
+  // only thread 0 writes result, as thread
+  if ((tid == 0) && (pos < NUM_ELEMS))
+    d_out[blockIdx.x] = d_in[pos];
+}
+
+// Maps values from d_in to d_out according to scatter addresses in d_sum_scan_0 or d_sum_scan_1.
+__global__
+void map_kernel(unsigned int* const d_out,
+                const unsigned int* const d_in,
+                const unsigned int* const d_predicate,
+                const unsigned int* const d_sum_scan_0,
+                const unsigned int* const d_sum_scan_1,
+                const size_t NUM_ELEMS) {
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= NUM_ELEMS) return;
+  const unsigned int pos = ((d_predicate[mid]) ? d_sum_scan_0[mid] : d_sum_scan_1[mid]);
+  d_out[pos] = d_in[mid];
+}
+
+// Calls reduce kernel to compute reduction.
+void reduce_wrapper(unsigned int* const d_out,
+                    unsigned int* const d_in,
+                    size_t num_elems,
+                    int block_size) {
+  unsigned int grid_size = num_elems / block_size + 1;
+
+  unsigned int* d_tmp;
+  checkCudaErrors(cudaMalloc(&d_tmp, sizeof(unsigned int) * grid_size));
+  checkCudaErrors(cudaMemset(d_tmp, 0, sizeof(unsigned int) * grid_size));
+
+  unsigned int prev_grid_size;
+  unsigned int remainder = 0;
+  // recursively solving, will run approximately log base block_size times.
+  do {
+    reduce_kernel<<<grid_size, block_size>>>(d_tmp, d_in, num_elems);
+
+    remainder = num_elems % block_size;
+    num_elems  = num_elems / block_size + remainder;
+
+    // updating input to intermediate
+    checkCudaErrors(cudaMemcpy(d_in, d_tmp, sizeof(int) * grid_size, cudaMemcpyDeviceToDevice));
+
+    // Updating grid_size to reflect how many blocks we now want to compute on
+    prev_grid_size = grid_size;
+    grid_size = num_elems / block_size + 1;      
+
+    // updating intermediate
+    checkCudaErrors(cudaFree(d_tmp));
+    checkCudaErrors(cudaMalloc(&d_tmp, sizeof(int) * grid_size));
+  } while(num_elems > block_size);
+
+  // computing rest
+  reduce_kernel<<<1, num_elems>>>(d_out, d_in, prev_grid_size);
+}
+
+// Computes an exclusive sum scan of scatter addresses for the given predicate array.
+void exclusive_sum_scan(unsigned int* const d_out,
+                        const unsigned int* const d_predicate,
+                        unsigned int* const d_predicate_tmp,
+                        unsigned int* const d_sum_scan,
+                        const unsigned int ARRAY_BYTES,
+                        const size_t NUM_ELEMS,
+                        const int GRID_SIZE,
+                        const int BLOCK_SIZE) {
+  // copy predicate values to new array
+  checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+  // set all elements to zero 
+  checkCudaErrors(cudaMemset(d_sum_scan, 0, ARRAY_BYTES));
+
+  // sum scan call
+  for (unsigned int step = 1; step < NUM_ELEMS; step *= 2) {
+    inclusive_sum_scan_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_sum_scan, d_predicate_tmp, step, NUM_ELEMS);
+    cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+    checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+  }
+
+  // shift to get exclusive scan
+  checkCudaErrors(cudaMemcpy(d_out, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+  right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, NUM_ELEMS);
+}
+
+// Computes an exclusive sum scan of scatter addresses for the given predicate array.
+unsigned int* radix_sort(unsigned int* h_input,
+                         const size_t NUM_ELEMS) {
+  const int BLOCK_SIZE  = 512;
+  const int GRID_SIZE   = NUM_ELEMS / BLOCK_SIZE + 1;
+  const unsigned int ARRAY_BYTES = sizeof(unsigned int) * NUM_ELEMS;
+  const unsigned int BITS_PER_BYTE = 8;
+
+  // host memory
+  unsigned int* const h_output = new unsigned int[NUM_ELEMS];
+
+  // device memory
+  unsigned int *d_val_src, *d_predicate, *d_sum_scan, *d_predicate_tmp, *d_sum_scan_0, *d_sum_scan_1, *d_predicate_toggle, *d_reduce, *d_map;
+  checkCudaErrors(cudaMalloc((void **) &d_val_src,          ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_map,              ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_predicate,        ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_predicate_tmp,    ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_predicate_toggle, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan,         ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_0,       ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_sum_scan_1,       ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)));
+
+  // copy host array to device
+  checkCudaErrors(cudaMemcpy(d_val_src, h_input, ARRAY_BYTES, cudaMemcpyHostToDevice));
+
+  for (unsigned int i = 0; i < (BITS_PER_BYTE * sizeof(unsigned int)); i++) {
+    // predicate is that LSB is 0
+    predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_val_src, NUM_ELEMS, i);
+
+    // calculate scatter addresses from predicates
+    exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE);
+
+    // copy contents of predicate, so we do not change its content
+    checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+
+    // calculate how many elements had predicate equal to 1
+    reduce_wrapper(d_reduce, d_predicate_tmp, NUM_ELEMS, BLOCK_SIZE);
+
+    // toggle predicate values, so we can compute scatter addresses for toggled predicates
+    toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, NUM_ELEMS);
+    // so we now have addresses for elements where LSB is equal to 1
+    exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE);
+    // shift scatter addresses according to amount of elements that had LSB equal to 0
+    add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, NUM_ELEMS);
+
+    // move elements accordingly
+    map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map, d_val_src, d_predicate, d_sum_scan_0, d_sum_scan_1, NUM_ELEMS);
+
+    // swap pointers, instead of moving elements
+    std::swap(d_val_src, d_map);
+  }
+  // copy contents back
+  checkCudaErrors(cudaMemcpy(h_output,d_val_src,ARRAY_BYTES,cudaMemcpyDeviceToHost));
+  return h_output;
+}
+\end{lstlisting}
