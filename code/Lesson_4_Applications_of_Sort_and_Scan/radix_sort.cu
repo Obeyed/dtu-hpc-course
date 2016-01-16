@@ -144,6 +144,7 @@ void exclusive_sum_scan(unsigned int* const,
 */
 unsigned int* radix_sort(unsigned int*,
                          const size_t);
+// Populates array with 1/0 depending on Least Significant Bit is set.
 __global__
 void predicate_kernel(unsigned int* const d_predicate,
                       const unsigned int* const d_val_src,
@@ -155,6 +156,7 @@ void predicate_kernel(unsigned int* const d_predicate,
   d_predicate[mid] = (int)(((d_val_src[mid] & (1 << i)) >> i) == 0);
 }
 
+// Performs one iteration of Hillis and Steele scan.
 __global__
 void inclusive_sum_scan_kernel(unsigned int* const d_out,
                                const unsigned int* const d_in,
@@ -167,6 +169,7 @@ void inclusive_sum_scan_kernel(unsigned int* const d_out,
   d_out[mid] = d_in[mid] + toAdd;
 }
 
+// Shifts all elements to the right. Sets first index to 0.
 __global__
 void right_shift_array_kernel(unsigned int* const d_out,
                        const unsigned int* const d_in,
@@ -177,6 +180,7 @@ void right_shift_array_kernel(unsigned int* const d_out,
   d_out[mid] = (mid == 0) ? 0 : d_in[mid - 1];
 }
 
+// Toggle array with values 1 and 0.
 __global__
 void toggle_predicate_kernel(unsigned int* const d_out, 
                              const unsigned int* const d_predicate,
@@ -187,6 +191,7 @@ void toggle_predicate_kernel(unsigned int* const d_out,
   d_out[mid] = ((d_predicate[mid]) ? 0 : 1);
 }
 
+// Adds an offset to the given array's values.
 __global__
 void add_splitter_map_kernel(unsigned int* const d_out,
                              const unsigned int* const shift, 
@@ -197,6 +202,7 @@ void add_splitter_map_kernel(unsigned int* const d_out,
   d_out[mid] += shift[0];
 }
 
+// Computes the sum of elements in d_in
 __global__ 
 void reduce_kernel(unsigned int* const d_out,
                    unsigned int* const d_in,
@@ -215,6 +221,7 @@ void reduce_kernel(unsigned int* const d_out,
     d_out[blockIdx.x] = d_in[pos];
 }
 
+// Maps values from d_in to d_out according to scatter addresses in d_sum_scan_0 or d_sum_scan_1.
 __global__
 void map_kernel(unsigned int* const d_out,
                 const unsigned int* const d_in,
@@ -229,6 +236,7 @@ void map_kernel(unsigned int* const d_out,
   d_out[pos] = d_in[mid];
 }
 
+// Calls reduce kernel to compute reduction.
 void reduce_wrapper(unsigned int* const d_out,
                     unsigned int* const d_in,
                     size_t numElems,
@@ -264,6 +272,7 @@ void reduce_wrapper(unsigned int* const d_out,
   reduce_kernel<<<1, numElems>>>(d_out, d_in, prev_grid_size);
 }
 
+// Computes an exclusive sum scan of scatter addresses for the given predicate array.
 void exclusive_sum_scan(unsigned int* const d_out,
                         const unsigned int* const d_predicate,
                         unsigned int* const d_predicate_tmp,
@@ -289,6 +298,7 @@ void exclusive_sum_scan(unsigned int* const d_out,
   right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, numElems);
 }
 
+// Computes an exclusive sum scan of scatter addresses for the given predicate array.
 unsigned int* radix_sort(unsigned int* h_input,
                          const size_t numElems) {
   const int BLOCK_SIZE  = 512;
