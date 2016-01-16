@@ -136,7 +136,7 @@ void exclusive_sum_scan(unsigned int* const,
                         const int,
                         const int);
 /**
-    Computes an exclusive sum scan of scatter addresses for the given predicate array.
+    Sort values using radix sort.
 
     @param h_input  Input values to be sorted (unsigned int)
     @param numElems Number of elements in array
@@ -298,7 +298,7 @@ void exclusive_sum_scan(unsigned int* const d_out,
   right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, numElems);
 }
 
-// Computes an exclusive sum scan of scatter addresses for the given predicate array.
+// Sort values using radix sort
 unsigned int* radix_sort(unsigned int* h_input,
                          const size_t numElems) {
   const int BLOCK_SIZE  = 512;
