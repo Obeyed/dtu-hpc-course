@@ -1,5 +1,15 @@
-// Create predicate array for HW4
+/**
+    High Performance Computing (special course)
+    radix_sort.cu
+    Location: Technical University of Denmark
+    Purpose: Uses GPU to sort series of unsigned integers using Radix Sort
+
+    @author Elias Obeid
+    @version 1.0 16/01/2016
+*/
+
 #include "radix_sort.h"
+
 
 /*
  * Calculate if LSB is 0.
