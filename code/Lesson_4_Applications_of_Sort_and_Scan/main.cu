@@ -11,11 +11,9 @@ int main(void) {
   for (unsigned int i = 0; i < numElems; i++)
     vals[i] = rand(); 
 
-  for (int i = 0; i < numElems; i++)
-    printf("%u ", vals[i]);
+  printf("CALLING RADIX SORT");
 
   unsigned int* result = radix_sort(vals, numElems);
-  printf("\n\n%u", result[numElems-1]);
 
   return 0;
 }
