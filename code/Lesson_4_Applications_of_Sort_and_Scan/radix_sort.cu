@@ -10,7 +10,55 @@
 
 #include "radix_sort.h"
 
+__global__ 
+void predicate_kernel(unsigned int* const, 
+                      const unsigned int* const,
+                      const size_t,
+                      const unsigned int);
+__global__
+void inclusive_sum_scan_kernel(unsigned int* const,
+                               const unsigned int* const,
+                               const int,
+                               const size_t);
+__global__
+void right_shift_array_kernel(unsigned int* const,
+                              const unsigned int* const,
+                              const size_t);
+__global__
+void toggle_predicate_kernel(unsigned int* const, 
+                             const unsigned int* const,
+                             const size_t);
+__global__
+void add_splitter_map_kernel(unsigned int* const,
+                             const unsigned int* const, 
+                             const size_t);
+__global__ 
+void reduce_kernel(unsigned int* const,
+                   unsigned int* const,
+                   const size_t);
+__global__
+void map_kernel(unsigned int* const,
+                const unsigned int* const,
+                const unsigned int* const,
+                const unsigned int* const,
+                const unsigned int* const,
+                const size_t);
 
+void reduce_wrapper(unsigned int* const,
+                    unsigned int* const,
+                    size_t,
+                    int);
+
+void exclusive_sum_scan(unsigned int* const,
+                        const unsigned int* const,
+                        unsigned int* const,
+                        unsigned int* const,
+                        const unsigned int,
+                        const size_t,
+                        const int,
+                        const int);
+unsigned int* radix_sort(unsigned int*,
+                         const size_t);
 /*
  * Calculate if LSB is 0.
  * 1 if true, 0 otherwise.
