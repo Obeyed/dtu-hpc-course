@@ -1,3 +1,0 @@
-# NV_Warning: The legacy Command Line Profiler is deprecated and will be no longer available as of the next major release of the CUDA toolkit. Please use nvprof.
-NV_Error: Failed to open profile config file: config.txt
-NV_Error: Profiler initialization failed.
