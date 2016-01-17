@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
   // call parallel code
   printf("CALLING GPU CODE..\n");
-  unsigned int* parallel_output = radix_sort(input, num_elems);
+  unsigned int* parallel_output = radix_sort(input_vals, num_elems);
 
   // call serial code
   printf("CALLING REFERENCE..\n");
