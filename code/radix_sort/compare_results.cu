@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv) {
   // change
-  const size_t num_elems = 1 << 10;
+  const size_t num_elems = 1 << 5;
   // define following as needed
   unsigned int* input_vals  = new unsigned int[num_elems];
   unsigned int* input_pos   = new unsigned int[num_elems];
@@ -39,9 +39,10 @@ int main(int argc, char **argv) {
   // if this is reached, then success
   printf("CORRECT!\n");
 
-//  for (int i = 0; i < num_elems; i++)
+  for (int i = 0; i < num_elems; i++)
+    printf("%u\t%u\n", parallel_output[i], serial_output[i]);
 //    printf("%u%s", result[i], ((i % 8 == 7) ? "\n" : "\t"));
-//  printf("\n");
+  printf("\n");
 
   return 0;
 }
