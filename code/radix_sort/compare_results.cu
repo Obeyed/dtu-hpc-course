@@ -31,9 +31,13 @@ int main(int argc, char **argv) {
                         &serial_output[0], &output_pos[0],
                         num_elems);
 
+  input_vals[0] = 10;
   // compare results
   printf("COMPARING RESULTS..\n");
   checkResultsExact(&serial_output[0], &parallel_output[0], num_elems);
+
+  // if this is reached, then success
+  printf("CORRECT!\n");
 
 //  for (int i = 0; i < num_elems; i++)
 //    printf("%u%s", result[i], ((i % 8 == 7) ? "\n" : "\t"));
