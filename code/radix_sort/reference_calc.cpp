@@ -31,8 +31,8 @@ void reference_calculation(unsigned int* inputVals,
 //  (2 - 1) << 1 = 0000 0010
 //  ...
 
-    std::memset(binHistogram, 0, sizeof(unsigned int) * numBins); //zero out the bins
-    std::memset(binScan, 0, sizeof(unsigned int) * numBins); //zero out the bins
+    memset(binHistogram, 0, sizeof(unsigned int) * numBins); //zero out the bins
+    memset(binScan, 0, sizeof(unsigned int) * numBins); //zero out the bins
 
     //perform histogram of data & mask into bins
     for (unsigned int j = 0; j < numElems; ++j) {
