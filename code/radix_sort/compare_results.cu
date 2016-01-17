@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
   // call serial code
   printf("CALLING REFERENCE..\n");
   input_vals[0] = 10;
+  input_vals[10] = 2000;
   reference_calculation(&input_vals[0],  &input_pos[0],
                         &serial_output[0], &output_pos[0],
                         num_elems);
@@ -37,12 +38,12 @@ int main(int argc, char **argv) {
   checkResultsExact(&serial_output[0], &parallel_output[0], num_elems);
 
   // if this is reached, then success
-  printf("CORRECT!\n");
+  printf("SUCCESS!\n");
 
-  for (int i = 0; i < num_elems; i++)
-    printf("%u\t%u\n", parallel_output[i], serial_output[i]);
+//  for (int i = 0; i < num_elems; i++)
+//    printf("%u\t%u\n", parallel_output[i], serial_output[i]);
 //    printf("%u%s", result[i], ((i % 8 == 7) ? "\n" : "\t"));
-  printf("\n");
+//  printf("\n");
 
   return 0;
 }
