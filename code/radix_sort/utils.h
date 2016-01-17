@@ -25,14 +25,12 @@ void check(T err, const char* const func, const char* const file, const int line
 template<typename T>
 void checkResultsExact(const T* const ref, const T* const gpu, size_t numElem) {
   //check that the GPU result matches the CPU result
-  bool failed = false;
   for (size_t i = 0; i < numElem; ++i) {
     if (ref[i] != gpu[i]) {
       std::cerr << "FAILURE -- EXPECTED " << ref[i] << " == " << gpu[i] << std::endl;
-      failed = true;
+      exit(1);
     }
   }
-  if (failed) exit(1);
 }
 
 template<typename T>
