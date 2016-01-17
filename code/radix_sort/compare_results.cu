@@ -27,11 +27,11 @@ int main(int argc, char **argv) {
 
   // call serial code
   printf("CALLING REFERENCE..\n");
+  input_vals[0] = 10;
   reference_calculation(&input_vals[0],  &input_pos[0],
                         &serial_output[0], &output_pos[0],
                         num_elems);
 
-  input_vals[0] = 10;
   // compare results
   printf("COMPARING RESULTS..\n");
   checkResultsExact(&serial_output[0], &parallel_output[0], num_elems);
