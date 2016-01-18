@@ -1,6 +1,8 @@
 \section{Grids, Blocks, and Threads}
 \label{sec:grids blocks threads}
 
+\todo{merge with section 2.3}
+
 In \cref{sec:gpgpu memory architecture} we introduced the notion of grids, blocks and threads.
 From a development perspective the position of each block within the grid and each thread within its block is fetched with the built-in variables presented in \cref{tab:built-in variables}, which all have three dimensions (\ttt{x, y, z}).
 \todo{nice to have illustration of grids of blocks of threads}
@@ -28,6 +30,8 @@ As presented in \cref{sec:hardware specific numbers} the max number of threads p
 
 \subsection{Testing Warp Sizes}
 \label{sec:testing warp sizes}
+
+\todo{put in optimization section}
 
 In \cref{sec:gpu} we introduced the concept of a warp, a scheduler for launching threads within a kernel.
 \cref{tab:warp size testing} shows the average elapsed time over 1,000 runs for launching different threads, to see the impact compared to the amount of warps are needed.
