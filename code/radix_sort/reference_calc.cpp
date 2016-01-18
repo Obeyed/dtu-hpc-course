@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 
 //A simple un-optimized reference radix sort calculation
 //Only deals with power-of-2 radices

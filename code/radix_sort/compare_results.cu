@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv) {
   // change
-  const size_t num_elems = 1 << 10;
+  const size_t num_elems = 1 << 5;
   // define following as needed
   unsigned int* input_vals  = new unsigned int[num_elems];
   unsigned int* input_pos   = new unsigned int[num_elems];
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
   // call parallel code
   printf("CALLING GPU CODE..\n");
-  unsigned int* parallel_output = radix_sort(input, num_elems);
+  unsigned int* parallel_output = radix_sort(input_vals, num_elems);
 
   // call serial code
   printf("CALLING REFERENCE..\n");
@@ -35,9 +35,8 @@ int main(int argc, char **argv) {
   printf("COMPARING RESULTS..\n");
   checkResultsExact(&serial_output[0], &parallel_output[0], num_elems);
 
-//  for (int i = 0; i < num_elems; i++)
-//    printf("%u%s", result[i], ((i % 8 == 7) ? "\n" : "\t"));
-//  printf("\n");
+  // if this is reached, then success
+  printf("SUCCESS!\n");
 
   return 0;
 }
