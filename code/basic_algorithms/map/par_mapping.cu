@@ -26,7 +26,7 @@ void par_map(unsigned int* const h_out,
   // run kernel
   mapping_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_in, NUM_ELEMS);
   // copy values to host
-  cudaMemcpy(h_out, d_out, OUT_BYTES, cudaMemcpyDeviceToHost);
+  cudaMemcpy(h_out, d_out, ARRAY_BYTES, cudaMemcpyDeviceToHost);
   // free device memory
   cudaFree(d_in); cudaFree(d_out);
 }
