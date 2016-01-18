@@ -1,10 +1,44 @@
 \section{Compact}
 \label{sec:compact}
 
-This section presents the algorithm commonly known as compact or filter.
+This section presents the algorithm commonly known as compact (also known as filter).
+The idea is to take some input and only return the items that obey some predicate, e.g. whether or not the least significant bit (LSB) is 0.
+The algorithm can be divided into three steps
+%
+\begin{enumerate}
+  \item Calculate predicate array
+  \item Calculate scatter addresses from predicate array
+  \item Map desired items to output, given the scatter addresses
+\end{enumerate}
+%
+\Cref{lst:predicate} briefly presents a simple computation whether or not the LSB is 0, and saves the result to the \ttt{predicate} array.
 
-% calculate predicates
+\begin{lstlisting}[numbers=none, caption={LSB equal to 0 -- save items' result to predicate array.}, label={lst:predicate}]
+predicate[idx] = (int)((input[idx] & 1) == 0);
+\end{lstlisting}
 
-% compute scatter addresses
+The next step is to compute the addresses whereto the given items from the input array must be moved to.
+This can be computed with an exclusive sum scan over the \ttt{predicate} array.
+\Cref{tab:excl sum scan} presents a simple example, where the top row presents the input indices, then the items in each index, the predicate for that item, and the scatter address based on the predicates, respectively.
+
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{r | c c c c c c}
+    \toprule
+    \tbf{idx}             & 0 & 1 & 2 & 3 & 4 & 5 \\
+    \midrule
+    \tbf{items}           & 4 & 5 & 6 & 7 & 8 & 9 \\
+    \tbf{predicate}       & 1 & 0 & 1 & 0 & 1 & 0 \\
+    \tbf{scatter address} & 0 & 1 & 1 & 2 & 2 & 2 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Predicate and scatter address output given the input}
+  \label{tab:excl sum scan}
+\end{table}
+
+From the scatter addresses it is now possible to map the values where the predicate is 1 to a new output array.
+The contents of that array is thus the values where the LSB is 0.
+This array will be of length 3, because the reduction of the predicate array yields the value 3.
+The array will be \ttt{[4, 6, 8]}.
 
 
