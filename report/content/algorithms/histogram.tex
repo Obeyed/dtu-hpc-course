@@ -14,9 +14,9 @@ void simple_histo(int *d_bins, int *d_in, int BIN_SIZE, int SIZE) {
 }
 \end{lstlisting}
 
-\Cref{lst:hist seq} shows the sequential histogram code.
+\Cref{lst:hist seq} shows the serial histogram code.
 
-\begin{lstlisting}[caption={Sequential histogram}, label={lst:hist seq}]
+\begin{lstlisting}[caption={Serial histogram}, label={lst:hist seq}]
 void histogram(int *h_in, int *h_out, int IN_SIZE, int OUT_SIZE) {
   for (int l = 0; l < IN_SIZE; l++) 
     h_out[(h_in[l] % OUT_SIZE)]++;

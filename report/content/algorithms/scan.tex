@@ -32,9 +32,9 @@ void scan_kernel(int *d_out, int *d_in, int step, int SIZE) {
 %}
 %\end{lstlisting}
 
-\Cref{lst:scan seq} shows the sequential code for scan.
+\Cref{lst:scan seq} shows the serial code for scan.
 
-\begin{lstlisting}[caption={Sequential scan}, label={lst:scan seq}]
+\begin{lstlisting}[caption={Serial scan}, label={lst:scan seq}]
 void scan(int *h_int, int *h_out, int _SIZE) {
   h_out[0] = h_in[0];
   for (int l = 1; l < SIZE; ++l)

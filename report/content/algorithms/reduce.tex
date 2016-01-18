@@ -50,9 +50,9 @@ void reduce_kernel(int *d_out, int *d_in, int SIZE) {
 %}
 %\end{lstlisting}
 
-\Cref{lst:reduce seq} shows the sequential code for reduce.
+\Cref{lst:reduce seq} shows the serial code for reduce.
 
-\begin{lstlisting}[caption={Sequential reduce}, label={lst:reduce seq}]
+\begin{lstlisting}[caption={Serial reduce}, label={lst:reduce seq}]
 void reduce(int *h_in, int *h_out, int SIZE) {
   for (int l = 0; l < SIZE; ++l) 
     h_out[0] += h_in[l];

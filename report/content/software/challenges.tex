@@ -32,8 +32,8 @@ void naive_histogram_kernel(int *d_bins, const int *d_in, const int SIZE) {
 One solution to this problem is to use the atomic function where the given memory is locked while a thread is updating it and unlocked when the thread has completed the update.
 By replacing line 9 \& 10 with line 11 the kernel will execute an atomic operation.
 The atomic operation has a slight overhead, but the cost is small\todo{get some costs!}~\cite{udacity}.
-The issue with using atomic is that it will force a sequential access to a memory slot.
-In the worst case, when size of bin is one, the GPGPU is forced to act sequential.
+The issue with using atomic is that it will force a serial access to a memory slot.
+In the worst case, when size of bin is one, the GPGPU is forced to act in a serial manner.
 
 Another solution is to us a reduce algorithm to avoid the \ttt{atomicAdd()}.
 Here each thread will manage a local copy of the histogram, and combine these histograms two and two, to end up with a complete histogram from the entire amount of launched threads.

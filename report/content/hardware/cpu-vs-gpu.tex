@@ -6,6 +6,6 @@ It is true that a GPGPU has many more cores than a CPU, but the cores are signif
 The GPGPU niether have features for more general computer such as interrupts and virtual memory (used in modern dat operating systems).
 As a result, the two processing units are developed with two different goals and thus have different characteristics.
 
-As every type of problem might not have a parallel solution, and writing parallel code is a lot trickier than sequential code, the CPU is still very much needed.
+As every type of problem might not have a parallel solution, and writing parallel code is a lot trickier than serial code, the CPU is still very much needed.
 The role of the GPU has thus evolved to be an "accelerator" to the CPU, a specialized computing unit to accelerate parallelizable tasks.
 At runtime the CPU will thus initialize the GPU and send it data to process when faced with such parallelizable task, the relationship is called a host (CPU) to device (GPGPU) relationship.

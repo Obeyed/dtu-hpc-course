@@ -12,9 +12,9 @@ void map_kernel(int *d_out, int *d_in, int SIZE) {
 }
 \end{lstlisting}
 
-\Cref{lst:map seq} shows the sequential code for map.
+\Cref{lst:map seq} shows the serial code for map.
 
-\begin{lstlisting}[caption={Sequential map}, label={lst:map seq}]
+\begin{lstlisting}[caption={Serial map}, label={lst:map seq}]
 void map(int *h_in, int *h_out, int SIZE) {
   for (int j = 0; j < SIZE; j++) 
     h_out[j] = h_in[j];
