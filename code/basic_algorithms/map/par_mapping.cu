@@ -4,39 +4,32 @@
 __global__ 
 void mapping_kernel(unsigned int* const d_out, 
                     unsigned int* const d_in, 
-                    const unsigned int IN_SIZE) {
+                    const size_t NUM_ELEMS) {
 	const unsigned int myId = threadIdx.x + blockDim.x * blockIdx.x;
-	if (myId >= IN_SIZE) return;
+	if (myId >= NUM_ELEMS) return;
 	d_out[myId] = d_in[myId];
 }
 
-int main(int argc, char **argv)
-{
-		const unsigned int IN_SIZE = 1<<rounds;
-		const unsigned int IN_BYTES = sizeof(unsigned int) * IN_SIZE;
-		const unsigned int OUT_SIZE = IN_SIZE;
-		const unsigned int OUT_BYTES = IN_BYTES;
-		const dim3 NUM_THREADS(1<<10);
-		const dim3 NUM_BLOCKS(IN_SIZE/NUM_THREADS.x + ((IN_SIZE % NUM_THREADS.x)?1:0));
+unsigned int* par_map(unsigned int* h_input, const size_t NUM_ELEMS) {
+  const int BLOCK_SIZE  = 512;
+  const int GRID_SIZE   = NUM_ELEMS / BLOCK_SIZE + 1;
+  const unsigned int ARRAY_BYTES = sizeof(unsigned int) * NUM_ELEMS;
 
-		// Generate the input array on host
-		unsigned int * h_in = new unsigned int[IN_SIZE];
-		unsigned int * h_out = new unsigned int[OUT_SIZE];
+  // host memory
+  unsigned int* h_output = new unsigned int[NUM_ELEMS];
 
-		// Declare GPU memory pointers
-		unsigned int * d_in;
-		unsigned int * d_out;
+  // device memory
+  unsigned int *d_input *d_out;
+  checkCudaErrors(cudaMalloc((void **) &d_input, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_out,   ARRAY_BYTES));
 
-		// Allocate GPU memory
-		cudaMalloc((void **) &d_in, IN_BYTES);
-		cudaMalloc((void **) &d_out, OUT_BYTES);
+  // Transfer the arrays to the GPU
+  cudaMemcpy(d_in, h_in, ARRAY_BYTES, cudaMemcpyHostToDevice);
+  // run kernel
+  mapping_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_in, NUM_ELEMS);
+  // copy values to host
+  cudaMemcpy(h_out, d_out, OUT_BYTES, cudaMemcpyDeviceToHost);
+  cudaFree(d_in); cudaFree(d_out);
 
-		// Transfer the arrays to the GPU
-		cudaMemcpy(d_in, h_in, IN_BYTES, cudaMemcpyHostToDevice);
-
-            mapping_kernel<<<NUM_BLOCKS, NUM_THREADS>>>(d_out, d_in, IN_SIZE);
-		cudaMemcpy(h_out, d_out, OUT_BYTES, cudaMemcpyDeviceToHost);
-		cudaFree(d_in);
-		cudaFree(d_out);
-	}
+  return h_out;
 }
