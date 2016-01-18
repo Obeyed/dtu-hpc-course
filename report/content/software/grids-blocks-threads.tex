@@ -2,8 +2,25 @@
 \label{sec:grids blocks threads}
 
 \todo{merge with section 2.3}
+In \cref{sec:gpgpu memory architecture} we introduced thenotion of grids, blocks and threads.
 
-In \cref{sec:gpgpu memory architecture} we introduced the notion of grids, blocks and threads.
+
+The computation on GPGPU is done through the use of "threads".
+Threads are scheduled in ``warps'' by ``blocks'', where the blocks are organized in ``grids''.
+A thread is an independant sequence of work where the sequence is defined by instructions of the kernel.
+A thread has an ID, being a the given threads number in a set of threads, which it uses to coordinate its work without exchange of information between other processors.
+\todo{warp}.
+To organize threads and utilize the ability to communicate between threads on an SM where memory access is fast, the concept of blocks has emerged.
+A block contains a set amount of threads, has a set amount of L1 cache on the SM reserved and is able to synchronize between threads at any point along executing a kernel.
+It further ensures that every thread is runned before terminating the block.
+As a single block might not be able to carry out all work in a job, a grid is defined to numerate the amount of blocks that are required to support computation of the job.
+However, the grid does does not support the same type of operations as the block, such as synchronization at a specific point in the kernel or fast shared memory.
+The reason is that a grid might contain more blocks than a single SM can handle, why shared memory would not make sense.
+\todo{still needs some more shizzle}
+
+ Threads are scheduling of work on a GPGPU is done through the usage computed through
+
+
 From a development perspective the position of each block within the grid and each thread within its block is fetched with the built-in variables presented in \cref{tab:built-in variables}, which all have three dimensions (\ttt{x, y, z}).
 \todo{nice to have illustration of grids of blocks of threads}
 
