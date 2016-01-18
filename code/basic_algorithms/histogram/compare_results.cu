@@ -1,4 +1,4 @@
-#include "par_scan.h"
+#include "par_histogram.h"
 #include "reference_calc.h"
 #include "utils.h"
 #include <stdlib.h>
