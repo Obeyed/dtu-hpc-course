@@ -1,6 +1,6 @@
 #include "reference_calc.h"
 
-void reference_calculcation(unsigned int* const h_out,
+void reference_calculation(unsigned int* const h_out,
                             unsigned int* const h_in,
                             const unsigned int NUM_ELEMS) {
   h_out[0] = 0;
