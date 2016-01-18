@@ -88,12 +88,22 @@ void merge(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsigne
 
 void fastHisto(unsigned int * d_out, unsigned int * d_in, unsigned int IN_SIZE, unsigned int GRID_SIZE, unsigned int OUT_SIZE){
   //Setting up major histo
+  printf("---fastHisto: STARTED---\n");
   unsigned int ** d_out_all, ** d_out_all_trans;
   unsigned int GRID_SIZE_ALL = GRID_SIZE * OUT_SIZE;
   unsigned int GRID_BYTES_ALL = GRID_SIZE_ALL * sizeof(unsigned int);
+  printf("---fastHisto: DECLARED---\n");
+  printf("---GRID_SIZE_ALL---: %d\n", GRID_SIZE_ALL);
+  printf("---GRID_BYTES_ALL---: %d\n", GRID_BYTES_ALL);
   cudaMalloc(&d_out_all, GRID_BYTES_ALL);
+  printf("---fastHisto: D_OUT_ALL MALLOC---\n");
   cudaMemset(d_out_all, 0, GRID_BYTES_ALL);
+  printf("---fastHisto: D_OUT_ALL MEMSET---\n");
   fastHisto_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out_all, d_in, IN_SIZE);
+  printf("---fastHisto: FH KERNEL COMPLETE---\n");
+  unsigned int * h_out_test = (unsigned int *)malloc(GRID_BYTES_ALL);
+  cudaMemcpy(h_out_test, d_out_all, GRID_BYTES_ALL, cudaMemcpyDeviceToHost);
+  for(unsigned int i = 0; i<OUT_SIZE; i++) printf("%d:%d-\n", i, h_out_test[i]);
   cudaMalloc(&d_out_all_trans, GRID_BYTES_ALL);
   transpose_kernel<<<1, 1>>>(d_out_all_trans, d_out_all, GRID_SIZE, OUT_SIZE);
   cudaFree(d_out_all);
@@ -116,8 +126,8 @@ int main(int argc, char **argv){
   unsigned int h_filler;
   unsigned int sum;
 
-  for(unsigned int rounds = 2; rounds<8; rounds++){
-    IN_SIZE = 1<<8;
+  for(unsigned int rounds = 1; rounds<2; rounds++){
+    IN_SIZE = 1<<2;
     IN_BYTES = sizeof(unsigned int) * IN_SIZE;
     OUT_SIZE = 1<<rounds;
     OUT_BYTES = sizeof(unsigned int) * OUT_SIZE;
@@ -137,9 +147,9 @@ int main(int argc, char **argv){
     printf("---BLOCK_SIZE---: %d\n", BLOCK_SIZE);
     printf("---GRID_SIZE---: %d\n", GRID_SIZE);
 
-    unsigned * d_in;
-	unsigned * d_out;
-	// Allocate GPU memory
+    unsigned int * d_in;
+	  unsigned int * d_out;
+	  // Allocate GPU memory
     cudaMalloc(&d_in, IN_BYTES);
     printf("---ALLOCATED D_IN---\n");
     cudaMalloc(&d_out, OUT_BYTES);
@@ -147,13 +157,15 @@ int main(int argc, char **argv){
 
     // Transfer the arrays to the GPU
     cudaMemcpy(d_in, h_in, IN_BYTES, cudaMemcpyHostToDevice);
-
+    printf("---MEMCPY D_IN---\n");
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     cudaEventRecord(start, 0);
+    printf("---START/STOP SETUP COMPLETE---\n");
     // running the code on the GPU
     cudaMemset(d_out, 0, OUT_BYTES);
+    printf("---CUDAMEMSET D_OUT COMPLETE---\n");
     fastHisto(d_out, d_in, IN_SIZE, GRID_SIZE, OUT_SIZE);
 //    simple_histo<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_in, OUT_SIZE, IN_SIZE);
     cudaEventRecord(stop, 0);
