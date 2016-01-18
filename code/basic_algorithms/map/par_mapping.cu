@@ -1,4 +1,4 @@
-#include <par_mapping.h>
+#include "par_mapping.h"
 
 __global__ 
 void mapping_kernel(unsigned int* const d_out, 
