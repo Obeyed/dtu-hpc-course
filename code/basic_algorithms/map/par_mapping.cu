@@ -1,5 +1,4 @@
 #include <par_map.h>
-#include <cuda_runtime.h>
 
 __global__ 
 void mapping_kernel(unsigned int* const d_out, 
@@ -10,17 +9,16 @@ void mapping_kernel(unsigned int* const d_out,
 	d_out[myId] = d_in[myId];
 }
 
-unsigned int* par_map(unsigned int* h_input, const size_t NUM_ELEMS) {
+void par_map(unsigned int* const h_out, 
+             unsigned int* const h_in,
+             const size_t NUM_ELEMS) {
   const int BLOCK_SIZE  = 512;
   const int GRID_SIZE   = NUM_ELEMS / BLOCK_SIZE + 1;
   const unsigned int ARRAY_BYTES = sizeof(unsigned int) * NUM_ELEMS;
 
-  // host memory
-  unsigned int* h_output = new unsigned int[NUM_ELEMS];
-
   // device memory
-  unsigned int *d_input *d_out;
-  checkCudaErrors(cudaMalloc((void **) &d_input, ARRAY_BYTES));
+  unsigned int *d_in, *d_out;
+  checkCudaErrors(cudaMalloc((void **) &d_in, ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_out,   ARRAY_BYTES));
 
   // Transfer the arrays to the GPU
@@ -29,7 +27,6 @@ unsigned int* par_map(unsigned int* h_input, const size_t NUM_ELEMS) {
   mapping_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_in, NUM_ELEMS);
   // copy values to host
   cudaMemcpy(h_out, d_out, OUT_BYTES, cudaMemcpyDeviceToHost);
+  // free device memory
   cudaFree(d_in); cudaFree(d_out);
-
-  return h_out;
 }

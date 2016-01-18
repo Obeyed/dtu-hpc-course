@@ -5,6 +5,6 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 
-unsigned int* par_map(unsigned int*, const size_t);
+void par_map(unsigned int* const, unsigned int* const, const size_t);
 
 #endif
