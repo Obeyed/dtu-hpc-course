@@ -1,7 +1,7 @@
 GPP=g++
 NVCC=nvcc
 ARCH_SM=sm_13 # change this according to the device's compute capability
-MKFILE_PATH=$(abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_PATH=$(shell pwd) # must be executed from the makefile's folder
 RADIX_FOLDER=radix_sort/
 ALGORITHMS=basic_algorthms/
 MAP_FOLDER=$(ALGORITHMS)map/
