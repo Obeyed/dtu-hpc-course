@@ -35,6 +35,8 @@ The atomic operation has a slight overhead, but the cost is small\todo{get some 
 The issue with using atomic is that it will force a serial access to a memory slot.
 In the worst case, when size of bin is one, the GPGPU is forced to act in a serial manner.
 
+\todo{move to optimization}
+
 Another solution is to us a reduce algorithm to avoid the \ttt{atomicAdd()}.
 Here each thread will manage a local copy of the histogram, and combine these histograms two and two, to end up with a complete histogram from the entire amount of launched threads.
 We present reduce algorithm in \cref{sec:reduce} and a reduce\_histogram which we will benchmark with the atomic histogram.

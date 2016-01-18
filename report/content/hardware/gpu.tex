@@ -19,7 +19,7 @@ By making each SM independent, memory access and computation are performed faste
 The cores on each SM are Single Instruction, Multiple Data (SIMD) ALUs.
 As the cores are constrained to run the same piece of code, though with different data, the software paradigm of ``kernels'' has developed.
 A kernel is a describtion of a set of instruction that all cores across all SMs performs independantly of one another.
-
+\todo{wait with thread and block definition?}
 The work given to the GPU is distributed to the SMs by the Giga-Thread global scheduler.
 The Giga-thread scheduler holds metainformation on the SMs, which allows it to optimize workloads across the GPGPU's independent processors.
 The scheduling of work on a GPGPU is computed through ``blocks'', containing ``threads'' and organized in ``grids''.
@@ -40,6 +40,8 @@ Something more specified in software\cref{chap:software}.
 
 The SMs receive instructions from the scheduler in a cache and uses ``warp'' schedulers distribute the work to the cores for execution.
 A warp is a collection of a subset of threads to facilitate the block in scheduling work.
+
+\todo{again, threads?}
 The warps only runs a fixed amount of threads, so if the block does not fit perfectly into the warp, the warp will execute empty threads.
 As block size is defined by the developer, the developer must be familiar with the warp size.
 At runtime, every thread has access to its own registers called local memory.
@@ -56,7 +58,7 @@ Compared to the SIMD cores, the SFUs are designed specifically to perform their 
 
 \subsection{Hardware Specific Numbers}
 \label{sec:hardware specific numbers}
-
+\todo{we use the hardware specification in the "optimization" section as to how we utilize the SM architecture}
 Throughout this report, we will be using the Tesla K40 GPU~\cite{teslak402013nvidia}.
 For future reference \cref{tab:tesla k40 specs} presents the specifications for our GPU device.
 In \cref{ap:tesla k40 specifications} we desribe which commands were used to find the specifications for our device.
