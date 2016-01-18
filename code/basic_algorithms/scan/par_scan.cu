@@ -22,7 +22,7 @@ void scan_wrapper(unsigned int* const d_out,
 	int GRID_SIZE = SIZE/BLOCK_SIZE + 1;
 
   // device memory
-	int *d_tmp;
+	unsigned int *d_tmp;
 	cudaMalloc((void **) &d_tmp, BYTES);
 	cudaMemcpy(d_tmp, d_in, BYTES, cudaMemcpyDeviceToDevice);
 
