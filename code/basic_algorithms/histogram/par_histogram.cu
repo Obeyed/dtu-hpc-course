@@ -5,13 +5,13 @@ void histogram_kernel(unsigned int* const d_bins,
                       unsigned int* const d_in, 
                       const unsigned int BIN_SIZE, 
                       const size_t IN_SIZE) {
-	unsigned int mid = threadIdx.x + blockDim.x * blockIdx.x;
-	if (mid >= IN_SIZE) return;
+  unsigned int mid = threadIdx.x + blockDim.x * blockIdx.x;
+  if (mid >= IN_SIZE) return;
 
-	unsigned int item = d_in[mid];
-	unsigned int bin = item % BIN_SIZE;
+  unsigned int item = d_in[mid];
+  unsigned int bin = item % BIN_SIZE;
 
-	atomicAdd(&(d_bins[bin]), 1);
+  atomicAdd(&(d_bins[bin]), 1);
 }
 
 

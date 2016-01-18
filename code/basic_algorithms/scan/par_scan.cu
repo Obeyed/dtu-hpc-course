@@ -6,12 +6,12 @@ void scan_kernel(unsigned int* const d_out,
                  unsigned int* const d_in, 
                  int step, 
                  size_t SIZE) {
-	int tid = threadIdx.x + blockDim.x * blockIdx.x;
-	if (tid >= SIZE) return;
+  int tid = threadIdx.x + blockDim.x * blockIdx.x;
+  if (tid >= SIZE) return;
 
-	int val = d_in[tid];
-	int toAdd = (((tid - step) < 0) ? 0 : d_in[tid - step]);
-	d_out[tid] = val + toAdd;
+  int val = d_in[tid];
+  int toAdd = (((tid - step) < 0) ? 0 : d_in[tid - step]);
+  d_out[tid] = val + toAdd;
 }
 
 void scan_wrapper(unsigned int* const d_out, 
@@ -19,19 +19,19 @@ void scan_wrapper(unsigned int* const d_out,
                   const size_t SIZE, 
                   const unsigned int BYTES,
                   const unsigned int BLOCK_SIZE) {
-	int GRID_SIZE = SIZE/BLOCK_SIZE + 1;
+  int GRID_SIZE = SIZE/BLOCK_SIZE + 1;
 
   // device memory
-	unsigned int *d_tmp;
-	cudaMalloc((void **) &d_tmp, BYTES);
-	cudaMemcpy(d_tmp, d_in, BYTES, cudaMemcpyDeviceToDevice);
+  unsigned int *d_tmp;
+  cudaMalloc((void **) &d_tmp, BYTES);
+  cudaMemcpy(d_tmp, d_in, BYTES, cudaMemcpyDeviceToDevice);
 
   // stops when step is larger than array size, happens at O(log2(SIZE))
   for (int step = 1; step < SIZE; step <<= 1) {
-		scan_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_tmp, step, SIZE);
-		cudaMemcpy(d_tmp, d_out, BYTES, cudaMemcpyDeviceToDevice);
-	}
-	cudaFree(d_tmp);
+    scan_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_tmp, step, SIZE);
+    cudaMemcpy(d_tmp, d_out, BYTES, cudaMemcpyDeviceToDevice);
+  }
+  cudaFree(d_tmp);
 }
 
 void par_scan(unsigned int* const h_out, 

@@ -4,9 +4,9 @@ __global__
 void mapping_kernel(unsigned int* const d_out, 
                     unsigned int* const d_in, 
                     const size_t NUM_ELEMS) {
-	const unsigned int myId = threadIdx.x + blockDim.x * blockIdx.x;
-	if (myId >= NUM_ELEMS) return;
-	d_out[myId] = d_in[myId];
+  const unsigned int myId = threadIdx.x + blockDim.x * blockIdx.x;
+  if (myId >= NUM_ELEMS) return;
+  d_out[myId] = d_in[myId];
 }
 
 void par_map(unsigned int* const h_out, 
