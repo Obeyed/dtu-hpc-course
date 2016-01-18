@@ -5,6 +5,6 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 
-void par_histogram(unsigned int* const, unsigned int* const, const size_t);
+void par_histogram(unsigned int* const, unsigned int* const, const size_t, const unsigned int);
 
 #endif
