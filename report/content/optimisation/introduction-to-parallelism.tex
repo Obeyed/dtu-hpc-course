@@ -2,8 +2,8 @@
 \label{sec:introduction to parallelism}
 The goal of using GPGPUs is to solve computational problems, either faster or bigger than what was previously possible with CPUs.
 Often a simple port of a piece of code, given it has a parallel nature, will resolve in a significant speed-up (x3-x5).
-However, utilizing the software and hardware it is possible to go way beyond the initial x3-x5 speed-up.
-The principels of GPGPU programming when coding for efficiency is to maximize usefull operations by minimizing memory bottlenecks and divergence that forces waiting times amongst threads.
+However, utilizing the software and hardware it is possible to go way beyond the initial speed-up.
+The principels of GPGPU programming when coding for efficiency is to maximize usefull operations by minimizing memory bottlenecks and divergence that forces waiting time amongst threads.
 
 It is usefull to abstract the optimization to different levels as some optimizations might be more usefull than others.
 
@@ -11,11 +11,12 @@ It is usefull to abstract the optimization to different levels as some optimizat
 \item Picking good algorithms
 \item Basic principles for efficiency
 \item Arch-specific detailed optimizations
-\item micro optimizations
+\item Micro optimizations
 \end{enumerate}
 
-The single most important element in optimization is to pick an algorithm with strong asymptotic bounds. Optimizing insertion sort $O(n^2)$ as opposed to merge-sort $O(nlgn)$ would make even a naive implementation of merge-sort vastly supperior to a very optimized version of insertion sort.
-We will discuss algorithmic specific for parallel coding in \todo{cref software} 
+The single most important element in optimization is to pick an algorithm with strong asymptotic bounds.
+Optimizing insertion sort $O(n^2)$ as opposed to merge-sort $O(nlgn)$ would make even a naive implementation of merge-sort vastly supperior to a very optimized version of insertion sort.
+We will discuss algorithmic specific for parallel coding in \cref{sec:software optimisations}
 
 Further, when considering algorithms for parallel purposes, the parallizability in an algorithm is of importance.
 When designing algorithms we will view the computations as a directed acyclic graph(DAG).
