@@ -17,7 +17,7 @@ The algorithm can be divided into three steps
 predicate[idx] = (int)((input[idx] & 1) == 0);
 \end{lstlisting}
 
-The next step is to compute the addresses whereto the given items from the input array must be moved to.
+The next step is to compute the addresses to which the given items from the input array must be moved.
 This can be computed with an exclusive sum scan over the \ttt{predicate} array.
 \Cref{tab:excl sum scan} presents a simple example, where the top row presents the input indices, then the items in each index, the predicate for that item, and the scatter address based on the predicates, respectively.
 

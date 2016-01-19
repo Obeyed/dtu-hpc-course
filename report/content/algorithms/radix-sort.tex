@@ -1,5 +1,45 @@
 \section{Radix Sort}
 \label{sec:radix sort}
 
-In \cref{ap:radix sort} we present our parallel implementation of Radix Sort.
+In \cref{ap:radix sort} we present our parallel implementation of radix sort.
 We will shortly present the steps we took to build the implementation.
+Radix sort iteratively looks at each bit of the integer and checks if the LSB is 0.
+It then moves the values accordingly.
+This is done for each bit in each integer, and the result is a brute force algorithm that sorts the values.
+
+% iteratively do for each bit
+
+\paragraph{Compute Predicates}
+  % predicate kernel
+The first step is to find the elements that obey the predicate.
+For radix sort we look at the LSB of every bit of the integers.
+The predicate is as presented in \cref{lst:predicate radix}.
+
+\begin{lstlisting}[caption={predicate to calculate}, label={lst:predicate radix}]
+d_predicate[mid] = (int)(((d_val_src[mid] & (1 << i)) >> i) == 0)
+\end{lstlisting}
+
+The \ttt{d\_predicate} will contain 0s and 1s.
+If the LSB is 0, it will contain a 1 for that element.
+The elements in \ttt{d\_val\_src} are traversed and labelled accordingly.
+
+For each iteration of the outer loop, we count the \ttt{i} variable up.
+This way we can left shift the integer 1 by \ttt{i} positions to move to the next LSB in the row.
+When perform the bitwise-and, and shift it back to see if it is equal to 0.
+
+Furthermore, we save the toggled version of the predicate array, to be able to compute the scatter addresses for the elements, that do not obey the predicate.
+We do this, because we must maintain the order of the elements in the output array.
+
+\subsection*{Compute Scatter Addresses}
+  % exclusive sum scan predicate (scatter addresses)
+
+\subsection*{Compute Amount of Predicates}
+  % reduce predicate
+
+\subsection*{Add Offset to Scatter Address}
+  % add offset to scatter address for toggled predicate
+
+\subsection*{Compact Accordingly}
+  % map to output based on scatter addresses (compact)
+
+
