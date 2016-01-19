@@ -1,24 +1,30 @@
 \section{Histogram}
 \label{sec:histogram}
 
-\Cref{lst:histo par} shows the histogram kernel.
+The histogram algorithm simply categorises each input element into a bin, for which it obeys the given category.
+Such a category could be to have $k$ bins, and we want to categorise the elements by their remainder after being divided by $k$, i.e. $8\ \%\ 7 = 1$, where $k = 7$ and the element is placed in bin number $1$.
+A serial example is presented int \cref{lst:hist seq}.
+We will have $k$ bins in the output.
+
+\begin{lstlisting}[caption={Serial histogram}, label={lst:hist seq}]
+void histogram(int *h_in, int *h_out, int IN_SIZE, int k) {
+  for (int l = 0; l < IN_SIZE; l++) 
+    h_out[(h_in[l] % k)]++;
+}
+\end{lstlisting}
+
+In \cref{sec:challenges with parallel programs} we presented a naive implementation of the histogram kernel.
+To avoid race conditions we use the \ttt{atomicAdd()} function to perform an atomic update on the given bin.
+We present the parallel implementation in \cref{lst:histo par}.
 
 \begin{lstlisting}[caption={Simple parallel histogram implementation}, label={lst:histo par}]
 __global__ 
-void simple_histo(int *d_bins, int *d_in, int BIN_SIZE, int SIZE) {
+void histo_kernel(int *d_bins, int *d_in, int BIN_SIZE, int SIZE) {
   int tid = threadIdx.x + blockDim.x * blockIdx.x;
   if (tid >= SIZE) return; // checking for out-of-bounds
-  int item = d_in[tid], 
-      bin  = item % BIN_SIZE;
+
+  int bin = d_in[tid] % BIN_SIZE;
   atomicAdd(&(d_bins[bin]), 1);
 }
 \end{lstlisting}
 
-\Cref{lst:hist seq} shows the serial histogram code.
-
-\begin{lstlisting}[caption={Serial histogram}, label={lst:hist seq}]
-void histogram(int *h_in, int *h_out, int IN_SIZE, int OUT_SIZE) {
-  for (int l = 0; l < IN_SIZE; l++) 
-    h_out[(h_in[l] % OUT_SIZE)]++;
-}
-\end{lstlisting}
