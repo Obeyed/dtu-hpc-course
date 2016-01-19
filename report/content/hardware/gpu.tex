@@ -22,29 +22,10 @@ A kernel is a describtion of a set of instruction that all cores across all SMs 
 \todo{wait with thread and block definition?}
 The work given to the GPU is distributed to the SMs by the Giga-Thread global scheduler.
 The Giga-thread scheduler holds metainformation on the SMs, which allows it to optimize workloads across the GPGPU's independent processors.
-The scheduling of work on a GPGPU is computed through ``blocks'', containing ``threads'' and organized in ``grids''.
-The thread is an independant sequence of work, where the sequence is defined by instructions of the kernel.
-A thread can use its ID, being a number in a set of threads, which it uses to coordinate its own work.
-To organize threads and utilize the ability to communicate between threads on an SMs where memory access is fast, the concept of blocks has emerged.
-A block containts a set amount of threads, has a set amount of L1 cache on the SM reserved and is able to synchronize between threads at any point in the kernel.
-It further ensures that every thread is runned before terminating the block.
-As a single block might not be able to carry out all work in a job a grid is defined to numerate the amount of blocks that are required to support computation of the job.
-However, the grid does not support the same type of operations as the block, such as synchronization at a specific point in the kernel or fast shared memory.
-The reason is that a grid might contain more blocks than a single SM can handle, why shared memory would not make sense.
-Further, the total amount of blocks might be larger than what the GPGPU can support at once, why deadlocks can apear if inter-kernel synchronization was supported.
-The only feature supported by the grid, is that it finish launching all blocks before starting the next kernel.
-Why using kernel wrappers might be required in some algorithms.
-As the grid does not provide guarantees of how many blocks to run at once or where to run them, it allows the scheduler to fit the kernel specification to any GPGPU supporting the CUDA instructions in the kernel and block size specification.
+The SMs receive instructions from the scheduler in a cache schedules the work for execution on the cores in the SM.
+We will go more into depth regarding the specifics on scheduling of independant processes in \cref{chap:software}.
 
-Something more specified in software\cref{chap:software}.
-
-The SMs receive instructions from the scheduler in a cache and uses ``warp'' schedulers distribute the work to the cores for execution.
-A warp is a collection of a subset of threads to facilitate the block in scheduling work.
-
-\todo{again, threads?}
-The warps only runs a fixed amount of threads, so if the block does not fit perfectly into the warp, the warp will execute empty threads.
-As block size is defined by the developer, the developer must be familiar with the warp size.
-At runtime, every thread has access to its own registers called local memory.
+At runtime, every independant process has access to its own registers called local memory.
 Each SM has shared memory for high-speed data sharing between threads in a block called shared memory.
 To supply the SMs with data the GPGPU contains a larger amount of global data available to all SMs.
 
@@ -58,7 +39,9 @@ Compared to the SIMD cores, the SFUs are designed specifically to perform their 
 
 \subsection{Hardware Specific Numbers}
 \label{sec:hardware specific numbers}
-\todo{we use the hardware specification in the "optimization" section as to how we utilize the SM architecture}
+Using CUDA functionality we are able to extract hardware specific numbers from the GPGPU.
+We we use the hardware specification in \cref{optimization} as to how we utilize the given architecture to optimize our kernel to the hardware.
+
 Throughout this report, we will be using the Tesla K40 GPU~\cite{teslak402013nvidia}.
 For future reference \cref{tab:tesla k40 specs} presents the specifications for our GPU device.
 In \cref{ap:tesla k40 specifications} we desribe which commands were used to find the specifications for our device.
