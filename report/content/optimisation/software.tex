@@ -1,4 +1,27 @@
 \section{Software Optimisations}
 \label{sec:software optimisations}
+When considering algorithms for parallel purposes, the parallizability in an algorithm is of importance.
+When designing algorithms we will view the computations as a directed acyclic graph(DAG).
+This graph will have a set of computational steps linked togetther from top till bottom such as illustrated by the Hillis and Steele scan in figure. \todo{cref}
+The important aspect is the workload to step ratio.
+The workload gives the total amount of work nessesary for the algorithm whereas the step size determines the amount of serial work in the algorithm.
+This approach of analysing the properties of the computational steps in an algorithm is thightly knit with Amdahls law for strong scaling.
+The step size compared with the total workload thus gives an idear of the amount of non-paralizable content in the algorithm.
 
+It is beneficial to both reduce stepsize (increasing parallerizability) and reduce workload (total amount of work).
+However, these goals are often not alligned as we will show with the two scan algorithms: Hillis \& Steele's inclusive scan and Blelloch's exclusive scan.
+Hillis \& Steele, which we have implemented in \cref{sec:scan}, has the following properties:
+\begin{equation*}
+Work: O(n lg n)
+Step: O(lg n)
+\end{equation*}
 
+Blelloch has the following properties:
+\begin{equation*}
+Work: O(n)
+Step: O(lg n)
+\end{equation*}
+However, in Blelloch there is a hidden multiple constant of two in the stepsize.
+
+Even though the workload is larger for the Hillis \& Steele scan if the amount of work at any given step in the algorithm is smaller than the total amount of available processors then the Hillis \& Steele algorithm will finish faster.
+However, if the workload is significantly larger than the amount of available processors and the stepsize is not the bottleneck, then the Blelloch scan will be superior.
