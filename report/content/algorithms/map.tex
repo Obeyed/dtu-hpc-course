@@ -6,9 +6,9 @@
 \begin{lstlisting}[caption={Map kernel}, label={lst:map par}]
 __global__ 
 void map_kernel(int *d_out, int *d_in, int SIZE) {
-  int tid = threadIdx.x + blockDim.x * blockIdx.x;
-  if (tid >= SIZE) return; // checking for out-of-bounds
-  d_out[tid] = d_in[tid];
+  int mid = threadIdx.x + blockDim.x * blockIdx.x;
+  if (mid >= SIZE) return; // checking for out-of-bounds
+  d_out[mid] = d_in[mid];
 }
 \end{lstlisting}
 
