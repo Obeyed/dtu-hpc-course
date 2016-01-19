@@ -1,18 +1,10 @@
 \section{Map}
 \label{sec:map}
 
-\Cref{lst:map par} shows the map kernel.
-
-\begin{lstlisting}[caption={Map kernel}, label={lst:map par}]
-__global__ 
-void map_kernel(int *d_out, int *d_in, int SIZE) {
-  int tid = threadIdx.x + blockDim.x * blockIdx.x;
-  if (tid >= SIZE) return; // checking for out-of-bounds
-  d_out[tid] = d_in[tid];
-}
-\end{lstlisting}
-
-\Cref{lst:map seq} shows the serial code for map.
+The task of mapping data from some input to some output is a simple task.
+The serial code for a mapping operation is presented in \cref{lst:map seq}.
+The code loops through each index of the input, and copies the value to the same index in the output.
+This operation will take \ttt{SIZE} steps to finish, because we simple loop through all elements.
 
 \begin{lstlisting}[caption={Serial map}, label={lst:map seq}]
 void map(int *h_in, int *h_out, int SIZE) {
@@ -20,3 +12,23 @@ void map(int *h_in, int *h_out, int SIZE) {
     h_out[j] = h_in[j];
 }
 \end{lstlisting}
+
+The nature of the serial solution is an optimal parallel solution.
+Every copy operation is independent of the others, which means they can be performed completely in parallel.
+We present a simple kernel that perform such a map operation in \cref{lst:map par}.
+
+\begin{lstlisting}[caption={Map kernel}, label={lst:map par}]
+__global__ 
+void map_kernel(int *d_out, int *d_in, int SIZE) {
+  int mid = threadIdx.x + blockDim.x * blockIdx.x;
+  if (mid >= SIZE) return;
+  d_out[mid] = d_in[mid];
+}
+\end{lstlisting}
+
+First the kernel calculates the index of thread as a product of its position in the block and grid.
+Next, the kernel makes sure that the index is inside the bounds of the arrays, it is operating on.
+Finally, the input is copied to the new output.
+
+The step size of the map kernel is 1, because all operations can be performed completely independent of the others.
+The work size is equal to \ttt{SIZE} big, because we still need to copy all elements from array to array.
