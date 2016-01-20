@@ -1,0 +1,32 @@
+\section{Help}
+\label{sec:help}
+
+The work performed for this project has mostly been independent study.
+Aside from the references given throughout the report, we have used the stackoverflow website to ask question to the community.
+We submitted the following questions to stackoverflow
+
+\begin{itemize}
+  \item Why does shared memory ensure coalesced writes~\footnote{\href{http://stackoverflow.com/questions/34881190/shared-memory-writes-coalesced-writes}{http://stackoverflow.com/questions/34881190/shared-memory-writes-coalesced-writes}}
+  \item Debugging out-of-bounds errors~\footnote{\href{http://stackoverflow.com/questions/34898507/cuda-out-of-bounds-write-when-transposing}{http://stackoverflow.com/questions/34898507/cuda-out-of-bounds-write-when-transposing}}
+  \item Large values in local memory~\footnote{\href{http://stackoverflow.com/questions/34655893/cuda-large-input-arrays}{http://stackoverflow.com/questions/34655893/cuda-large-input-arrays}}
+  \item Developing a reduce algorithm~\footnote{\href{http://stackoverflow.com/questions/34596490/cuda-reduce-algorithm}{http://stackoverflow.com/questions/34596490/cuda-reduce-algorithm}}
+\end{itemize}
+
+Furthermore, we have used the GPU Lab at the Technical University of Denmark (DTU) to run our CUDA code.
+We connected with \ttt{ssh} to the gpu lab address with our username as 
+%
+\begin{quote}
+  \ttt{ssh {username}@login.gbar.dtu.dk}
+\end{quote}
+%
+To load the needed modules and get access to the correct resources we used the following commands
+%
+\begin{quote}
+  \ttt{qrsh \&\& k40sh \&\& module load cuda}
+\end{quote}
+%
+We compiled our CUDA code with the \ttt{nvcc} compiler and ran it with the following command
+%
+\begin{quote}
+  \ttt{nvcc -arch=sm\_35 -o test cudaCode.cu \&\& ./test}
+\end{quote}
