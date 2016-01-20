@@ -66,7 +66,7 @@ void reduce(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsign
   // Recursively solving, will run approximately log base NUM_THREADS times.
   do
   {
-    shared_reduce_kernel<<<NUM_BLOCKS, NUM_THREADS, SMEM>>>(d_intermediate_out, d_intermediate_in, SIZE);
+    shared_reduce_kernel<<<NUM_BLOCKS, NUM_THREADS, (NUM_THREADS * sizeof(unsigned int))>>>(d_intermediate_out, d_intermediate_in, SIZE);
 
     // Updating SIZE
     SIZE = NUM_BLOCKS;//SIZE / NUM_THREADS + SIZE_REST;
