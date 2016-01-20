@@ -4,6 +4,30 @@
 #include <iostream>
 #include <fstream>
 
+
+// Computes the sum of elements in d_in in shared memory
+__global__ 
+void shared_reduce_kernel(unsigned int* const d_out,
+                          unsigned int* const d_in,
+                          const size_t NUM_ELEMS) {
+  unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned int tid = threadIdx.x;
+
+  extern __shared__ unsigned int* sdata;  // allocate shared memory
+  sdata[tid] = d_in[mid];                 // each thread loads global to shared
+  __syncthreads();                        // make sure all threads are done
+
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>=1) {
+    if ((tid < s) && ((pos + s) < NUM_ELEMS))
+      sdata[tid] +=  sdata[tid + s];      // perform operations on shared memory
+    __syncthreads();
+  }
+
+  // only thread 0 writes result, as thread
+  if ((tid == 0) && (pos < NUM_ELEMS))
+    d_out[blockIdx.x] = sdata[0];         // copy shared back to global
+}
+
 /* -------- KERNEL -------- */
 __global__ void reduce_kernel(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE)
 {
@@ -35,10 +59,12 @@ void reduce(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsign
   cudaMalloc(&d_intermediate_out, sizeof(unsigned int)*NUM_BLOCKS);
   cudaMemcpy(d_intermediate_in, d_in, sizeof(unsigned int)*SIZE, cudaMemcpyDeviceToDevice);
 
+  // calculate shared memory
+  const unsigned int SMEM = BLOCK_SIZE * sizeof(unsigned int);
   // Recursively solving, will run approximately log base NUM_THREADS times.
   do
   {
-    reduce_kernel<<<NUM_BLOCKS, NUM_THREADS>>>(d_intermediate_out, d_intermediate_in, SIZE);
+    shared_reduce_kernel<<<NUM_BLOCKS, NUM_THREADS, SMEM>>>(d_intermediate_out, d_intermediate_in, SIZE);
 
     // Updating SIZE
     SIZE = NUM_BLOCKS;//SIZE / NUM_THREADS + SIZE_REST;
@@ -102,8 +128,8 @@ int main(int argc, char **argv)
 //    printf("time!: %.5f\n", elapsedTime);
     unsigned int h_out;
     cudaMemcpy(&h_out, d_out, sizeof(int), cudaMemcpyDeviceToHost);
-    printf("%d \n", h_out);
-    myfile << elapsedTime << ",";
+//    printf("%d \n", h_out);
+    myfile << elapsedTime << "," << std::endl;
   }
   myfile.close();
   return 0;
