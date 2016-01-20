@@ -1,7 +1,7 @@
 \section{Kernels}
 \label{sec:kernels}
 
-In \todo{cref} we introduced the software perspective of how to run code on the SIMD ALU cores on the GPGPU.
+In \cref{sec:gpu} we introduced the software perspective of how to run code on the SIMD ALU cores on the GPGPU.
 In the programming language CUDA a kernel is a C++ function with the \ttt{\_\_global\_\_} identifier in front of its declaration as illustrated in \cref{lst:kernel declaration example}.
 This function first computes the thread's index (\ttt{tid}) in the block, then checks if it is out of bounds, and finally copies the value at \ttt{tid} from \ttt{d\_in} to \ttt{d\_out}.
 
