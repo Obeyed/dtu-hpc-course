@@ -1,49 +1,17 @@
-\section{Debugging and Profiling}
+\section{Debugging}
 \label{sec:debugging and profiling}
+To debug we use two approached; \ttt{printf} for testing the logic of our application and \ttt{cuda-memcheck} to catch cuda memory errors.
 
-The goal of parallel programming is to solve computational intensive problems.
-However, not all problems are best solved with parallel solutions.
-The first step is to assess the problem at hand.
-If the developer finds that it can be made parallel and the gained performance is worth the effort, then the original program is made parallel.
-While these programs may be correct it might be possible to optimise them beyond the fact that they are executed in parallel.~\cite{nvidia2015doc}
-
-\subsection{Finding Bottlenecks}
-\label{sec:finding bottlenecks}
-
-As we presented in \cref{sec:gpgpu memory architecture} the layered memory has different transfer rates.
-The obvious point is that it is possible to optimise how and from where the memory is fetched and stored.
-First, we figure out where the bottlenecks of the program are.~\cite{farber2011cuda}
-
-An event is some quantifiable activity, action, or occurrence on a GPGPU device.
-Metrics are characteristics of an application which are calculated from one or more events.
-\ttt{nvprof} is a command-line debugging tool to profile different metrics for CUDA code.
-By default it gives a short summary of how much time was spent on the different invocations.
-The default settings show where time is spent throughout the application.
-The debugger is invoked as follows
-%
-\begin{quote}
-  \ttt{nvprof [options] [CUDA-application] [application-arguments]}
-\end{quote}
-%
-A long list of metrics can be displayed.
-For instance the \ttt{--print-gpu-trace} will print a list of all kernel invocations.
-It will show metrics such as the amount of memory used, where it is used, what the memory's transfer rate was, on which GPGPU the kernel ran, and the execution time, etc.~\cite{profiling2015doc}
-
-\ttt{nvprof} is especially useful when a developer will interact with GPGPUs that are on a remote server.
-Aside from writing its results to the terminal it is also possible to write the profiling results to a file.
-Furthermore, it is possible to add the \ttt{--analysis-metrics} flag to the debugger, which will capture all the GPGPU's metrics.
-This enables a visual profiler to perform a ``guided analysis''.~\cite{nvprof2013tips}
-
-\subsection{Validating Memory Access}
-\label{sec:validating memory access}
-
-Another handy tool is \ttt{cuda-memcheck}.
-It can be used to find issues with for instance memory access, thread ordering, and race conditions and hardware reported program errors.
+The \ttt{cuda-memcheck} is a command-line tool that allows print of captured cuda-errors doing runtime.
+It can be used to find issues with memory access, thread ordering, race conditions and hardware reported program errors.
 It is invoked as folllows
 %
 \begin{quote}
   \ttt{cuda-memcheck [options] application-name [application-options]}
 \end{quote}
 %
-The \ttt{cuda-memcheck} tool has different options that detect different errors, e.g. \ttt{memcheck, racecheck}, where the \ttt{memcheck} tool is enabled by default.
-The \ttt{racecheck} tool can for instance detect write-after-write hazards, where two or more threads attempt to update the same memory location simultaneously (we gave an example on a race condition in \cref{sec:challenges with parallel programs}).~\cite{cudamemcheck2015doc}
+As with the \ttt{nvprof} from \cref{sec:introduction to analysis of optimisation} the \ttt{cuda-memcheck} tool has a variety of flags for the option input.
+In the option input \ttt{memcheck} is sat by default.
+We further tested the option flag \ttt{racecheck}.
+The \ttt{racecheck} allows us to detect write-after-write hazards, where two or more threads attempt to update the same memory location simultaneously.
+For example, our race condition from \cref{sec:challenges with parallel programs} gave the following stacktrace\todo{outprint}.~\cite{cudamemcheck2015doc}
