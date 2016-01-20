@@ -79,7 +79,7 @@ void reduce(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsign
   while(SIZE > NUM_THREADS); // if it is too small, compute rest.
 
   // Computing rest
-  reduce_kernel<<<1, SIZE>>>(d_out, d_intermediate_out, SIZE);
+  shared_reduce_kernel<<<1, SIZE, SMEM>>>(d_out, d_intermediate_out, SIZE);
   cudaFree(d_intermediate_in);
   cudaFree(d_intermediate_out);
 }

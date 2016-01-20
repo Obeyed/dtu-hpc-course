@@ -77,7 +77,8 @@ void reduce_wrapper(unsigned int* const d_out,
   } while(num_elems > BLOCK_SIZE);
 
   // computing rest
-  reduce_kernel<<<1, num_elems>>>(d_out, d_in, prev_grid_size);
+  //global_reduce_kernel<<<1, num_elems>>>(d_out, d_in, prev_grid_size);
+  shared_reduce_kernel<<<1, num_elems, SMEM>>>(d_out, d_in, prev_grid_size);
 }
 
 void par_reduce(unsigned int* const h_out, 
