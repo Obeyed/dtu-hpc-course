@@ -104,6 +104,7 @@ __global__
 void reduce_kernel(int *d_out, int *d_in, int SIZE) {
   int mid = threadIdx.x + blockIdx.x * blockDim.x,
       tid = threadIdx.x;
+  if (mid >= SIZE) return;
 
   extern __shared__ int sdata[]; // allocate shared memory
   sdata[tid] = d_in[mid];        // each thread loads global to shared memory
