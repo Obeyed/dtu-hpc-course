@@ -60,7 +60,7 @@ void reduce(unsigned int * d_out, unsigned int * d_in, unsigned int SIZE, unsign
   cudaMemcpy(d_intermediate_in, d_in, sizeof(unsigned int)*SIZE, cudaMemcpyDeviceToDevice);
 
   // calculate shared memory
-  const unsigned int SMEM = BLOCK_SIZE * sizeof(unsigned int);
+  const unsigned int SMEM = NUM_THREADS * sizeof(unsigned int);
   // Recursively solving, will run approximately log base NUM_THREADS times.
   do
   {
