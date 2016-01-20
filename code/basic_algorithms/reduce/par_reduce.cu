@@ -1,10 +1,10 @@
 #include "par_reduce.h"
 
-// Computes the sum of elements in d_in
+// Computes the sum of elements in d_in in global memory
 __global__ 
-void reduce_kernel(unsigned int* const d_out,
-                   unsigned int* const d_in,
-                   const size_t NUM_ELEMS) {
+void global_reduce_kernel(unsigned int* const d_out,
+                          unsigned int* const d_in,
+                          const size_t NUM_ELEMS) {
   unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int tid = threadIdx.x;
 
@@ -19,12 +19,36 @@ void reduce_kernel(unsigned int* const d_out,
     d_out[blockIdx.x] = d_in[pos];
 }
 
+// Computes the sum of elements in d_in in shared memory
+__global__ 
+void shared_reduce_kernel(unsigned int* const d_out,
+                          unsigned int* const d_in,
+                          const size_t NUM_ELEMS) {
+  unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned int tid = threadIdx.x;
+
+  extern __shared__ unsigned int* sdata;  // allocate shared memory
+  sdata[tid] = d_in[mid];                 // each thread loads global to shared
+  __syncthreads();                        // make sure all threads are done
+
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>=1) {
+    if ((tid < s) && ((pos + s) < NUM_ELEMS))
+      sdata[tid] +=  sdata[tid + s];      // perform operations on shared memory
+    __syncthreads();
+  }
+
+  // only thread 0 writes result, as thread
+  if ((tid == 0) && (pos < NUM_ELEMS))
+    d_out[blockIdx.x] = sdata[0];         // copy shared back to global
+}
+
 // Calls reduce kernel to compute reduction.
 void reduce_wrapper(unsigned int* const d_out,
                     unsigned int* const d_in,
                     size_t num_elems,
-                    int block_size) {
-  unsigned int grid_size = num_elems / block_size + 1;
+                    const int BLOCK_SIZE) {
+  unsigned int grid_size = num_elems / BLOCK_SIZE + 1;
+  const unsigned int SMEM = BLOCK_SIZE * sizeof(int);
 
   unsigned int* d_tmp;
   checkCudaErrors(cudaMalloc(&d_tmp, sizeof(unsigned int) * grid_size));
@@ -32,24 +56,25 @@ void reduce_wrapper(unsigned int* const d_out,
 
   unsigned int prev_grid_size;
   unsigned int remainder = 0;
-  // recursively solving, will run approximately log base block_size times.
+  // recursively solving, will run approximately log base BLOCK_SIZE times.
   do {
-    reduce_kernel<<<grid_size, block_size>>>(d_tmp, d_in, num_elems);
+    //reduce_kernel<<<grid_size, BLOCK_SIZE>>>(d_tmp, d_in, num_elems);
+    reduce_kernel<<<grid_size, BLOCK_SIZE, SEM>>>(d_tmp, d_in, num_elems);
 
-    remainder = num_elems % block_size;
-    num_elems  = num_elems / block_size + remainder;
+    remainder = num_elems % BLOCK_SIZE;
+    num_elems  = num_elems / BLOCK_SIZE + remainder;
 
     // updating input to intermediate
     checkCudaErrors(cudaMemcpy(d_in, d_tmp, sizeof(int) * grid_size, cudaMemcpyDeviceToDevice));
 
     // Updating grid_size to reflect how many blocks we now want to compute on
     prev_grid_size = grid_size;
-    grid_size = num_elems / block_size + 1;      
+    grid_size = num_elems / BLOCK_SIZE + 1;      
 
     // updating intermediate
     checkCudaErrors(cudaFree(d_tmp));
     checkCudaErrors(cudaMalloc(&d_tmp, sizeof(int) * grid_size));
-  } while(num_elems > block_size);
+  } while(num_elems > BLOCK_SIZE);
 
   // computing rest
   reduce_kernel<<<1, num_elems>>>(d_out, d_in, prev_grid_size);
