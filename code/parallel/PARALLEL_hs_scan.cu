@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     int * h_in = (int *)malloc(SIZE*sizeof(int));
     int * h_out = (int *)malloc(SIZE*sizeof(int));
     for (unsigned int i = 0; i <  SIZE; i++) h_in[i] = 1;
-    cudaMemcpy(d_in, h_in, sizeof(int)*SIZE, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_in, h_in, BYTES, cudaMemcpyHostToDevice);
 
     // Running kernel wrapper
     // setting up time
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     cudaEventElapsedTime(&elapsedTime, start, stop);    
     elapsedTime = elapsedTime / ((float) times);
 //    printf("time!: %.5f\n", elapsedTime);
-    cudaMemcpy(h_out, d_out, sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
 //    printf("%d \n", h_out);
     myfile << elapsedTime << "," << std::endl;
   }
