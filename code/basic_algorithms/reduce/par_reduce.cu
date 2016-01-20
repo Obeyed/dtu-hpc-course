@@ -27,7 +27,9 @@ void shared_reduce_kernel(unsigned int* const d_out,
   unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int tid = threadIdx.x;
 
-  extern __shared__ unsigned int sdata[];  // allocate shared memory
+  if (pos >= NUM_ELEMS) return;
+
+  extern __shared__ unsigned int sdata[]; // allocate shared memory
   sdata[tid] = d_in[pos];                 // each thread loads global to shared
   __syncthreads();                        // make sure all threads are done
 
