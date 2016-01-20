@@ -12,7 +12,7 @@ __global__ void mapping_kernel(unsigned int * d_out, unsigned int * d_in, const 
 	{
 		return;
 	}
-	d_out[myId] = d_in[myId];
+	d_out[myId] = 1*d_in[myId]/1;
 }
 
 int main(int argc, char **argv)
@@ -20,14 +20,17 @@ int main(int argc, char **argv)
 	std::ofstream myfile;
     myfile.open ("par_mapping.csv");
 //	printf("---STARTED---\n");
-	const unsigned int times = 10;
-	for(unsigned int rounds = 0; rounds<30; rounds++)
+    const unsigned int times = 10;
+	const unsigned int IN_SIZE = 1<<29;
+	const unsigned int IN_BYTES = sizeof(unsigned int) * IN_SIZE;
+	const unsigned int OUT_SIZE = IN_SIZE;
+	const unsigned int OUT_BYTES = IN_BYTES;
+
+
+	for(unsigned int rounds = 1; rounds<33; rounds++)
 	{
-		const unsigned int IN_SIZE = 1<<rounds;
-		const unsigned int IN_BYTES = sizeof(unsigned int) * IN_SIZE;
-		const unsigned int OUT_SIZE = IN_SIZE;
-		const unsigned int OUT_BYTES = IN_BYTES;
-		const dim3 NUM_THREADS(1<<10);
+		
+		const dim3 NUM_THREADS(32*rounds);
 		const dim3 NUM_BLOCKS(IN_SIZE/NUM_THREADS.x + ((IN_SIZE % NUM_THREADS.x)?1:0));
 
 		// Generate the input array on host
@@ -38,20 +41,18 @@ int main(int argc, char **argv)
 		// Declare GPU memory pointers
 		unsigned int * d_in;
 		unsigned int * d_out;
-/*	    printf("\n@@@ROUND@@@: %d\n", rounds);
-	    printf("---IN_SIZE---: %d\n", IN_SIZE);
-	    printf("---IN_BYTES---: %d\n", IN_BYTES);
-	    printf("---OUT_SIZE---: %d\n", OUT_SIZE);
-	    printf("---OUT_BYTES---: %d\n", OUT_BYTES);
-	    printf("---THREAD_SIZE---: %d\n", NUM_THREADS.x);
-	    printf("---NUM_BLOCKS---: %d\n", NUM_BLOCKS.x);
-*/
+	    printf("\n@@@ROUND@@@: %d\n", rounds);
+//	    printf("---IN_SIZE---: %d\n", IN_SIZE);
+//	    printf("---IN_BYTES---: %d\n", IN_BYTES);
+//	    printf("---OUT_SIZE---: %d\n", OUT_SIZE);
+//	    printf("---OUT_BYTES---: %d\n", OUT_BYTES);
+//	    printf("---THREAD_SIZE---: %d\n", NUM_THREADS.x);
+//	    printf("---NUM_BLOCKS---: %d\n", NUM_BLOCKS.x);
+
 
 		// Allocate GPU memory
 		cudaMalloc((void **) &d_in, IN_BYTES);
-//		printf("---ALLOCATED D_IN---\n");
 		cudaMalloc((void **) &d_out, OUT_BYTES);
-//		printf("---ALLOCATED D_IN---\n");
 
 		// Transfer the arrays to the GPU
 		cudaMemcpy(d_in, h_in, IN_BYTES, cudaMemcpyHostToDevice);
@@ -71,7 +72,7 @@ int main(int argc, char **argv)
         float elapsedTime = .0f;
         cudaEventElapsedTime(&elapsedTime, start, stop);
         elapsedTime = elapsedTime / ((float) times);
-//        printf(" time: %.5f\n", elapsedTime);
+        printf(" time: %.5f\n", elapsedTime);
 
 		// Copy back to HOST
 		cudaMemcpy(h_out, d_out, OUT_BYTES, cudaMemcpyDeviceToHost);
@@ -79,13 +80,15 @@ int main(int argc, char **argv)
 		for(unsigned int i = 0; i<OUT_SIZE; i++){sum += h_out[i];}
 		for(unsigned int i = 0; (i<OUT_SIZE) && (i<10); i++)
 		{
-			printf("OUT %d: count %d\n", i, h_out[i]);
+//			printf("OUT %d: count %d\n", i, h_out[i]);
 		}
-		printf("%d\n", sum);
+//		printf("%d\n", sum);
 		// free GPU memory allocation
 		cudaFree(d_in);
 		cudaFree(d_out);
         myfile << elapsedTime << ",";
+        free(h_in);
+        free(h_out);
 	}
 	myfile.close();
 	return 0;
