@@ -19,7 +19,6 @@ By making each SM independent, memory access and computation are performed faste
 The cores on each SM are Single Instruction, Multiple Data (SIMD) ALUs.
 As the cores are constrained to run the same piece of code, though with different data, the software paradigm of ``kernels'' has developed.
 A kernel is a describtion of a set of instruction that all cores across all SMs performs independantly of one another.
-\todo{wait with thread and block definition?}
 The work given to the GPU is distributed to the SMs by the Giga-Thread global scheduler.
 The Giga-thread scheduler holds metainformation on the SMs, which allows it to optimize workloads across the GPGPU's independent processors.
 The SMs receive instructions from the scheduler in a cache schedules the work for execution on the cores in the SM.

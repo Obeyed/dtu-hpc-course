@@ -1,13 +1,12 @@
 \section{Grids, Blocks, and Threads}
 \label{sec:grids blocks threads}
 
-\todo{merge with section 2.3}
-In \cref{sec:gpgpu memory architecture} we introduced thenotion of grids, blocks and threads.
+In \cref{sec:gpgpu memory architecture} we introduced the notion of scheduling and independant processeses on the GPGPU.
+In this section we will further elaborate on the scheduling paradigm used in CUDA GPGPU programming.
 
-
-The computation on GPGPU is done through the use of "threads".
-Threads are scheduled in ``warps'' by ``blocks'', where the blocks are organized in ``grids''.
-A thread is an independant sequence of work where the sequence is defined by instructions of the kernel.
+The computation on the GPGPU is done through the use of "threads".
+Threads are scheduled concurrently in ``warps'' by ``blocks'', where the blocks are organized in ``grids''.
+A thread is an independant sequence of work where the sequence is defined by instructions of the kernel and multiple threads can run concurrently.
 A thread has an ID, being a the given threads number in a set of threads, which it uses to coordinate its work without exchange of information between other processors.
 
 To organize threads and utilize the ability to communicate between threads on an SM where memory access is fast, the concept of blocks has emerged.
@@ -50,48 +49,3 @@ These built-in variables are of type \ttt{uint3} and \ttt{dim3}, which are integ
 The variables are used to specify dimensionality and receive position when running a kernel.
 When constructing the \ttt{dim3} variable all unspecified components are set to 1.
 As presented in \cref{sec:hardware specific numbers} the max number of threads per block is 1024 for the device we will be working with.~\cite{nvidia2015doc}
-
-\subsection{Testing Warp Sizes}
-\label{sec:testing warp sizes}
-
-\todo{put in optimization section}
-
-In \cref{sec:gpu} we introduced the concept of a warp, a scheduler for launching threads within a kernel.
-\cref{tab:warp size testing} shows the average elapsed time over 1,000 runs for launching different threads, to see the impact compared to the amount of warps are needed.
-One warp launches 32 threads at a time, asserted from \cref{ap:tesla k40 specifications}.
-
-\begin{table}[htb]%
-  \begin{minipage}{0.49\linewidth}
-    \centering
-    \begin{tabular}{lrr}
-      \toprule
-      threads (\#) & time (ms) & latency \\
-      \midrule
-      $32 \times 10$    & $5.321$ &          \\
-      $32 \times 10-1$  & $5.336$ & $+0.28\%$  \\
-      $32 \times 10-16$ & $5.600$ & $+5.24\%$  \\
-      $32 \times 10-31$ & $5.892$ & $+10.73\%$ \\
-      \bottomrule
-    \end{tabular}
-  \end{minipage}%
-  \begin{minipage}{0.49\linewidth}
-    \centering
-    \begin{tabular}{lrr}
-      \toprule
-      threads (\#) & time (ms) & latency \\
-      \midrule
-      $32 \times 9$     & $5.561$ & \\
-      $32 \times 9-1$   & $5.585$ & $+0.43\%$  \\
-      $32 \times 9-16$  & $5.892$ & $+5.95\%$  \\
-      $32 \times 9-31$  & $6.236$ & $+12.13\%$ \\
-      \bottomrule
-    \end{tabular}
-  \end{minipage}%
-  \caption{Testing different warp sizes}
-  \label{tab:warp size testing}
-\end{table}
-
-We present the multiple of 32 as the base case for the two tables.
-By using block size between $32 \times 8$ and $32 \times 9$ the SM still launched the same amount of warps (9 warps per block), but with idle threads in the 9'th warp as it must have 32 threads.
-As the amount of threads per block is reduced the total amount of blocks nessesary to complete the job must increase and thus increases runtime.
-\cref{tab:warp size testing} shows how the performance deteriorates as the amount of idle threads in the last warp increases.
