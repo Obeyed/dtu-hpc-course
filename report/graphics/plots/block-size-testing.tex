@@ -1,0 +1,21 @@
+\begin{tikzpicture}
+  \begin{axis}[
+    ymajorgrids,
+    xmajorgrids,
+    ymax=35,
+    xtick={32,256,448,640,832,1024},
+    ylabel={Time (ms)},
+    xlabel={No. threads},
+    legend style={
+      at={(0.05,0.95)},
+      anchor=north west,
+      column sep=1ex
+     },
+     no markers,
+     very thick 
+   ]
+
+    \addplot table [x=threads, y=time] {data/threadsperblock.csv};
+    \addlegendentry{mapping $2^{29}$ values};
+  \end{axis}
+\end{tikzpicture}

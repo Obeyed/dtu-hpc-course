@@ -1,0 +1,23 @@
+\begin{tikzpicture}
+  \begin{axis}[
+    ymajorgrids,
+    xmajorgrids,
+    ymin=0,ymax=3000,
+    xtick={32,256,448,640,832,1024},
+    ylabel={No. active threads},
+    xlabel={No. launched threads},
+%    xmode=log,
+%    log basis x={2},
+    legend style={
+      at={(0.05,0.95)},
+      anchor=north west,
+      column sep=1ex
+     },
+     no markers,
+     very thick 
+   ]
+
+   \addplot+[domain=1:1024] {floor((2048/x))*x};
+   \addlegendentry{$\lfloor \frac{2048}{x} \rfloor \times x $};
+  \end{axis}
+\end{tikzpicture}
