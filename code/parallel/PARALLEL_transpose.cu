@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <cuda_runtime.h>
 //#include "gputimer.h"
 
-const dim3 BLOCK_SIZE(32,32);
+const unsigned int DIM = 12;
+const dim3 BLOCK_SIZE(DIM, DIM);
 
 // For testing
 unsigned int compare_matrices(unsigned int *gpu, unsigned int *ref,
@@ -11,9 +13,12 @@ unsigned int compare_matrices(unsigned int *gpu, unsigned int *ref,
   for(unsigned int i=0; i < COLUMNS; i++)
     for(unsigned int j=0; j < ROWS; j++)
       if (ref[i + j*COLUMNS] != gpu[i + j*COLUMNS]){
-        printf("reference(%d,%d) = %f but test(%d,%d) = %f\n",
-               i,j,ref[i+j*COLUMNS],i,j,gpu[i+j*COLUMNS]);
+        //printf("reference(%d,%d) = %d but test(%d,%d) = %d\n",
+        //       i,j,ref[i+j*COLUMNS],i,j,gpu[i+j*COLUMNS]);
         result = 1;
+      }else{
+        //printf("WORKED: reference(%d,%d) = %d test(%d,%d) = %d\n",
+        //i,j,ref[i+j*COLUMNS],i,j,gpu[i+j*COLUMNS]);
       }
   return result;
 }
@@ -39,13 +44,41 @@ void transpose_kernel(unsigned int * d_out, unsigned int * d_in,
   unsigned int row = threadIdx.x + blockIdx.x * blockDim.x;
   unsigned int column = threadIdx.y + blockIdx.y * blockDim.y;
   if((row >= ROWS) || (column >= COLUMNS)) return;
-
   d_out[column + row*COLUMNS] = d_in[row + column*ROWS];
 }
 
+__global__
+void transpose_kernel_tiled(unsigned int * d_out, unsigned int * d_in,
+                            const unsigned int ROWS, const unsigned int COLUMNS){
+
+  __shared__ unsigned int tile[DIM][DIM+1]; //fucking cuda, should be blockDim.y
+
+  unsigned int x = threadIdx.x + blockIdx.x * blockDim.x,
+               y = threadIdx.y + blockIdx.y * blockDim.y;
+  if((x >= COLUMNS) || (y >= ROWS))
+  {
+//  	printf("RETURNED: %d, %d \n", x, y);
+    return;
+  }
+  tile[threadIdx.y][threadIdx.x] = d_in[x + y*COLUMNS];
+//  printf("FIRST: id: threadIdx[y=%d][x=%d]=%d\n",threadIdx.y, threadIdx.x, tile[threadIdx.y][threadIdx.x]);
+//  printf("from in_position: %d\n", x + y*COLUMNS);
+  __syncthreads();
+
+  x = threadIdx.x + blockIdx.y * blockDim.y;
+  y = threadIdx.y + blockIdx.x * blockDim.x;
+
+  d_out[x + y*ROWS] = tile[threadIdx.x][threadIdx.y];
+//  printf("I am tile[%d][%d] = %d \n", x, y, tile[threadIdx.x][threadIdx.y]);
+//  printf("to out_position %d\n", x + y*ROWS);
+}
+
+
+
+
 int main(int argc, char **argv){
-  const unsigned int ROWS = 1<<4,
-                     COLUMNS = 1<<4,
+  const unsigned int ROWS = 1<<10,
+                     COLUMNS = 1<<10,
                      BYTES_ARRAY = ROWS*COLUMNS*sizeof(unsigned int);
 
   unsigned int * h_in = (unsigned int *) malloc(BYTES_ARRAY),
@@ -67,7 +100,8 @@ int main(int argc, char **argv){
 
   const dim3 GRID_SIZE(ROWS/BLOCK_SIZE.x + 1, COLUMNS/BLOCK_SIZE.y + 1);
 //  timer.start();
-  transpose_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_in, ROWS, COLUMNS);
+//  transpose_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_in, ROWS, COLUMNS);
+  transpose_kernel_tiled<<<GRID_SIZE, BLOCK_SIZE, DIM*DIM*sizeof(unsigned int)+1>>>(d_out, d_in, ROWS, COLUMNS);
 //  timer.stop();
 
   cudaMemcpy(h_out, d_out, BYTES_ARRAY, cudaMemcpyDeviceToHost);
