@@ -47,4 +47,42 @@ As the amount of threads per block is reduced the total amount of blocks nessesa
 \subsection{Testing BUS width}
 \label{sec:testing BUS width}
 
+In \cref{sec:gpu} we introduced the concept of a warp, a scheduler for launching threads within a kernel.
+\cref{tab:block size testing} shows the average elapsed time over 10 runs for launching different block size being multiples of the warp size, to see the SM's max thread bottleneck is impacted the impact by the amount of threads in a block.
+The SM can handle 2048 threads concurrently, asserted from \cref{ap:tesla k40 specifications}.
 
+\todo{replace with block size}
+\begin{table}[htb]%
+  \begin{minipage}{0.49\linewidth}
+    \centering
+    \begin{tabular}{lrr}
+      \toprule
+      threads (\#) & time (ms) & latency \\
+      \midrule
+      $32 \times 10$    & $5.321$ &          \\
+      $32 \times 10-1$  & $5.336$ & $+0.28\%$  \\
+      $32 \times 10-16$ & $5.600$ & $+5.24\%$  \\
+      $32 \times 10-31$ & $5.892$ & $+10.73\%$ \\
+      \bottomrule
+    \end{tabular}
+  \end{minipage}%
+  \begin{minipage}{0.49\linewidth}
+    \centering
+    \begin{tabular}{lrr}
+      \toprule
+      threads (\#) & time (ms) & latency \\
+      \midrule
+      $32 \times 9$     & $5.561$ & \\
+      $32 \times 9-1$   & $5.585$ & $+0.43\%$  \\
+      $32 \times 9-16$  & $5.892$ & $+5.95\%$  \\
+      $32 \times 9-31$  & $6.236$ & $+12.13\%$ \\
+      \bottomrule
+    \end{tabular}
+  \end{minipage}%
+  \caption{Testing different warp sizes}
+  \label{tab:warp size testing}
+\end{table}
+
+As visable in the graph it has a "wave" function.
+Further is a function of the total amount of threads the SM can execute on.
+There is a clear correlation, which indicates that choosing a block size that maximizes the amount of threads able to concurrently execute is essential to achieving the best performance.
