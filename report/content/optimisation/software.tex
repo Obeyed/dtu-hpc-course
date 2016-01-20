@@ -1,5 +1,8 @@
 \section{Software Optimisations}
 \label{sec:software optimisations}
+
+\subsection{Workload and step size}
+\label{sec:workload and step size}
 When considering algorithms for parallel purposes, the parallizability in an algorithm is of importance.
 When designing algorithms we will view the computations as a directed acyclic graph(DAG).
 This graph will have a set of computational steps linked togetther from top till bottom such as illustrated by the Hillis and Steele scan in figure. \todo{cref}
@@ -25,3 +28,9 @@ However, in Blelloch there is a hidden multiple constant of two in the stepsize.
 
 Even though the workload is larger for the Hillis \& Steele scan if the amount of work at any given step in the algorithm is smaller than the total amount of available processors then the Hillis \& Steele algorithm will finish faster.
 However, if the workload is significantly larger than the amount of available processors and the stepsize is not the bottleneck, then the Blelloch scan will be superior.
+
+\subsection{Avoiding atomic operations}
+In \cref{sec:challenges with parallel programs} we introduced atomic operations to handle race conditions amongst threads.
+However, using atomic operations serializes the access to the memory cell containing the bin which in worst case could cause a step size equivalent of the workload.
+In \todo{fig} we ran a test to perceive the performance penalty of using such approach, in which the workload is the same but output size differs along the x-axis.
+To avoid using the atomic operation we will device an algorithm overcoming the race condition in a more parallel way in \cref{sec:fast histogram}
