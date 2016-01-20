@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 #include <fstream>
-
+#include <ostream>
 int set_grid(int SIZE, int BLOCK_SIZE)
 {
   return SIZE/BLOCK_SIZE + ((SIZE % BLOCK_SIZE)? 1 : 0);
@@ -59,12 +59,14 @@ int main(int argc, char **argv) {
   cudaMalloc((void **) &d_in, BYTES);
   cudaMalloc((void **) &d_out, BYTES);
 
-	for (int rounds = 29; rounds <= MAX; rounds++) {
+	for (int rounds = 0; rounds <= MAX; rounds++) {
+
     SIZE = 1 << rounds;
     BYTES = SIZE * sizeof(int);
-
-		for(int i = 0; i < SIZE; i++)
-      h_in[i] = 1;
+    int num = 1;
+    int * h_in  = (int *)malloc(BYTES); 
+    int * h_out = (int *)malloc(BYTES);
+		memset(h_in, num, BYTES);
 
 		// transfer arrays to GPU
 		cudaMemcpy(d_in, h_in, BYTES, cudaMemcpyHostToDevice);
@@ -87,7 +89,7 @@ int main(int argc, char **argv) {
     float elapsedTime;
     cudaEventElapsedTime(&elapsedTime, start, stop);    
     elapsedTime = elapsedTime / ((float) TIMES);
-//    printf("average time elapsed: %f\n", elapsedTime);
+    printf("average time elapsed: %.5f\n", elapsedTime);
 
     myfile << elapsedTime << "," << std::endl;
 	}
@@ -96,15 +98,16 @@ int main(int argc, char **argv) {
   // free GPU memory allocation
   cudaFree(d_in);
   cudaFree(d_out);
-
+  free(h_in);
+  free(h_out);
   myfile.close();
 
-/*  for (int i = 0; i < 5; i++)
+  for (int i = 0; i < 5; i++)
     printf("%d ", h_out[i]);
   printf(" -- ");
   for (int i = SIZE - 5; i < SIZE; i++)
     printf("%d ", h_out[i]);
   printf("\n");
-*/
+
 	return 0;
 }
