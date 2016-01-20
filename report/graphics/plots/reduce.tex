@@ -17,7 +17,7 @@
 
     \addplot table [x=x, y=parallel-global] {data/reduce.csv};
     \addlegendentry{parallel (global)};
-    \addplot table [x=x, y=parallel-shared] {data/reduce.csv};
+    \addplot+[dotted] table [x=x, y=parallel-shared] {data/reduce.csv};
     \addlegendentry{parallel (shared)};
     \addplot+[dashed] table [x=x, y=sequential] {data/reduce.csv};
     \addlegendentry{sequential};

@@ -105,9 +105,9 @@ void reduce_kernel(int *d_out, int *d_in, int SIZE) {
   int mid = threadIdx.x + blockIdx.x * blockDim.x,
       tid = threadIdx.x;
 
-  extern __shared__ int* sdata; // allocate shared memory
-  sdata[tid] = d_in[mid];       // each thread loads global to shared memory
-  __syncthreads();              // make sure all threads are done
+  extern __shared__ int sdata[]; // allocate shared memory
+  sdata[tid] = d_in[mid];        // each thread loads global to shared memory
+  __syncthreads();               // make sure all threads are done
 
   for (int s = blockDim.x / 2; s > 0; s /= 2) {
     if ((tid < s) && ((mid + s) < SIZE))
@@ -128,3 +128,19 @@ reduce_kernel<<<grid_size, BLOCK_SIZE, SMEM>>>(d_tmp_out, d_tmp_in, size);
 Furthermore, we must update the kernel call to include the amount of shared memory to be allocated.
 This is illustrated in \cref{lst:reduce invocation with smem}, where the third argument in the triple chevrons is the amount of shared memory to allocate
 
+We present a plot in \cref{fig:reduce plot} illustrating the development of the run time for the reduce algorithms presented.
+The GPGPU gets an advantage when the array size to sum is large.
+This is most likely due to that fact that the CPU is much faster than the GPGPU.
+The GPGPU beats the CPU when it has enough work to spread out to its threads.
+
+\begin{figure}[htb]
+  \centering
+  \input{graphics/plots/reduce}
+  \caption{Runtime development of three reduce algorithms}
+  \label{fig:reduce plot}
+\end{figure}
+
+We mentioned that the shared memory version of the reduce would theoretically get approximately a 3x speed-up compared to the regular version.
+This is not the case as illustrated in the plot.
+This is due to the fact that we do not utilize the full potential of the local memory of the device.
+If we were to get closer to the theoretical speed-up we would have to do more optimisations.

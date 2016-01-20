@@ -32,3 +32,14 @@ Finally, the input is copied to the new output.
 
 The step size of the map kernel is 1, because all operations can be performed completely independent of the others.
 The work size is equal to \ttt{SIZE} big, because we still need to copy all elements from array to array.
+
+We present the comparison of the map algorithms in \cref{fig:map plot}.
+It is clear that the parallel mapping algorithm has an advantage.
+All the operations can be performed in parallel, while the CPU has to perform every operation as consecutive operations.
+
+\begin{figure}[htb]
+  \centering
+  \input{graphics/plots/map}
+  \caption{Runtime development of the map algorithms}
+  \label{fig:map plot}
+\end{figure}
