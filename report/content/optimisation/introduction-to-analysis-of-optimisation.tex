@@ -8,39 +8,26 @@ As many of our tasks are relatively simple and does not require much computation
 
 \subsection{Profilling}
 \label{sec:profiling}
-
-The goal of parallel programming is to solve computational intensive problems.
-However, not all problems are best solved with parallel solutions.
-The first step is to assess the problem at hand.
-If the developer finds that it can be made parallel and the gained performance is worth the effort, then the original program is made parallel.
-While these programs may be correct it might be possible to optimise them beyond the fact that they are executed in parallel.~\cite{nvidia2015doc}
-
-\subsection{Finding Bottlenecks}
-\label{sec:finding bottlenecks}
-
-As we presented in \cref{sec:gpgpu memory architecture} the layered memory has different transfer rates.
-The obvious point is that it is possible to optimise how and from where the memory is fetched and stored.
-First, we figure out where the bottlenecks of the program are.~\cite{farber2011cuda}
-
+To understand our problem from a runtime perspective we must quantify the execution time in ``metrics'' of the different ``events'' in our program.
 An event is some quantifiable activity, action, or occurrence on a GPGPU device.
-Metrics are characteristics of an application which are calculated from one or more events.
-\ttt{nvprof} is a command-line debugging tool to profile different metrics for CUDA code.
-By default it gives a short summary of how much time was spent on the different invocations.
-The default settings show where time is spent throughout the application.
+Metrics are a set of runtime descriptions of one or more events.i
+
+In order to gather metrics about our events we utilize the built-in CUDA tool \ttt{nvprof}, which is a command-line debugging tool to profile compiled CUDA code.
+The property of being a command-line tool makes \ttt{nvprof} especially usefull for us as we are limited to executing code on remote servers.
+
+By default \ttt{nvprof} gives a short summary of how much time was spent on the different invocations.
+The default settings shows where time is spent throughout the application.
 The debugger is invoked as follows
 %
 \begin{quote}
   \ttt{nvprof [options] [CUDA-application] [application-arguments]}
 \end{quote}
 %
-A long list of metrics can be displayed.
-For instance the \ttt{--print-gpu-trace} will print a list of all kernel invocations.
-It will show metrics such as the amount of memory used, where it is used, what the memory's transfer rate was, on which GPGPU the kernel ran, and the execution time, etc.~\cite{profiling2015doc}
-
-\ttt{nvprof} is especially useful when a developer will interact with GPGPUs that are on a remote server.
+To give a detailed metrics description the flag \ttt{--print-gpu-trace} can be utilized, this flag will print a list of all kernel invocations.
+Further \ttt{--print.gpu-trace} will show metrics such as the amount of memory used, where it is used, what the memory's transfer rate was, on which GPGPU the kernel ran, the execution time, etc.~\cite{profiling2015doc}
 Aside from writing its results to the terminal it is also possible to write the profiling results to a file.
-Furthermore, it is possible to add the \ttt{--analysis-metrics} flag to the debugger, which will capture all the GPGPU's metrics.
-This enables a visual profiler to perform a ``guided analysis''.~\cite{nvprof2013tips}
+Furthermore, to gain insight into opportunities for optimisation the \ttt{--analysis-metrics} flag allows nvprof to capture statistics for analysis of the GPGPU's metrics.
+These statistics can be used with Nvidia's visual profiler to perform a ``guided analysis'' which we utilizes in \todo{nvvp fast histo!}.~\cite{nvprof2013tips}
 
 \subsection{Strong scaling - Amdahl's Law}
 \label{sec:amdahls law}
@@ -82,6 +69,8 @@ This type of formulation is often interesting when computing problems that are o
   W(n) = n + (1-n) \times (1-P)
 \end{equation}
 Where $P$ is the amount of the program that can be parallelized and $W(n)$ is the theoretical increase in throughput over a defined period of time.~\cite{gustafson1988reevaluating}.
+
+\todo{Fuck gustav?}
 
 \subsection{Theoretical memory speed-up}
 \label{sec:analysing hardware}
