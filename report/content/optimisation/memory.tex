@@ -31,4 +31,10 @@ In \cref{sec:grids blocks threads} we introduced blocks as having a set amount o
 
 Shared memory is a defined space of memory in the SM's L1 cache that a set of threads within a block can read/write to during block execution.
 The memory will disapear when the block terminates.
+In this report we will consider two types of instances where shared memory could give a beneficial speed-up.
 
+The first is when a set of threads have to perform several read/write operations to a fixed set of global memory, which we as use in \cref{sec:reduce}.
+By mapping the global memory to shared memory, computing the set of operations in shared memory and then writing back to global memory allows us utilize the fast access to shared memory.
+
+The second is to coalesce writes by collecting them in shared memory.
+This type of coalescing is especially interesting in the the transpose problem where data is read row-wise but written column-wise. In \cref{sec:transpose} will introduce how we used tiles in shared memory to allow coalesced writing.
