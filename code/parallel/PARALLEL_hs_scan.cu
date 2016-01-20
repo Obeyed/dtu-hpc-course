@@ -87,9 +87,9 @@ int main(int argc, char **argv) {
     float elapsedTime;
     cudaEventElapsedTime(&elapsedTime, start, stop);    
     elapsedTime = elapsedTime / ((float) TIMES);
-    printf("average time elapsed: %f\n", elapsedTime);
+//    printf("average time elapsed: %f\n", elapsedTime);
 
-    myfile << elapsedTime << ",";
+    myfile << elapsedTime << "," << std::endl;
 	}
   // move last result back to host
   cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
@@ -99,12 +99,12 @@ int main(int argc, char **argv) {
 
   myfile.close();
 
-  for (int i = 0; i < 5; i++)
+/*  for (int i = 0; i < 5; i++)
     printf("%d ", h_out[i]);
   printf(" -- ");
   for (int i = SIZE - 5; i < SIZE; i++)
     printf("%d ", h_out[i]);
   printf("\n");
-
+*/
 	return 0;
 }
