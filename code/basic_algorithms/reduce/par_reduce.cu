@@ -28,7 +28,7 @@ void shared_reduce_kernel(unsigned int* const d_out,
   unsigned int tid = threadIdx.x;
 
   extern __shared__ unsigned int* sdata;  // allocate shared memory
-  sdata[tid] = d_in[mid];                 // each thread loads global to shared
+  sdata[tid] = d_in[pos];                 // each thread loads global to shared
   __syncthreads();                        // make sure all threads are done
 
   for (unsigned int s = blockDim.x / 2; s > 0; s >>=1) {
@@ -58,8 +58,8 @@ void reduce_wrapper(unsigned int* const d_out,
   unsigned int remainder = 0;
   // recursively solving, will run approximately log base BLOCK_SIZE times.
   do {
-    //reduce_kernel<<<grid_size, BLOCK_SIZE>>>(d_tmp, d_in, num_elems);
-    reduce_kernel<<<grid_size, BLOCK_SIZE, SEM>>>(d_tmp, d_in, num_elems);
+    //global_reduce_kernel<<<grid_size, BLOCK_SIZE>>>(d_tmp, d_in, num_elems);
+    shared_reduce_kernel<<<grid_size, BLOCK_SIZE, SMEM>>>(d_tmp, d_in, num_elems);
 
     remainder = num_elems % BLOCK_SIZE;
     num_elems  = num_elems / BLOCK_SIZE + remainder;
