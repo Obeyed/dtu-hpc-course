@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
+#include <iostream>
 #include <fstream>
-#include <ostream>
+
 int set_grid(int SIZE, int BLOCK_SIZE)
 {
   return SIZE/BLOCK_SIZE + ((SIZE % BLOCK_SIZE)? 1 : 0);
@@ -38,76 +39,57 @@ void hs_kernel_wrapper(int * d_out, int * d_in, int SIZE, unsigned int BYTES, in
 	cudaFree(d_intermediate);
 }
 
-int main(int argc, char **argv) {
+
+/* -------- MAIN -------- */
+int main(int argc, char **argv)
+{
   std::ofstream myfile;
   myfile.open ("par_scan.csv");
+  // Setting NUM_THREADS
+  const unsigned int times = 10;
+  for (unsigned int rounds = 0; rounds<30; rounds++)
+  {
+//    printf("Round: %d\n", rounds);
+    unsigned int NUM_THREADS = 1<<10;
+    // Making non-bogus data and setting it on the GPU
+    unsigned int SIZE = 1<<rounds;
+    unsigned int BYTES = SIZE * sizeof(int);
+    unsigned int * d_in;
+    unsigned int * d_out;
+    cudaMalloc(&d_in, sizeof(unsigned int)*SIZE);
+    cudaMalloc(&d_out, sizeof(unsigned int)*SIZE);
+    unsigned int * h_in = (unsigned int *)malloc(SIZE*sizeof(int));
+    for (unsigned int i = 0; i <  SIZE; i++) h_in[i] = 1;
+    cudaMemcpy(d_in, h_in, sizeof(unsigned int)*SIZE, cudaMemcpyHostToDevice);
 
-  int NUM_THREADS = 1 << 10,
-      SIZE,
-      TIMES = 10,
-      MAX = 29;
-  unsigned int BYTES;
-  int *h_in, *h_out,
-      *d_in, *d_out;
-
-  // MAXIMUM SIZE: ALLOCATE ONCE!
-  BYTES = (1 << MAX) * sizeof(int);
-  // setting host memory
-  h_in  = (int *)malloc(BYTES); 
-  h_out = (int *)malloc(BYTES);
-  // allocate GPU memory
-  cudaMalloc((void **) &d_in, BYTES);
-  cudaMalloc((void **) &d_out, BYTES);
-
-	for (int rounds = 0; rounds <= MAX; rounds++) {
-
-    SIZE = 1 << rounds;
-    BYTES = SIZE * sizeof(int);
-    int num = 1;
-    int * h_in  = (int *)malloc(BYTES); 
-    int * h_out = (int *)malloc(BYTES);
-		memset(h_in, num, BYTES);
-
-		// transfer arrays to GPU
-		cudaMemcpy(d_in, h_in, BYTES, cudaMemcpyHostToDevice);
-
+    // Running kernel wrapper
     // setting up time
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
+    // kernel time!!!
     cudaEventRecord(start, 0);
-		// kernel time!!!
-		for (int i = 0; i < TIMES; i++)
-	    hs_kernel_wrapper(d_out, d_in, SIZE, BYTES, NUM_THREADS);
 
-    // stop recording
+    for (unsigned int i = 0; i < times; i++)
+    {
+      hs_kernel_wrapper(d_out, d_in, SIZE, BYTES, NUM_THREADS);
+
+    }
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
-    
+
     // calculating time
     float elapsedTime;
     cudaEventElapsedTime(&elapsedTime, start, stop);    
-    elapsedTime = elapsedTime / ((float) TIMES);
-    printf("average time elapsed: %.5f\n", elapsedTime);
-
+    elapsedTime = elapsedTime / ((float) times);
+//    printf("time!: %.5f\n", elapsedTime);
+    unsigned int h_out;
+    cudaMemcpy(&h_out, d_out, sizeof(int), cudaMemcpyDeviceToHost);
+//    printf("%d \n", h_out);
     myfile << elapsedTime << "," << std::endl;
-	}
-  // move last result back to host
-  cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
-  // free GPU memory allocation
-  cudaFree(d_in);
-  cudaFree(d_out);
-  free(h_in);
-  free(h_out);
+  }
   myfile.close();
+  return 0;
 
-  for (int i = 0; i < 5; i++)
-    printf("%d ", h_out[i]);
-  printf(" -- ");
-  for (int i = SIZE - 5; i < SIZE; i++)
-    printf("%d ", h_out[i]);
-  printf("\n");
-
-	return 0;
 }
