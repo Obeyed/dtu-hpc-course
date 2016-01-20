@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     float elapsedTime;
     cudaEventElapsedTime(&elapsedTime, start, stop);    
     elapsedTime = elapsedTime / ((float) times);
-//    printf("time!: %.5f\n", elapsedTime);
+    printf("time!: %.5f\n", elapsedTime);
     cudaMemcpy(h_out, d_out, BYTES, cudaMemcpyDeviceToHost);
 //    printf("%d \n", h_out);
     myfile << elapsedTime << "," << std::endl;
