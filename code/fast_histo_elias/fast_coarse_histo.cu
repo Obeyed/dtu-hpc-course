@@ -97,21 +97,21 @@ int main(int argc, char **argv) {
 
   // sort
   const unsigned int NUM_ARRAYS = 3;
-  printf("setting up all arrays");
+  printf("setting up all arrays\n");
   unsigned int** all_arrays = new unsigned int*[NUM_ARRAYS];
-  printf("assigned pointers");
+  printf("assigned pointers\n");
   all_arrays[0] = h_coarse_bins;
   all_arrays[1] = h_bins;
   all_arrays[2] = h_values;
 
-  printf("calling sort");
+  printf("calling sort\n");
   unsigned int** sorted = radix_sort(all_arrays, NUM_ARRAYS, NUM_ELEMS);
-  printf("out of sort");
+  printf("out of sort\n");
   h_coarse_bins = sorted[0];
   h_bins = sorted[1];
   h_values = sorted[2];
 
-  printf("finsihed");
+  printf("finsihed\n");
 
   // send coarse bin to each block
   // atomicAdd bins in shared memory

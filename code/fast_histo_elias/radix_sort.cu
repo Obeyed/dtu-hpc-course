@@ -380,10 +380,21 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
   printf("H_OUT[0] = %u\n", h_output[0]);
   printf("D_SORT_BY = %u\n", d_sort_by);
 
+  unsigned int* h_out_coarse = new unsigned int[NUM_ELEMS];
+  unsigned int* h_out_bin = new unsigned int[NUM_ELEMS];
+  unsigned int* h_out_val = new unsigned int[NUM_ELEMS];
+  printf("COPY TO THREE NEW ARRAYS\n");
   // copy contents back
-  checkCudaErrors(cudaMemcpy(h_output[0], d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(h_output[1], d_map_bin, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(h_output[2], d_map_val, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_out_coarse, d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_out_bin, d_map_bin, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_out_val, d_map_val, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  printf("COPIED\n");
+
+  h_output[0] = h_out_coarse;
+  h_output[1] = h_out_bin;
+  h_output[2] = h_out_val;
+
+  printf("RETURNING\n");
 
   return h_output;
 }
