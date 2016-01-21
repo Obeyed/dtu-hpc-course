@@ -248,6 +248,7 @@ void map_kernel(unsigned int* const d_out_coarse,
   d_out_val[pos]    = d_in_val[mid];
   d_out_bin[pos]    = d_in_bin[mid];
   d_out_coarse[pos] = d_in_coarse[mid];
+  printf("moving %u to %u\n", mid, pos);
 }
 
 // Calls reduce kernel to compute reduction.
