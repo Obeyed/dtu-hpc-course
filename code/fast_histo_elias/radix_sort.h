@@ -5,6 +5,6 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 
-unsigned int** radix_sort(unsigned int*, unsigned int**, const size_t, const size_t);
+unsigned int** radix_sort(unsigned int**, const size_t, const size_t);
 
 #endif

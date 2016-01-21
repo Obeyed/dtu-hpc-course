@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
   all_arrays[0] = h_coarse_bins;
   all_arrays[1] = h_bins;
   all_arrays[2] = h_values;
-  unsigned int** sorted = radix_sort(h_coarse_bins, all_arrays, NUM_ARRAYS, NUM_ELEMS);
+  unsigned int** sorted = radix_sort(all_arrays, NUM_ARRAYS, NUM_ELEMS);
   h_coarse_bins = sorted[0];
   h_bins = sorted[1];
   h_values = sorted[2];
