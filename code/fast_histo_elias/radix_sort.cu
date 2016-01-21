@@ -367,12 +367,12 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
     // so we now have addresses for elements where LSB is equal to 1
     exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE);
     // shift scatter addresses according to amount of elements that had LSB equal to 0
-    add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, NUM_ELEMS, i);
+    add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, NUM_ELEMS);
 
     // move elements accordingly
     map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map_coarse, d_map_bin, d_map_val, 
                                          d_sort_by, d_in_bin, d_in_val, 
-                                         d_predicate, d_sum_scan_0, d_sum_scan_1, NUM_ELEMS);
+                                         d_predicate, d_sum_scan_0, d_sum_scan_1, NUM_ELEMS, i);
 
     // swap pointers, instead of moving elements
     std::swap(d_sort_by, d_map_coarse);
