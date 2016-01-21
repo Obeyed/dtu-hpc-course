@@ -1,13 +1,17 @@
 \section{Reduce}
 \label{sec:reduce}
 
-Another handy algorithm is the reduce algorithm.
-The idea is to perform some binary operation on the collection of elements in some array, and return a single result.
-This operation could for instance be a sum over all elements, where the operation would be addition.
-The operation must be associative, i.e. \ttt{(a op b) op c = a op (b op c)}, for the reduce algorithm to perform correctly.
-\Cref{lst:reduce seq} shows the serial reduce code.
-The operation loops through all input elements and sums the result.
+The next algorithm is the reduce algorithm.
+The reduce algorithm is a gather operation that maps a space down to a subspace, e.g. performing a addition on an array of numbers.
+The algorithm for performing parallel gathers are restricted to associative operations such that \ttt{(a op b) op c = a op (b op c)}.
 
+\Cref{lst:reduce seq} shows the such type of operations in a serial fashion.
+The operation loops through all input elements and sums the result.
+The operation can be expressed such as, given $n=ARRAY\_SIZE$
+\begin{equation*}
+work load: O(n)
+size: O(n)
+\end{equation*}
 \begin{lstlisting}[caption={Serial reduce}, label={lst:reduce seq}]
 void reduce(int *h_in, int h_out, int SIZE) {
   for (int l = 0; l < SIZE; ++l) 
@@ -16,8 +20,10 @@ void reduce(int *h_in, int h_out, int SIZE) {
 \end{lstlisting}
 
 The challenge with the reduce code is that we perform all operations on a single memory address.
-If the serial code is naively made parallel we have a race condition.
-We need to split the problem into smaller problems and perform several sweeps on the results and combine the intermediary results to get the final result.
+If the serial code is naively made parallel we would be faced with race conditions.
+Instead we can look at the associative property of out problem, such that $((a+b)+c)+d = A + B$ where $A=a+b$ and $B=c+d$.
+By utilizing this property we can perform the computation of $A$ and $B$ in parallel and thus halve the problem by allowing each thread to compute two numbers to one.
+Reducing the problem size by a factor of two at each step gives a step size of $O(lg_2n)$ and allows us to compute parts of the problem in parallel.
 We present an illustration in \cref{fig:reduce decomp example} to try to give an intuition of how the parallel code will run.~\cite{reduceharris}
 
 \begin{figure}[htb]
@@ -73,8 +79,8 @@ reduce_kernel<<<1, size>>>(d_out, d_tmp_out, size);
 \subsection{Using Shared Memory}
 \label{sec: reduce shared memory}
 
-A rather quick optimisation is to use shared memory instead of global memory in the kernel.
-The kernel performs read and write operations in the l
+As the kernel relies on computation of a subtree it performs several read/writes to global memory.
+To reduce the amount of expensive transfers from global memory we propose the usage of shared memory instead.
 If we have 1024 threads per block then we will do more than 3000 read and write operations to global memory.
 However, if we read the needed memory into shared memory and perform the loop on that memory, then we will do about 1000 read and write operations.
 Thus, we can achieve a theoretical 3x speed up.
@@ -127,12 +133,12 @@ reduce_kernel<<<grid_size, BLOCK_SIZE, SMEM>>>(d_tmp_out, d_tmp_in, size);
 \end{lstlisting}
 
 Furthermore, we must update the kernel call to include the amount of shared memory to be allocated.
-This is illustrated in \cref{lst:reduce invocation with smem}, where the third argument in the triple chevrons is the amount of shared memory to allocate
+This is illustrated in \cref{lst:reduce invocation with smem}, where the third argument in the triple chevrons is the amount of shared memory to allocate.
 
-We present a plot in \cref{fig:reduce plot} illustrating the development of the run time for the reduce algorithms presented.
+In \cref{fig:reduce plot} is the run time for the reduce algorithms graphed.
 The GPGPU gets an advantage when the array size to sum is large.
-This is most likely due to that fact that the CPU is much faster than the GPGPU.
-The GPGPU beats the CPU when it has enough work to spread out to its threads.
+This is most likely due to overhead and memory transfers.
+The GPGPU is superior to the CPU when it has enough work to spread out to its many SMs.
 
 \begin{figure}[htb]
   \centering
@@ -141,7 +147,9 @@ The GPGPU beats the CPU when it has enough work to spread out to its threads.
   \label{fig:reduce plot}
 \end{figure}
 
+Using amdahls law would conclude that this problem is not as parallelizable as the mapping function from the previous section and should thus achieve a lesser speed-up.
+At $n=2^{29}$ the CPU performs the reduce in $1332.38ms$ where as the GPGPU performs the global reduce in $165.92$, x$8.03$ speed-up, and shared reduce in $124.07$, x$10.74$ speed-up.
+
 We mentioned that the shared memory version of the reduce would theoretically get approximately a 3x speed-up compared to the regular version.
-This is not the case as illustrated in the plot.
-This is due to the fact that we do not utilize the full potential of the local memory of the device.
-If we were to get closer to the theoretical speed-up we would have to do more optimisations.
+This is not the case as illustrated in the plot and by the speed-ups.
+This is due to the fact that we do not utilize the full potential of the local memory of the device.\cite{udacity}
