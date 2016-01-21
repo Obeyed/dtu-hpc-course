@@ -1,59 +1,13 @@
 \chapter{Algorithms}
 \label{chap:algorithms}
 
-This chapter introduces four fundamental algorithms that are very useful in parallel computing.
-We will be introducing map, reduce, scan, and histogram algorithms in sections \ref{sec:map} through \ref{sec:histogram}, respectively.
-Furthermore, we present the compact algorithm (\cref{sec:compact}) and radix sort (\cref{sec:radix sort}), which uses these basic algorithms for a bigger purpose.
+In the algorithms chapter we introduce four fundamental algorithms to that are often used in various combinations to model problems in parallel.\cite{udacity}
+We will be introducing map (\cref{sec:map}), reduce (\cref{sec:reduce}), scan (\cref{sec:scan}) and histogram (\cref{sec:histogram}).
+Furthermore, we present the compact algorithm (\cref{sec:compact}), and radix sort (\cref{sec:radix sort}) and fast histogram (\cref{sec:fast histogram}), which uses these basic algorithms to solve more complex problems.
 
-Moreover, in the first four sections we present plots to illustrate the runtime's development while we expand the array size of the input.
-We performed these tests by running each array size 10 times and averaging that result to get one data point to plot.
+Moreover, in the first three\todo{visualisations} sections we present plots to illustrate the runtime's development while we expand the array size of the input from $2^0$ to $2^{29}$.
+We performed these tests by running each array size 10 times and averaging the runtime results.
 So, we ran $30 \times 10$ total runs for each test.
-
-%\begin{figure*}[t]
-%  \centering
-%  \begin{subfigure}[b]{.49\linewidth}
-%    \centering
-%    \resizebox{!}{.80\textwidth}{
-%      \input{graphics/plots/map}
-%    }
-%    \caption{Map algorithm}
-%    \label{fig:par seq map}
-%  \end{subfigure}%
-%  ~
-%  \begin{subfigure}[b]{.49\linewidth}
-%    \centering
-%    \resizebox{!}{.80\textwidth}{
-%      \input{graphics/plots/reduce}
-%    }
-%    \caption{Reduce algorithm}
-%    \label{fig:par seq reduce}
-%  \end{subfigure}%
-%  \caption{Comparing parallel and sequential algorithms (1 of 2)}
-%  \label{fig:par seq 1}
-%\end{figure*}
-
-%\begin{figure*}[t]
-%  \centering
-%  \begin{subfigure}[b]{.49\linewidth}
-%    \centering
-%    \resizebox{!}{.80\textwidth}{
-%      \input{graphics/plots/scan}
-%    }
-%    \caption{Scan algorithm}
-%    \label{fig:par seq scan}
-%  \end{subfigure}%
-%  ~
-%  \begin{subfigure}[b]{.49\linewidth}
-%    \centering
-%    \resizebox{!}{.80\textwidth}{
-%      \input{graphics/plots/histogram}
-%    }
-%    \caption{Histogram algorithm}
-%    \label{fig:par seq histogram}
-%  \end{subfigure}%
-%  \caption{Comparing parallel and sequential algorithms (2 of 2)}
-%  \label{fig:par seq 2}
-%\end{figure*}
 
 \input{content/algorithms/debugging}
 \input{content/algorithms/map}
