@@ -148,8 +148,28 @@ The GPGPU is superior to the CPU when it has enough work to spread out to its ma
 \end{figure}
 
 Using amdahls law would conclude that this problem is not as parallelizable as the mapping function from the previous section and should thus achieve a lesser speed-up.
-At $n=2^{29}$ the CPU performs the reduce in $1332.38ms$ where as the GPGPU performs the global reduce in $165.92$, x$8.03$ speed-up, and shared reduce in $124.07$, x$10.74$ speed-up.
+At $n=2^{29}$ the performances are summarized in \cref{tab:cpu vs shared global gpgpu}the CPU performs the reduce in $1332.38ms$ where as the GPGPU performs the global reduce in $165.92$, x$8.03$ speed-up, and shared reduce in $124.07$, x$10.74$ speed-up.
 
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{c r | r r r r}
+    \toprule
+    device & algorithm & time in ms & speed-up & bandwidth usage & usage percentage\\
+    \midrule
+    {CPU} & serial  & 1332.38 &  &  &  \\
+    \multirow{2}*{GPGPU} & global & 165.92 & x8.03 & 51.77 GB/s & 17.95\% \\
+                         & shared &    124.07 & x10.74 & 34.62 GB/s & 12.00\% \\
+    \bottomrule
+  \end{tabular}
+  \caption{Global vs. Shared memory read and writes}
+  \label{tab:cpu vs shared global gpgpu}
+\end{table}
+
+Reads/writes in the global memory model is twice the total array amount as it also reads/writes for every step in the work tree.
+As the size of the tree and amount of work is logarithmic with respect to the input the total amount of reads and writes are twice the input size.
+Reads/writes in the shared memory model does not follow the same logarithmic reduction in global memory reads/writes as it only communicates with global memory at block termination.
+As we used a block size of $1024$ in the experiments we will not consider the additional transfers at the combining tree layers beyong the initial input array.i
+ 
 We mentioned that the shared memory version of the reduce would theoretically get approximately a 3x speed-up compared to the regular version.
 This is not the case as illustrated in the plot and by the speed-ups.
 This is due to the fact that we do not utilize the full potential of the local memory of the device.\cite{udacity}

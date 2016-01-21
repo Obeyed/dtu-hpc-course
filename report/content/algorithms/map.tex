@@ -39,6 +39,27 @@ We present the comparison of the map algorithms in \cref{fig:map plot}.
 It is clear that the parallel mapping algorithm has an advantage.
 All the operations can be performed in parallel, while the CPU has to perform every operation as consecutive operations.
 
+In \cref{tab:mapping cpu vs gpgpu} we list the performance at $n = 2^{29}$.
+However, the result is nowhere near Amdahls law prediction of $x2880$ speed-up.
+The reason is that the mapping operation is an operation with very low computational complexity and many expensive transfers to and from global memory.
+This result in the global memory being a bottleneck we are held back by the memory bottlenecks.
+
+
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{c r | r r r r}
+    \toprule
+    device & algorithm & time in ms & speed-up & bandwidth usage & usage percentage\\
+    \midrule
+    CPU & serial  & 1200.73 &  &  &  \\
+    GPGPU & parallel & 25.32 & x47.42 & 169.63 GB/s & 58.9\% \\
+    \bottomrule
+  \end{tabular}
+  \caption{Global vs. Shared memory read and writes}
+  \label{tab:mapping cpu vs gpgpu}
+\end{table}
+
+
 At $n = 2^{29}$ it takes the CPU $1200.73 ms$ while the GPGPU computes the mapping in $25.32$ being a $x47.42$ speed-up.
 However, Amdahls law predicted a $x2880$ speed-up, but as the mapping operation is an operation with very low computational operation and many expensive transfers to and from global memory we are held back by the memory bottlenecks.
 
