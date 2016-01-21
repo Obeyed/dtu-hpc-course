@@ -13,7 +13,7 @@ const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 const unsigned int COARSER = 10;
 
 const dim3 BLOCK_SIZE(1 << 8);
-const dim3 GRID_SIZE(BLOCK_SIZE.x / NUM_ELEMS);
+const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x);
 const dim3 GRID_SIZE_COARSED(GRID_SIZE.x / COARSER);
 
 __global__
@@ -60,6 +60,7 @@ void print(const unsigned int* const h_in,
         h_coarse_bins[i], 
         ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t\t"));
   printf("\n");
+  printf("SHOULD RETURN NOW");
 }
 
 int main(int argc, char **argv) {
