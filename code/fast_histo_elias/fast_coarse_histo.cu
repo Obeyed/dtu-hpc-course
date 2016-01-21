@@ -81,14 +81,6 @@ void sort(unsigned int* h_coarse_bins,
   h_values = sorted[2];
 }
 
-void init_device_memory(unsigned int* const d_values,
-                        unsigned int* const d_bins,
-                        unsigned int* const d_coarse_bins) {
-  checkCudaErrors(cudaMalloc((void **) &d_values, ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_bins,   ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_coarse_bins,   ARRAY_BYTES));
-}
-
 int main(int argc, char **argv) {
   printf("## STARTING ##\n");
   printf("blocks: %u\tthreads: %u\t coarser: %u", GRID_SIZE.x, BLOCK_SIZE.x, COARSER);
@@ -104,7 +96,9 @@ int main(int argc, char **argv) {
 
   //copy values to device memory
   unsigned int* d_values, * d_bins, * d_coarse_bins;
-  init_device_memory(d_values, d_bins, d_coarse_bins);
+  checkCudaErrors(cudaMalloc((void **) &d_values, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_bins,   ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_coarse_bins,   ARRAY_BYTES));
 
   // copy host memory to device
   checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
