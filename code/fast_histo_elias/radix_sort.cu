@@ -382,9 +382,17 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
   unsigned int* h_out_bin = new unsigned int[NUM_ELEMS];
   unsigned int* h_out_val = new unsigned int[NUM_ELEMS];
   // copy contents back
-  checkCudaErrors(cudaMemcpy(&(h_output[0]), d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(&(h_output[1]), d_map_bin, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-  checkCudaErrors(cudaMemcpy(&(h_output[2]), d_map_val, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_out_coarse, d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_out_bin, d_map_bin, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_out_val, d_map_val, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+
+  printf("H_OUT[0] = %u\n", h_output[0]);
+  printf("H_OUT[1] = %u\n", h_output[1]);
+  printf("H_OUT[2] = %u\n", h_output[2]);
+
+  h_output[0] = h_out_coarse;
+  h_output[1] = h_out_bin;
+  h_output[2] = h_out_val;
 
   printf("SHOULD BE UPDATED\n");
   printf("H_OUT[0] = %u\n", h_output[0]);
