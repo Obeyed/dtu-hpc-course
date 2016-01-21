@@ -326,7 +326,7 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
   unsigned int** h_output = new unsigned int*[NUM_ARRAYS_TO_SORT];
 
   // device memory
-  unsigned int *d_in_bin, *d_in_bin, *d_sort_by, *d_map_coarse, *d_map_val, 
+  unsigned int *d_in_bin, *d_in_val, *d_sort_by, *d_map_coarse, *d_map_val, 
                *d_map_bin, *d_predicate, *d_sum_scan, *d_predicate_tmp, 
                *d_sum_scan_0, *d_sum_scan_1, *d_predicate_toggle, *d_reduce;
   checkCudaErrors(cudaMalloc((void **) &d_sort_by,          ARRAY_BYTES));
