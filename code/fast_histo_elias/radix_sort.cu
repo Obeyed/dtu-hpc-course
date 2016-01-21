@@ -398,6 +398,8 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
 
     // swap pointers, instead of moving elements
     std::swap(d_sort_by, d_map_coarse);
+    std::swap(d_in_bin, d_map_bin);
+    std::swap(d_in_val, d_map_val);
 
     // copy contents back
     checkCudaErrors(cudaMemcpy(h_out_coarse, d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
