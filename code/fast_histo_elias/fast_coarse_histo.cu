@@ -10,8 +10,11 @@ const unsigned int NUM_ELEMS    = 1 << 10;
 const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 
-const dim3 BLOCK_SIZE(1024);
-const dim3 GRID_SIZE(NUM_BINS);
+const unsigned int COARSER = 10;
+
+const dim3 BLOCK_SIZE(1 << 8);
+const dim3 GRID_SIZE(BLOCK_SIZE.x / NUM_ELEMS);
+const dim3 GRID_SIZE_COARSED(GRID_SIZE.x / COARSER);
 
 __global__
 void compute_coarse_bin_mapping(const unsigned int* const d_in,
@@ -61,6 +64,9 @@ void print(const unsigned int* const h_in,
 
 int main(int argc, char **argv) {
   printf("## STARTING ##\n");
+  printf("blocks: %u\tthreads: %u\t coarsed blocks: %u", GRID_SIZE.x, BLOCK_SIZE.x, GRID_SIZE_COARSED.x);
+
+  printf("\n\n");
 
   // create random values
   unsigned int* h_values = new unsigned int[NUM_ELEMS];
