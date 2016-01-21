@@ -44,7 +44,7 @@ void find_positions_mapping_kernel(unsigned int* const d_out,
   if ((mid >= NUM_ELEMS) || (mid == 0)) return;
 
   if (d_in[mid] != d_in[mid-1])
-    d_out[in[mid]] = mid;
+    d_out[d_in[mid]] = mid;
 }
 
 void init_rand(unsigned int* const h_in) {
