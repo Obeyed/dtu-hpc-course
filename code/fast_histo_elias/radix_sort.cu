@@ -377,12 +377,6 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
     std::swap(d_sort_by, d_map_coarse);
   }
 
-  printf("&H_OUT[0] = %u\n", &h_output[0]);
-  printf("&H_OUT[1] = %u\n", &h_output[1]);
-  printf("&H_OUT[2] = %u\n", &h_output[2]);
-  printf("D_SORT_BY = %u\n", d_sort_by);
-  printf("D_MAP_BIN = %u\n", d_map_bin);
-  printf("D_MAP_VAL = %u\n", d_map_val);
 
   unsigned int* h_out_coarse = new unsigned int[NUM_ELEMS];
   unsigned int* h_out_bin = new unsigned int[NUM_ELEMS];
@@ -392,17 +386,24 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
   checkCudaErrors(cudaMemcpy(h_out_bin, d_map_bin, ARRAY_BYTES, cudaMemcpyDeviceToHost));
   checkCudaErrors(cudaMemcpy(h_out_val, d_map_val, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
+  printf("H_OUT[0] = %u\n", h_output[0]);
+  printf("H_OUT[1] = %u\n", h_output[1]);
+  printf("H_OUT[2] = %u\n", h_output[2]);
+  printf("H_OUT_COARSE = %u\n", h_out_coarse);
+  printf("H_OUT_BIN = %u\n", h_out_bin);
+  printf("H_OUT_VAL = %u\n", h_out_val);
+
   h_output[0] = h_out_coarse;
   h_output[1] = h_out_bin;
   h_output[2] = h_out_val;
 
-  printf("SHOULD BE UPDATED");
-  printf("&H_OUT[0] = %u\n", &h_output[0]);
-  printf("&H_OUT[1] = %u\n", &h_output[1]);
-  printf("&H_OUT[2] = %u\n", &h_output[2]);
-  printf("D_SORT_BY = %u\n", d_sort_by);
-  printf("D_MAP_BIN = %u\n", d_map_bin);
-  printf("D_MAP_VAL = %u\n", d_map_val);
+  printf("SHOULD BE UPDATED\n");
+  printf("H_OUT[0] = %u\n", h_output[0]);
+  printf("H_OUT[1] = %u\n", h_output[1]);
+  printf("H_OUT[2] = %u\n", h_output[2]);
+  printf("H_OUT_COARSE = %u\n", h_out_coarse);
+  printf("H_OUT_BIN = %u\n", h_out_bin);
+  printf("H_OUT_VAL = %u\n", h_out_val);
 
   printf("RETURNING\n");
 
