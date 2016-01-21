@@ -51,7 +51,11 @@ void print(const unsigned int* const h_in,
   printf("\n");
 
   for (int i = 0; i < NUM_ELEMS; i++)
-    printf("%u\t%u%s", h_in[i], h_bins[i], h_coarse_bins[i], ((i % WIDTH != 0) ? "\t\t" : "\n"));
+    printf("%u\t%u\t%u%s", 
+        h_in[i], 
+        h_bins[i], 
+        h_coarse_bins[i], 
+        ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t\t"));
   printf("\n");
 }
 
