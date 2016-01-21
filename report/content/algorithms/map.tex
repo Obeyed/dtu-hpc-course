@@ -1,10 +1,14 @@
 \section{Map}
 \label{sec:map}
 
-The task of mapping data from some input to some output is a simple task.
+As introduced in \cref{sec:challenges with parallel programs} we present a CPU sequential execution of the mapping operation and a GPGPU accelerated parallel implementation of the mapping operation.
 The serial code for a mapping operation is presented in \cref{lst:map seq}.
-The code loops through each index of the input, and copies the value to the same index in the output.
-This operation will take \ttt{SIZE} steps to finish, because we simple loop through all elements.
+The code loops through each index of the input and copies the value to the same index in the output.
+Given $n=ARRAY\_SIZE$This algorithm will take.
+\begin{equation*}
+workload: O(n)
+Steps: O(n)
+\end{equation*}
 
 \begin{lstlisting}[caption={Serial map}, label={lst:map seq}]
 void map(int *h_in, int *h_out, int SIZE) {
@@ -13,8 +17,9 @@ void map(int *h_in, int *h_out, int SIZE) {
 }
 \end{lstlisting}
 
-The nature of the serial solution is an optimal parallel solution.
-Every copy operation is independent of the others, which means they can be performed completely in parallel.
+As we can analyse the problem as a mapping operation, as introduced in \cref{sec:challenges with parallel programs}, we know that every mapping operation is independant from one another why the amount of steps can be reduced to $O(1)$ and the problem thus becomes 100\% parallizible.
+Given Amdahls law we should be able to achieve a speed up in the amount of cores, which is 2880 according to \cref{ap:tesla k40 specifications}
+
 We present a simple kernel that perform such a map operation in \cref{lst:map par}.
 
 \begin{lstlisting}[caption={Map kernel}, label={lst:map par}]
@@ -27,15 +32,15 @@ void map_kernel(int *d_out, int *d_in, int SIZE) {
 \end{lstlisting}
 
 First the kernel calculates the index of thread as a product of its position in the block and grid.
-Next, the kernel makes sure that the index is inside the bounds of the arrays, it is operating on.
+Next, the kernel validates that the index is inside the bounds of the arrays it is operating on.
 Finally, the input is copied to the new output.
-
-The step size of the map kernel is 1, because all operations can be performed completely independent of the others.
-The work size is equal to \ttt{SIZE} big, because we still need to copy all elements from array to array.
 
 We present the comparison of the map algorithms in \cref{fig:map plot}.
 It is clear that the parallel mapping algorithm has an advantage.
 All the operations can be performed in parallel, while the CPU has to perform every operation as consecutive operations.
+
+At $n = 2^{29}$ it takes the CPU $1200.73 ms$ while the GPGPU computes the mapping in $25.32$ being a $x47.42$ speed-up.
+However, Amdahls law predicted a $x2880$ speed-up, but as the mapping operation is an operation with very low computational operation and many expensive transfers to and from global memory we are held back by the memory bottlenecks.
 
 \begin{figure}[htb]
   \centering
