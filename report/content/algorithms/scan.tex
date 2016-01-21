@@ -1,10 +1,12 @@
 \section{Scan}
 \label{sec:scan}
 
-The scan algorithm takes an array, a binary and associative operator, and an identity element.
+The third basic algorithm is the scan algorithm.
+The scan algorithm is able to produce the cumulative operation of all previous array ellements given location.
+Either exclusive or inclusive such as illustrated in \cref{tab:scan example}.
+To compute the scan the algorithm takes an array, a binary and associative operator, and an identity element.
 If the operator is add, the scan algorithm computes the running sum of the input.
-The identity element is 0 for addition.
-As an example see \cref{tab:scan example} which shows the running sum of each element in the array.
+The identity element is 0 for addition as shown in the ouput (excl.) from \cref{tab:scan example}.
 
 \begin{table}[htb]
   \centering
