@@ -7,7 +7,7 @@
 #include "radix_sort.h"
 
 // CONSTANTS
-const unsigned int NUM_ELEMS    = 1 << 5;
+const unsigned int NUM_ELEMS    = 1 << 6;
 const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 
@@ -106,18 +106,12 @@ int main(int argc, char **argv) {
   all_arrays[2] = h_values;
 
   unsigned int** sorted = radix_sort(all_arrays, NUM_ARRAYS, NUM_ELEMS);
-  printf("FROM HISTO:\n");
-  printf("sorted[0] = %u\n", sorted[0]);
-  printf("sorted[1] = %u\n", sorted[1]);
-  printf("sorted[2] = %u\n", sorted[2]);
-
   h_coarse_bins = sorted[0];
   h_bins = sorted[1];
   h_values = sorted[2];
 
-  printf("updated[0] = %u\n", h_coarse_bins);
-  printf("updated[1] = %u\n", h_bins);
-  printf("updated[2] = %u\n", h_values);
+  printf("AFTER SORTING:\n");
+  print(h_values, h_bins, h_coarse_bins);
 
 
   // send coarse bin to each block
@@ -125,9 +119,6 @@ int main(int argc, char **argv) {
   
   // combine bins and write to global memory
 
-
-  printf("AFTER SORTING:\n");
-  print(h_values, h_bins, h_coarse_bins);
 
   printf("## DONE ##\n");
 

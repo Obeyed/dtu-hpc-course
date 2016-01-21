@@ -312,26 +312,6 @@ void exclusive_sum_scan(unsigned int* const d_out,
   right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, NUM_ELEMS);
 }
 
-
-void print(const unsigned int* const h_in,
-           const unsigned int* const h_bins,
-           const unsigned int* const h_coarse_bins,
-           const unsigned int NUM_ELEMS) {
-  const unsigned int WIDTH = 6;
-
-  for(int i = 0; i < WIDTH; i++)
-    printf("input\tbin\tcoarse\t\t");
-  printf("\n");
-
-  for (int i = 0; i < NUM_ELEMS; i++)
-    printf("%u\t%u\t%u%s", 
-        h_in[i], 
-        h_bins[i], 
-        h_coarse_bins[i], 
-        ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t\t"));
-  printf("\n");
-}
-
 // Sort values using radix sort
 // EDIT: sort by first array in h_to_be_sorted
 unsigned int** radix_sort(unsigned int** h_to_be_sorted,
@@ -400,33 +380,16 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
     std::swap(d_sort_by, d_map_coarse);
     std::swap(d_in_bin, d_map_bin);
     std::swap(d_in_val, d_map_val);
-
-    // copy contents back
-    checkCudaErrors(cudaMemcpy(h_out_coarse, d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(h_out_bin, d_map_bin, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(h_out_val, d_map_val, ARRAY_BYTES, cudaMemcpyDeviceToHost));
-
-    print(h_out_val, h_out_bin, h_out_coarse, NUM_ELEMS);
   }
-
 
   // copy contents back
   checkCudaErrors(cudaMemcpy(h_out_coarse, d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
   checkCudaErrors(cudaMemcpy(h_out_bin, d_map_bin, ARRAY_BYTES, cudaMemcpyDeviceToHost));
   checkCudaErrors(cudaMemcpy(h_out_val, d_map_val, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
-  printf("H_OUT[0] = %u\n", h_output[0]);
-  printf("H_OUT[1] = %u\n", h_output[1]);
-  printf("H_OUT[2] = %u\n", h_output[2]);
-
   h_output[0] = h_out_coarse;
   h_output[1] = h_out_bin;
   h_output[2] = h_out_val;
-
-  printf("SHOULD BE UPDATED\n");
-  printf("H_OUT[0] = %u\n", h_output[0]);
-  printf("H_OUT[1] = %u\n", h_output[1]);
-  printf("H_OUT[2] = %u\n", h_output[2]);
 
   return h_output;
 }
