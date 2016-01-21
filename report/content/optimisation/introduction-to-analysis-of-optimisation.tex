@@ -75,18 +75,18 @@ Where $P$ is the amount of the program that can be parallelized and $W(n)$ is th
 \subsection{Theoretical memory speed-up}
 \label{sec:analysing hardware}
 In order to access the usage of the theoretical memory bandwitdth in our optimization we can use the hardware specific numbers to see how much data we should be able to push through the GPGPU.
-We need to find the clock rate to determine how fast the processesors are running and the bus width to determine the amount of data transfered at every clock.
+We need to find the clock rate to determine how fast the processesors are running and the bus width to determine the amount of data transfered at every clock multiplied by 2 due to double data rate.\footnote{http://devblogs.nvidia.com/parallelforall/how-implement-performance-metrics-cuda-cc/}
 The formulation for theoretical memory bandwidth thus becomes:
 \begin{equation*}
-output \frac{bytes}{s} = \frac{clock}{sec} * \frac{bytes}{clock}
+output \frac{bytes}{s} = \frac{clock}{sec} * \frac{bytes}{clock} * 2
 \end{equation*}
 Reading out \ttt{deviceQuery} information \cref{aap:tesla k40 specifications} we can access that the \ttt{Memory Clock Rate: 3004 Mhz} and \ttt{Memory Bus Width: 384}.
 Thus out theoretical memory bandwidth on out K40 is
 \begin{equation*}
-144.192 \frac{GB}{s} = 3.004 Ghz * 48 \frac{bytes}{clock}
+288.384 \frac{GB}{s} = 3.004 Ghz * 48 \frac{bytes}{clock} * 2
 \end{equation*}
 In order to understand how close our solution is to the theoretical memory bandwidthwe use the following formula:
 \begin{equation*}
-percentage of theoretical = \frac{\frac{read/writes in GBs}{time in seconds}}{144.192} * 100
+percentage of theoretical = \frac{\frac{read/writes in GBs}{time in seconds}}{288.384} * 100
 \end{equation*}
 In \todo{cref section} we use this tool to analyse a problem statement.
