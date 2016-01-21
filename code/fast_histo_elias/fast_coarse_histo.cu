@@ -11,7 +11,7 @@ const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 
 const dim3 BLOCK_SIZE(1 << 8);
-const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x);
+const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x + 1);
 
 const unsigned int COARSER = NUM_BINS / 10;
 const unsigned int MAX_NUMS = 1000;
