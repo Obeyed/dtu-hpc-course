@@ -43,6 +43,8 @@ void find_positions_mapping_kernel(unsigned int* const d_out,
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if ((mid >= NUM_ELEMS) || (mid == 0)) return;
 
+  printf("mid: %u, d_in[%u] = %u\n", mid, mid, d_in[mid]);
+
   if (d_in[mid] != d_in[mid-1])
     d_out[d_in[mid]] = mid;
 }
@@ -133,10 +135,18 @@ int main(int argc, char **argv) {
 
   // sort
   sort(h_coarse_bins, h_bins, h_values);
-
+  checkCudaErrors(cudaMemcpy(d_coarse_bins, h_coarse_bins,  ARRAY_BYTES, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_bins,        h_bins,         ARRAY_BYTES, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_values,      h_values,       ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   // find starting position for each coarsed bin
   cudaMemset(d_positions, 0, COARSER_BYTES);
+  checkCudaErrors(cudaMemcpy(h_positions, d_positions, COARSER_BYTES, cudaMemcpyDeviceToHost));
+
+  printf("pre-positions:\n");
+  for (int i = 0; i < COARSER; i++)
+    printf("%u : %u\n", i, h_positions[i]);
+
   find_positions_mapping_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_positions, d_coarse_bins);
   checkCudaErrors(cudaMemcpy(h_positions, d_positions, COARSER_BYTES, cudaMemcpyDeviceToHost));
   
