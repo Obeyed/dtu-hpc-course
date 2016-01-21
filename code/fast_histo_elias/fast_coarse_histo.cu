@@ -22,7 +22,7 @@ void compute_bin_mapping(const unsigned int* const d_in,
   d_out[mid] = d_in[mid] % NUM_BINS;
 }
 
-void init(unsigned int* const h_in) {
+void init_rand(unsigned int* const h_in) {
   /* initialize random seed: */
   srand(time(NULL));
 
@@ -39,7 +39,7 @@ void print(const unsigned int* const h_in,
     printf("input\tbin\t\t");
   printf("\n");
 
-  for (int i = 0; i < NUM_ELEMS; i++) {
+  for (int i = 0; i < NUM_ELEMS; i++)
     printf("%u\t%u%s", h_in[i], h_bin[i], ((i % WIDTH == 0) ? "\n" : "\t\t"));
   printf("\n");
 }
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
   // create random values
   unsigned int* h_values = new unsigned int[NUM_ELEMS];
-  init(h_values);
+  init_rand(h_values);
   // host memory
   unsigned int* h_bins   = new unsigned int[NUM_ELEMS];
   memset(h_bins, 0, NUM_ELEMS);
