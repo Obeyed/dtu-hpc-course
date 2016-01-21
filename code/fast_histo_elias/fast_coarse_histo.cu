@@ -14,6 +14,7 @@ const dim3 BLOCK_SIZE(1 << 8);
 const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x);
 
 const unsigned int COARSER = NUM_BINS / 10;
+const unsigned int MAX_NUMS = 1000;
 
 __global__
 void compute_coarse_bin_mapping(const unsigned int* const d_in,
@@ -40,7 +41,7 @@ void init_rand(unsigned int* const h_in) {
 
   /* generate values between 0 and 999: */
   for (int i = 0; i < NUM_ELEMS; i++)
-    h_in[i] = rand() % 1000;
+    h_in[i] = rand() % MAX_NUMS;
 }
 
 void print(const unsigned int* const h_in,
