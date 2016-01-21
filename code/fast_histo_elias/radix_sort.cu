@@ -106,6 +106,8 @@ void map_kernel(unsigned int* const,
                 const unsigned int* const,
                 const unsigned int* const,
                 const unsigned int* const,
+                const unsigned int* const,
+                const unsigned int* const,
                 const size_t);
 /**
     Calls reduce kernel to compute reduction.
@@ -231,7 +233,9 @@ __global__
 void map_kernel(unsigned int* const d_out_coarse,
                 unsigned int* const d_out_bin,
                 unsigned int* const d_out_val,
-                const unsigned int* const d_in,
+                const unsigned int* const d_in_coarse,
+                const unsigned int* const d_in_bin,
+                const unsigned int* const d_in_val,
                 const unsigned int* const d_predicate,
                 const unsigned int* const d_sum_scan_0,
                 const unsigned int* const d_sum_scan_1,
@@ -309,8 +313,8 @@ void exclusive_sum_scan(unsigned int* const d_out,
 }
 
 // Sort values using radix sort
-unsigned int** radix_sort(unsigned int* h_sort_by,
-                          unsigned int** h_to_be_sorted,
+// EDIT: sort by first array in h_to_be_sorted
+unsigned int** radix_sort(unsigned int** h_to_be_sorted,
                           const size_t NUM_ARRAYS_TO_SORT,
                           const size_t NUM_ELEMS) {
   const int BLOCK_SIZE  = 1024;
@@ -322,9 +326,9 @@ unsigned int** radix_sort(unsigned int* h_sort_by,
   unsigned int** h_output = new unsigned int*[NUM_ARRAYS_TO_SORT];
 
   // device memory
-  unsigned int *d_sort_by, *d_map_coarse, *d_map_val, *d_map_bin, *d_predicate, 
-               *d_sum_scan, *d_predicate_tmp, *d_sum_scan_0, *d_sum_scan_1, 
-               *d_predicate_toggle, *d_reduce;
+  unsigned int *d_in_bin, *din_bin, *d_sort_by, *d_map_coarse, *d_map_val, 
+               *d_map_bin, *d_predicate, *d_sum_scan, *d_predicate_tmp, 
+               *d_sum_scan_0, *d_sum_scan_1, *d_predicate_toggle, *d_reduce;
   checkCudaErrors(cudaMalloc((void **) &d_sort_by,          ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_map_coarse,       ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_map_val,          ARRAY_BYTES));
@@ -338,7 +342,9 @@ unsigned int** radix_sort(unsigned int* h_sort_by,
   checkCudaErrors(cudaMalloc((void **) &d_reduce, sizeof(unsigned int)));
 
   // copy host array to device
-  checkCudaErrors(cudaMemcpy(d_sort_by, h_sort_by, ARRAY_BYTES, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_sort_by, h_to_be_sorted[0], ARRAY_BYTES, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_in_bin, h_to_be_sorted[1], ARRAY_BYTES, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_in_val, h_to_be_sorted[2], ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   for (unsigned int i = 0; i < (BITS_PER_BYTE * sizeof(unsigned int)); i++) {
     // predicate is that LSB is 0
@@ -361,7 +367,9 @@ unsigned int** radix_sort(unsigned int* h_sort_by,
     add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, NUM_ELEMS);
 
     // move elements accordingly
-    map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map_coarse, d_map_bin, d_map_val, d_sort_by, d_predicate, d_sum_scan_0, d_sum_scan_1, NUM_ELEMS);
+    map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map_coarse, d_map_bin, d_map_val, 
+                                         d_sort_by, d_in_bin, d_in_val, 
+                                         d_predicate, d_sum_scan_0, d_sum_scan_1, NUM_ELEMS);
 
     // swap pointers, instead of moving elements
     std::swap(d_sort_by, d_map_coarse);
