@@ -135,7 +135,9 @@ int main(int argc, char **argv) {
 
   // sort
   sort(h_coarse_bins, h_bins, h_values);
-
+  checkCudaErrors(cudaMemcpy(d_coarse_bins, h_coarse_bins,  ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(d_bins,        h_bins,         ARRAY_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(d_values,      h_values,       ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
   // find starting position for each coarsed bin
   cudaMemset(d_positions, 0, COARSER_BYTES);
