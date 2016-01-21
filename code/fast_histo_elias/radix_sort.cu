@@ -108,7 +108,7 @@ void map_kernel(unsigned int* const,
                 const unsigned int* const,
                 const unsigned int* const,
                 const unsigned int* const,
-                const size_t, const unsigned int);
+                const size_t);
 /**
     Calls reduce kernel to compute reduction.
     Runs log_(BLOCK_SIZE)(num_elems) times.
@@ -239,7 +239,7 @@ void map_kernel(unsigned int* const d_out_coarse,
                 const unsigned int* const d_predicate,
                 const unsigned int* const d_sum_scan_0,
                 const unsigned int* const d_sum_scan_1,
-                const size_t NUM_ELEMS, const unsigned int i) {
+                const size_t NUM_ELEMS) {
   const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= NUM_ELEMS) return;
 
@@ -248,7 +248,6 @@ void map_kernel(unsigned int* const d_out_coarse,
   d_out_val[pos]    = d_in_val[mid];
   d_out_bin[pos]    = d_in_bin[mid];
   d_out_coarse[pos] = d_in_coarse[mid];
-  if (i == 0) printf("moving %u to %u\n", mid, pos);
 }
 
 // Calls reduce kernel to compute reduction.
@@ -372,13 +371,15 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
     // move elements accordingly
     map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map_coarse, d_map_bin, d_map_val, 
                                          d_sort_by, d_in_bin, d_in_val, 
-                                         d_predicate, d_sum_scan_0, d_sum_scan_1, NUM_ELEMS, i);
+                                         d_predicate, d_sum_scan_0, d_sum_scan_1, NUM_ELEMS);
 
     // swap pointers, instead of moving elements
     std::swap(d_sort_by, d_map_coarse);
   }
 
   printf("H_OUT[0] = %u\n", h_output[0]);
+  printf("H_OUT[1] = %u\n", h_output[1]);
+  printf("H_OUT[2] = %u\n", &h_output[2]);
   printf("D_SORT_BY = %u\n", d_sort_by);
 
   unsigned int* h_out_coarse = new unsigned int[NUM_ELEMS];
