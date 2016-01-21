@@ -14,6 +14,15 @@ const dim3 BLOCK_SIZE(1024);
 const dim3 GRID_SIZE(NUM_BINS);
 
 __global__
+void compute_coarse_bin_mapping(const unsigned int* const d_in,
+                                unsigned int* const d_out) {
+  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (mid >= NUM_ELEMS) return;
+
+  d_out[mid] = d_in[mid] % GRID_SIZE.x;
+}
+
+__global__
 void compute_bin_mapping(const unsigned int* const d_in,
                          unsigned int* const d_out) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -32,15 +41,16 @@ void init_rand(unsigned int* const h_in) {
 }
 
 void print(const unsigned int* const h_in,
-           const unsigned int* const h_bin) {
+           const unsigned int* const h_bins,
+           const unsigned int* const h_coarse_bins) {
   const unsigned int WIDTH = 6;
 
   for(int i = 0; i < WIDTH; i++)
-    printf("input\tbin\t\t");
+    printf("input\tbin\tcoarse\t\t");
   printf("\n");
 
   for (int i = 0; i < NUM_ELEMS; i++)
-    printf("%u\t%u%s", h_in[i], h_bin[i], ((i % WIDTH == 0) ? "\n" : "\t\t"));
+    printf("%u\t%u%s", h_in[i], h_bins[i], h_coarse_bins[i], ((i % WIDTH != 0)) ? "\t\t" : "\n"));
   printf("\n");
 }
 
@@ -51,14 +61,17 @@ int main(int argc, char **argv) {
   unsigned int* h_values = new unsigned int[NUM_ELEMS];
   init_rand(h_values);
   // host memory
-  unsigned int* h_bins   = new unsigned int[NUM_ELEMS];
-  memset(h_bins, 0, NUM_ELEMS);
+  unsigned int* h_bins = new unsigned int[NUM_ELEMS];
+  unsigned int* h_coarse_bins = new unsigned int[NUM_ELEMS];
 
   //copy values to device memory
-  unsigned int* d_values, *d_bins;
+  unsigned int* d_values, 
+              * d_bins,
+              * d_coarse_bins;
   checkCudaErrors(cudaMalloc((void **) &d_values, ARRAY_BYTES));
   checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMalloc((void **) &d_bins,   ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_coarse_bins,   ARRAY_BYTES));
 
   // compute bin id
   compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
@@ -66,6 +79,9 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemcpy(h_bins, d_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
   // compute coarse bin id
+  compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins);
+  // move memory to host
+  checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
   // sort
 
@@ -75,7 +91,7 @@ int main(int argc, char **argv) {
   // combine bins and write to global memory
 
 
-  print(h_values, h_bins);
+  print(h_values, h_bins, h_coarse_bins);
 
   printf("## DONE ##");
 
