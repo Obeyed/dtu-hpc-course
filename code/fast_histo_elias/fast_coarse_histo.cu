@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
   print(h_values, h_bins, h_coarse_bins);
 
-  printf("## DONE ##");
+  printf("## DONE ##\n");
 
   return 0;
 }
