@@ -7,7 +7,7 @@
 #include "radix_sort.h"
 
 // CONSTANTS
-const unsigned int NUM_ELEMS    = 1 << 10;
+const unsigned int NUM_ELEMS    = 1 << 5;
 const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 
@@ -95,6 +95,9 @@ int main(int argc, char **argv) {
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
+  printf("BEFORE SORTING:\n");
+  print(h_values, h_bins, h_coarse_bins);
+
   // sort
   const unsigned int NUM_ARRAYS = 3;
   printf("setting up all arrays\n");
@@ -119,6 +122,7 @@ int main(int argc, char **argv) {
   // combine bins and write to global memory
 
 
+  printf("AFTER SORTING:\n");
   print(h_values, h_bins, h_coarse_bins);
 
   printf("## DONE ##\n");
