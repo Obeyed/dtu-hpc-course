@@ -7,7 +7,7 @@
 #include "radix_sort.h"
 
 // CONSTANTS
-const unsigned int NUM_ELEMS    = 1 << 5;
+const unsigned int NUM_ELEMS    = 1 << 6;
 const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 
@@ -15,6 +15,7 @@ const dim3 BLOCK_SIZE(1 << 8);
 const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x + 1);
 
 const unsigned int COARSER = NUM_BINS / 10;
+const unsigned int COARSER_BYTES = sizeof(unsigned int) * COARSER;
 const unsigned int MAX_NUMS = 1000;
 
 __global__
@@ -36,6 +37,16 @@ void compute_bin_mapping(const unsigned int* const d_in,
   d_out[mid] = d_in[mid] % NUM_BINS;
 }
 
+__global__
+void find_positions_mapping_kernel(unsigned int* const d_out,
+                                   const unsigned int* const d_in) {
+  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  if ((mid >= NUM_ELEMS) || (mid == 0)) return;
+
+  if (d_in[mid] != d_in[mid-1])
+    d_out[d_in[mid]] = mid;
+}
+
 void init_rand(unsigned int* const h_in) {
   /* initialize random seed: */
   srand(time(NULL));
@@ -47,8 +58,9 @@ void init_rand(unsigned int* const h_in) {
 
 void print(const unsigned int* const h_in,
            const unsigned int* const h_bins,
-           const unsigned int* const h_coarse_bins) {
-  const unsigned int WIDTH = 6;
+           const unsigned int* const h_coarse_bins,
+           const unsigned int* const h_positions) {
+  const unsigned int WIDTH = 4;
 
   for(int i = 0; i < WIDTH; i++)
     printf("input\tbin\tcoarse\t\t");
@@ -61,6 +73,28 @@ void print(const unsigned int* const h_in,
         h_coarse_bins[i], 
         ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t\t"));
   printf("\n");
+
+  printf("positions:\n");
+  for (int i = 0; i < COARSER; i++)
+    printf("%u : %u\n", i, h_positions[i]);
+}
+
+void sort(unsigned int*& h_coarse_bins, 
+          unsigned int*& h_bins, 
+          unsigned int*& h_values) {
+  const unsigned int NUM_ARRAYS = 3;
+  // set up pointers
+  unsigned int** to_be_sorted = new unsigned int*[NUM_ARRAYS];
+  to_be_sorted[0] = h_coarse_bins;
+  to_be_sorted[1] = h_bins;
+  to_be_sorted[2] = h_values;
+
+  unsigned int** sorted = radix_sort(to_be_sorted, NUM_ARRAYS, NUM_ELEMS);
+
+  // update pointers
+  h_coarse_bins = sorted[0];
+  h_bins = sorted[1];
+  h_values = sorted[2];
 }
 
 int main(int argc, char **argv) {
@@ -75,15 +109,17 @@ int main(int argc, char **argv) {
   // host memory
   unsigned int* h_bins = new unsigned int[NUM_ELEMS];
   unsigned int* h_coarse_bins = new unsigned int[NUM_ELEMS];
+  unsigned int* h_positions = new unsigned int[COARSER];
 
   //copy values to device memory
-  unsigned int* d_values, 
-              * d_bins,
-              * d_coarse_bins;
+  unsigned int* d_values, * d_bins, * d_coarse_bins, * d_positions;
   checkCudaErrors(cudaMalloc((void **) &d_values, ARRAY_BYTES));
-  checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMalloc((void **) &d_bins,   ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_coarse_bins,   ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_coarse_bins, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_positions, ARRAY_BYTES));
+
+  // copy host memory to device
+  checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   // compute bin id
   compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
@@ -95,32 +131,22 @@ int main(int argc, char **argv) {
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
-  printf("BEFORE SORTING:\n");
-  print(h_values, h_bins, h_coarse_bins);
-
   // sort
-  const unsigned int NUM_ARRAYS = 3;
-  unsigned int** all_arrays = new unsigned int*[NUM_ARRAYS];
-  all_arrays[0] = h_coarse_bins;
-  all_arrays[1] = h_bins;
-  all_arrays[2] = h_values;
-
-  unsigned int** sorted = radix_sort(all_arrays, NUM_ARRAYS, NUM_ELEMS);
-  h_coarse_bins = sorted[0];
-  h_bins = sorted[1];
-  h_values = sorted[2];
+  sort(h_coarse_bins, h_bins, h_values);
 
 
-  // send coarse bin to each block
-  // atomicAdd bins in shared memory
+  // find starting position for each coarsed bin
+  cudaMemset(d_positions, 0, COARSER_BYTES);
+  find_positions_mapping_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_positions, d_coarse_bins);
+  checkCudaErrors(cudaMemcpy(h_positions, d_positions, COARSER_BYTES, cudaMemcpyDeviceToHost));
   
+  print(h_values, h_bins, h_coarse_bins, h_positions);
+
   // combine bins and write to global memory
 
-
-  printf("AFTER SORTING:\n");
-  print(h_values, h_bins, h_coarse_bins);
 
   printf("## DONE ##\n");
 
   return 0;
 }
+
