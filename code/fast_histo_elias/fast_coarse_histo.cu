@@ -63,24 +63,6 @@ void print(const unsigned int* const h_in,
   printf("\n");
 }
 
-void sort(unsigned int* h_coarse_bins, 
-          unsigned int* h_bins, 
-          unsigned int* h_values) {
-  const unsigned int NUM_ARRAYS = 3;
-  // set up pointers
-  unsigned int** to_be_sorted = new unsigned int*[NUM_ARRAYS];
-  to_be_sorted[0] = h_coarse_bins;
-  to_be_sorted[1] = h_bins;
-  to_be_sorted[2] = h_values;
-
-  unsigned int** sorted = radix_sort(to_be_sorted, NUM_ARRAYS, NUM_ELEMS);
-
-  // update pointers
-  h_coarse_bins = sorted[0];
-  h_bins = sorted[1];
-  h_values = sorted[2];
-}
-
 int main(int argc, char **argv) {
   printf("## STARTING ##\n");
   printf("blocks: %u\tthreads: %u\t coarser: %u", GRID_SIZE.x, BLOCK_SIZE.x, COARSER);
@@ -95,13 +77,13 @@ int main(int argc, char **argv) {
   unsigned int* h_coarse_bins = new unsigned int[NUM_ELEMS];
 
   //copy values to device memory
-  unsigned int* d_values, * d_bins, * d_coarse_bins;
+  unsigned int* d_values, 
+              * d_bins,
+              * d_coarse_bins;
   checkCudaErrors(cudaMalloc((void **) &d_values, ARRAY_BYTES));
+  checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMalloc((void **) &d_bins,   ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_coarse_bins,   ARRAY_BYTES));
-
-  // copy host memory to device
-  checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   // compute bin id
   compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
@@ -113,10 +95,21 @@ int main(int argc, char **argv) {
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
-  // sort
   printf("BEFORE SORTING:\n");
   print(h_values, h_bins, h_coarse_bins);
-  sort(h_coarse_bins, h_bins, h_values);
+
+  // sort
+  const unsigned int NUM_ARRAYS = 3;
+  unsigned int** all_arrays = new unsigned int*[NUM_ARRAYS];
+  all_arrays[0] = h_coarse_bins;
+  all_arrays[1] = h_bins;
+  all_arrays[2] = h_values;
+
+  unsigned int** sorted = radix_sort(all_arrays, NUM_ARRAYS, NUM_ELEMS);
+  h_coarse_bins = sorted[0];
+  h_bins = sorted[1];
+  h_values = sorted[2];
+
   printf("AFTER SORTING:\n");
   print(h_values, h_bins, h_coarse_bins);
 
@@ -131,4 +124,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-
