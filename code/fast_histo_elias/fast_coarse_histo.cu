@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 
   // sort
   const unsigned int NUM_ARRAYS = 3;
-  unsigned int** all_arrays = new unsigned int[NUM_ARRAYS];
+  unsigned int** all_arrays = new unsigned int[NUM_ARRAYS][NUM_ELEMS];
   all_arrays[0] = h_coarse_bins;
   all_arrays[1] = h_bins;
   all_arrays[2] = h_values;

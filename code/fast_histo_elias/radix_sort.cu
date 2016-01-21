@@ -319,10 +319,7 @@ unsigned int** radix_sort(unsigned int* h_sort_by,
   const unsigned int BITS_PER_BYTE = 8;
 
   // host memory
-  unsigned int** h_output = new unsigned int[NUM_ARRAYS_TO_SORT];
-  // 0: coarsed, 1: bin, 2: values
-  for (int i = 0; i < NUM_ARRAYS_TO_SORT; i++)
-    h_output[i] = new unsigned int[NUM_ELEMS];
+  unsigned int** h_output = new unsigned int[NUM_ARRAYS_TO_SORT][NUM_ELEMS];
 
   // device memory
   unsigned int *d_sort_by, *d_map_coarse, *d_map_val, *d_map_bin, *d_predicate, 
