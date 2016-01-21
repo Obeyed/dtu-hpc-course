@@ -2,6 +2,7 @@
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+#include "utils.h"
 
 // CONSTANTS
 const unsigned int NUM_ELEMS    = 1 << 10;
@@ -42,7 +43,6 @@ void print(const unsigned int* const h_in,
   printf("\n");
 }
 
-/*
 int main(int argc, char **argv) {
   printf("## STARTING ##");
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMalloc((void **) &d_bins,   ARRAY_BYTES));
 
   // compute bin id
-  compute_bin_mapping(d_values, d_bins);
+  compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_bins, d_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
@@ -80,4 +80,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-*/
