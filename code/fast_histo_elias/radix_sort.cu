@@ -377,8 +377,8 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
     std::swap(d_sort_by, d_map_coarse);
   }
 
-  printf("H_OUT[0] = %u\n", h_output[0]);
-  printf("H_OUT[1] = %u\n", h_output[1]);
+  printf("H_OUT[0] = %u\n", &h_output[0]);
+  printf("H_OUT[1] = %u\n", &h_output[1]);
   printf("H_OUT[2] = %u\n", &h_output[2]);
   printf("D_SORT_BY = %u\n", d_sort_by);
 
@@ -394,7 +394,7 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
 
   h_output[0] = h_out_coarse;
   h_output[1] = h_out_bin;
-  h_output[2] = h_out_val;
+  h_output[2] = &h_out_val;
 
   printf("RETURNING\n");
 
