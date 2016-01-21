@@ -29,8 +29,11 @@ void fire_up_local_bins(unsigned int* const d_out,
 
   if (global_pos >= NUM_ELEMS) return;
 
+
   unsigned int own_histo_pos = blockIdx.x * COARSER_SIZE;
   unsigned int normalised_bin = d_bins[global_pos]-coarser_id*COARSER_SIZE;
+
+  printf("mid: %u, g_pos: %u, l_pos: %u, norm_bin: %u\n", mid, global_pos, own_histo_pos, normalised_bin);
 
   // read some into shared memory
   atomicAdd(&(d_out[own_histo_pos + normalised_bin]), 1);
