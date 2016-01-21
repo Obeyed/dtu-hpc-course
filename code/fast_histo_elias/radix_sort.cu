@@ -377,8 +377,8 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
     std::swap(d_sort_by, d_map_coarse);
   }
 
-  printf("H_OUT[0] = %u", h_output[0]);
-  printf("D_SORT_BY = %u", d_sort_by);
+  printf("H_OUT[0] = %u\n", h_output[0]);
+  printf("D_SORT_BY = %u\n", d_sort_by);
 
   // copy contents back
   checkCudaErrors(cudaMemcpy(h_output[0], d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
