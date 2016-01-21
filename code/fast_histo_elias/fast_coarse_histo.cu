@@ -18,11 +18,11 @@ const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x);
 __global__
 void compute_coarse_bin_mapping(const unsigned int* const d_in,
                                 unsigned int* const d_out,
-                                const size_t BLOCKS) {
+                                const size_t COARSE) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= NUM_ELEMS) return;
 
-  d_out[mid] = d_in[mid] % BLOCKS;
+  d_out[mid] = d_in[mid] / COARSE;
 }
 
 __global__
