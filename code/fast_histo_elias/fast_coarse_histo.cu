@@ -33,7 +33,7 @@ void fire_up_local_bins(unsigned int* const d_out,
   unsigned int normalised_bin = d_bins[global_pos]-coarser_id*COARSER_SIZE;
 
   // read some into shared memory
-  atomicAdd(&(d_out[own_histo_pos + normalised_bin]), 1)
+  atomicAdd(&(d_out[own_histo_pos + normalised_bin]), 1);
 
   // atomic adds
 
@@ -132,6 +132,7 @@ int main(int argc, char **argv) {
   // host memory
   unsigned int* h_bins = new unsigned int[NUM_ELEMS];
   unsigned int* h_coarse_bins = new unsigned int[NUM_ELEMS];
+  unsigned int* h_histogram = new unsigned int[NUM_BINS];
   unsigned int* h_positions = new unsigned int[COARSER_SIZE];
 
   //copy values to device memory
@@ -173,9 +174,10 @@ int main(int argc, char **argv) {
   // make some local bins
   int local_bin_size = h_positions[1];
   unsigned int local_bin_start = 0;
-  unsigned int grid_size = local_bin_size / BLOCK_SIZE + 1;
+  unsigned int grid_size = local_bin_size / BLOCK_SIZE.x + 1;
   unsigned int* d_COARSER_GRID;
-  unsigned int BYTES = grid_size*COARSER_SIZE*sizeof(unsigned int);
+  unsigned int BYTES = grid_size * COARSER_SIZE * sizeof(unsigned int);
+  checkCudaErrors(cudaMalloc((void **) &d_COARSER_GRID, BYTES));
   fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_COARSER_GRID, d_bins, local_bin_start, local_bin_start, 0);
 
 
@@ -194,8 +196,8 @@ int main(int argc, char **argv) {
     local_bin_start = h_positions[i];
     local_bin_size = h_positions[i-1] - h_positions[i];
     if (local_bin_size > 0) {
-      grid_size = local_bin_size / BLOCK_SIZE + 1;
-      BYTES = grid_size*COARSER_SIZE*sizeof(unsigned int);
+      grid_size = local_bin_size / BLOCK_SIZE.x + 1;
+      BYTES = grid_size * COARSER_SIZE * sizeof(unsigned int);
       checkCudaErrors(cudaMalloc((void **) &d_COARSER_GRID, BYTES));
       fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_COARSER_GRID, d_bins, local_bin_start, local_bin_size, i);
 
