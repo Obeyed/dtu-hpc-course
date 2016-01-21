@@ -7,7 +7,7 @@
 
 // CONSTANTS
 const unsigned int NUM_ELEMS    = 1 << 10;
-const unsigned int NUM_BINS     = 10;
+const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 
 const dim3 BLOCK_SIZE(1024);
@@ -33,7 +33,7 @@ void init_rand(unsigned int* const h_in) {
 
 void print(const unsigned int* const h_in,
            const unsigned int* const h_bin) {
-  const unsigned int WIDTH = 4;
+  const unsigned int WIDTH = 6;
 
   for(int i = 0; i < WIDTH; i++)
     printf("input\tbin\t\t");
@@ -45,7 +45,7 @@ void print(const unsigned int* const h_in,
 }
 
 int main(int argc, char **argv) {
-  printf("## STARTING ##");
+  printf("## STARTING ##\n");
 
   // create random values
   unsigned int* h_values = new unsigned int[NUM_ELEMS];
