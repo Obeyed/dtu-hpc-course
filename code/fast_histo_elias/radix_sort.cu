@@ -108,7 +108,7 @@ void map_kernel(unsigned int* const,
                 const unsigned int* const,
                 const unsigned int* const,
                 const unsigned int* const,
-                const size_t);
+                const size_t, const unsigned int);
 /**
     Calls reduce kernel to compute reduction.
     Runs log_(BLOCK_SIZE)(num_elems) times.
