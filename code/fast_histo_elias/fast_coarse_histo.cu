@@ -15,11 +15,12 @@ const dim3 GRID_SIZE(NUM_BINS);
 
 __global__
 void compute_coarse_bin_mapping(const unsigned int* const d_in,
-                                unsigned int* const d_out) {
+                                unsigned int* const d_out,
+                                const size_t BLOCKS) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= NUM_ELEMS) return;
 
-  d_out[mid] = d_in[mid] % GRID_SIZE.x;
+  d_out[mid] = d_in[mid] % BLOCKS;
 }
 
 __global__
@@ -79,7 +80,7 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemcpy(h_bins, d_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
   // compute coarse bin id
-  compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins);
+  compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins, GRID_SIZE.x);
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
