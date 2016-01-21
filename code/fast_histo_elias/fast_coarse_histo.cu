@@ -14,7 +14,6 @@ const unsigned int COARSER = 10;
 
 const dim3 BLOCK_SIZE(1 << 8);
 const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x);
-const dim3 GRID_SIZE_COARSED(GRID_SIZE.x / COARSER);
 
 __global__
 void compute_coarse_bin_mapping(const unsigned int* const d_in,
@@ -60,12 +59,11 @@ void print(const unsigned int* const h_in,
         h_coarse_bins[i], 
         ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t\t"));
   printf("\n");
-  printf("SHOULD RETURN NOW");
 }
 
 int main(int argc, char **argv) {
   printf("## STARTING ##\n");
-  printf("blocks: %u\tthreads: %u\t coarsed blocks: %u", GRID_SIZE.x, BLOCK_SIZE.x, GRID_SIZE_COARSED.x);
+  printf("blocks: %u\tthreads: %u\t coarser: %u", GRID_SIZE.x, BLOCK_SIZE.x, COARSER);
 
   printf("\n\n");
 
@@ -91,7 +89,7 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemcpy(h_bins, d_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
   // compute coarse bin id
-  compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins, GRID_SIZE.x);
+  compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins, COARSER);
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
