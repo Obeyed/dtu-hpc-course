@@ -312,6 +312,26 @@ void exclusive_sum_scan(unsigned int* const d_out,
   right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, NUM_ELEMS);
 }
 
+
+void print(const unsigned int* const h_in,
+           const unsigned int* const h_bins,
+           const unsigned int* const h_coarse_bins,
+           const unsigned int NUM_ELEMS) {
+  const unsigned int WIDTH = 6;
+
+  for(int i = 0; i < WIDTH; i++)
+    printf("input\tbin\tcoarse\t\t");
+  printf("\n");
+
+  for (int i = 0; i < NUM_ELEMS; i++)
+    printf("%u\t%u\t%u%s", 
+        h_in[i], 
+        h_bins[i], 
+        h_coarse_bins[i], 
+        ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t\t"));
+  printf("\n");
+}
+
 // Sort values using radix sort
 // EDIT: sort by first array in h_to_be_sorted
 unsigned int** radix_sort(unsigned int** h_to_be_sorted,
@@ -324,6 +344,9 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
 
   // host memory
   unsigned int** h_output = new unsigned int*[NUM_ARRAYS_TO_SORT];
+  unsigned int* h_out_coarse = new unsigned int[NUM_ELEMS];
+  unsigned int* h_out_bin = new unsigned int[NUM_ELEMS];
+  unsigned int* h_out_val = new unsigned int[NUM_ELEMS];
 
   // device memory
   unsigned int *d_in_bin, *d_in_val, *d_sort_by, *d_map_coarse, *d_map_val, 
@@ -375,12 +398,16 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
 
     // swap pointers, instead of moving elements
     std::swap(d_sort_by, d_map_coarse);
+
+    // copy contents back
+    checkCudaErrors(cudaMemcpy(h_out_coarse, d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_out_bin, d_map_bin, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_out_val, d_map_val, ARRAY_BYTES, cudaMemcpyDeviceToHost));
+
+    print(h_out_val, h_out_bin, h_out_coarse, NUM_ELEMS);
   }
 
 
-  unsigned int* h_out_coarse = new unsigned int[NUM_ELEMS];
-  unsigned int* h_out_bin = new unsigned int[NUM_ELEMS];
-  unsigned int* h_out_val = new unsigned int[NUM_ELEMS];
   // copy contents back
   checkCudaErrors(cudaMemcpy(h_out_coarse, d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
   checkCudaErrors(cudaMemcpy(h_out_bin, d_map_bin, ARRAY_BYTES, cudaMemcpyDeviceToHost));
