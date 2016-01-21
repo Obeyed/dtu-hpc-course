@@ -14,9 +14,32 @@ const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 const dim3 BLOCK_SIZE(1 << 8);
 const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x + 1);
 
-const unsigned int COARSER = NUM_BINS / 10;
-const unsigned int COARSER_BYTES = sizeof(unsigned int) * COARSER;
+const unsigned int COARSER_SIZE = NUM_BINS / 10;
+const unsigned int COARSER_BYTES = sizeof(unsigned int) * COARSER_SIZE;
 const unsigned int MAX_NUMS = 1000;
+
+__global__
+void fire_up_local_bins(unsigned int* const d_out,
+                        const unsigned int* const d_bins,
+                        const unsigned int offset,
+                        const unsigned int limit,
+                        const unsigned int coarser_id) {
+  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int global_pos = mid + offset;
+
+  if (global_pos >= NUM_ELEMS) return;
+
+  unsigned int own_histo_pos = blockIdx.x * COARSER_SIZE;
+  unsigned int normalised_bin = d_bins[global_pos]-coarser_id*COARSER_SIZE;
+
+  // read some into shared memory
+  atomicAdd(&(d_out[own_histo_pos + normalised_bin]), 1)
+
+  // atomic adds
+
+  // write to global memory
+
+}
 
 __global__
 void compute_coarse_bin_mapping(const unsigned int* const d_in,
@@ -75,7 +98,7 @@ void print(const unsigned int* const h_in,
   printf("\n");
 
   printf("positions:\n");
-  for (int i = 0; i < COARSER; i++)
+  for (int i = 0; i < COARSER_SIZE; i++)
     printf("%u : %u\n", i, h_positions[i]);
 }
 
@@ -99,7 +122,7 @@ void sort(unsigned int*& h_coarse_bins,
 
 int main(int argc, char **argv) {
   printf("## STARTING ##\n");
-  printf("blocks: %u\tthreads: %u\t coarser: %u", GRID_SIZE.x, BLOCK_SIZE.x, COARSER);
+  printf("blocks: %u\tthreads: %u\t COARSER_SIZE: %u", GRID_SIZE.x, BLOCK_SIZE.x, COARSER_SIZE);
 
   printf("\n\n");
 
@@ -109,7 +132,7 @@ int main(int argc, char **argv) {
   // host memory
   unsigned int* h_bins = new unsigned int[NUM_ELEMS];
   unsigned int* h_coarse_bins = new unsigned int[NUM_ELEMS];
-  unsigned int* h_positions = new unsigned int[COARSER];
+  unsigned int* h_positions = new unsigned int[COARSER_SIZE];
 
   //copy values to device memory
   unsigned int* d_values, * d_bins, * d_coarse_bins, * d_positions;
@@ -127,7 +150,7 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemcpy(h_bins, d_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
   // compute coarse bin id
-  compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins, COARSER);
+  compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins, COARSER_SIZE);
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
@@ -148,6 +171,47 @@ int main(int argc, char **argv) {
   print(h_values, h_bins, h_coarse_bins, h_positions);
 
   // make some local bins
+  int local_bin_size = h_positions[1];
+  unsigned int local_bin_start = 0;
+  unsigned int grid_size = local_bin_size / BLOCK_SIZE + 1;
+  unsigned int* d_COARSER_GRID;
+  unsigned int BYTES = grid_size*COARSER_SIZE*sizeof(unsigned int);
+  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_COARSER_GRID, d_bins, local_bin_start, local_bin_start, 0);
+
+
+          checkCudaErrors(cudaMemcpy(h_histogram, d_COARSER_GRID, BYTES, cudaMemcpyDeviceToHost));
+
+          for (int j = 0; j < grid_size * COARSER_SIZE; j++)
+            printf("%u\t%s", 
+                h_histogram[j], 
+                ((j % 4 == 3) ? "\n" : "\t\t"));
+          printf("\n");
+
+
+  cudaFree(d_COARSER_GRID);
+
+  for (int i = 1; i < COARSER_SIZE; i++) {
+    local_bin_start = h_positions[i];
+    local_bin_size = h_positions[i-1] - h_positions[i];
+    if (local_bin_size > 0) {
+      grid_size = local_bin_size / BLOCK_SIZE + 1;
+      BYTES = grid_size*COARSER_SIZE*sizeof(unsigned int);
+      checkCudaErrors(cudaMalloc((void **) &d_COARSER_GRID, BYTES));
+      fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_COARSER_GRID, d_bins, local_bin_start, local_bin_size, i);
+
+
+          checkCudaErrors(cudaMemcpy(h_histogram, d_COARSER_GRID, BYTES, cudaMemcpyDeviceToHost));
+
+          for (int j = 0; j < grid_size * COARSER_SIZE; j++)
+            printf("%u\t%s", 
+                h_histogram[j], 
+                ((j % 4 == 3) ? "\n" : "\t\t"));
+          printf("\n");
+
+
+      cudaFree(d_COARSER_GRID);
+    }
+  }
 
   // combine bins and write to global memory
 
