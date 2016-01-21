@@ -27,7 +27,7 @@ void fire_up_local_bins(unsigned int* const d_out,
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   unsigned int global_pos = mid + offset;
 
-  if (global_pos >= NUM_ELEMS) return;
+  if (global_pos >= NUM_ELEMS || mid >= limit) return;
 
 
   unsigned int own_histo_pos = blockIdx.x * COARSER_SIZE;
