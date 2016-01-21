@@ -42,6 +42,7 @@ void print(const unsigned int* const h_in,
   printf("\n");
 }
 
+/*
 int main(int argc, char **argv) {
   printf("## STARTING ##");
 
