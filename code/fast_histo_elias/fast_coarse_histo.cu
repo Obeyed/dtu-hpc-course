@@ -10,10 +10,10 @@ const unsigned int NUM_ELEMS    = 1 << 10;
 const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 
-const unsigned int COARSER = 10;
-
 const dim3 BLOCK_SIZE(1 << 8);
 const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x);
+
+const unsigned int COARSER = NUM_BINS / 10;
 
 __global__
 void compute_coarse_bin_mapping(const unsigned int* const d_in,
