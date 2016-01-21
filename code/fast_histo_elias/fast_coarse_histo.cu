@@ -106,9 +106,18 @@ int main(int argc, char **argv) {
   all_arrays[2] = h_values;
 
   unsigned int** sorted = radix_sort(all_arrays, NUM_ARRAYS, NUM_ELEMS);
-  h_coarse_bins = sorted[0];
-  h_bins = sorted[1];
-  h_values = sorted[2];
+  printf("FROM HISTO:\n");
+  printf("sorted[0] = %u\n", sorted[0]);
+  printf("sorted[1] = %u\n", sorted[1]);
+  printf("sorted[2] = %u\n", sorted[2]);
+
+  h_coarse_bins = &(sorted[0]);
+  h_bins = &(sorted[1]);
+  h_values = &(sorted[2]);
+
+  printf("updated[0] = %u\n", h_coarse_bins);
+  printf("updated[1] = %u\n", h_bins);
+  printf("updated[2] = %u\n", h_values);
 
 
   // send coarse bin to each block
