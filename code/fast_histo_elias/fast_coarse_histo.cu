@@ -38,11 +38,8 @@ void print(const unsigned int* const h_in,
   printf("\n");
 
   for (int i = 0; i < NUM_ELEMS; i++) {
-    printf("%u\t%u%s", 
-      h_in[i], 
-      h_bin[i], 
-      ((i % WIDTH == 0) ? "\n" : "\t\t")
-    );
+    printf("%u\t%u%s", h_in[i], h_bin[i], ((i % WIDTH == 0) ? "\n" : "\t\t"));
+  printf("\n");
 }
 
 int main(int argc, char **argv) {
@@ -56,11 +53,10 @@ int main(int argc, char **argv) {
   memset(h_bins, 0, NUM_ELEMS);
 
   //copy values to device memory
-  unsigned int* d_values,
-              * d_bins;
+  unsigned int* d_values, *d_bins;
   checkCudaErrors(cudaMalloc((void **) &d_values, ARRAY_BYTES));
-  checkCudaErrors(cudaMemcpy(d_values, h_values, ARRAY_BYTES, cudaMemcpyHostToDevice));
-  checkCudaErrors(cudaMalloc((void **) &d_bins, ARRAY_BYTES));
+  checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMalloc((void **) &d_bins,   ARRAY_BYTES));
 
   // compute bin id
   compute_bin_mapping(d_values, d_bins);
