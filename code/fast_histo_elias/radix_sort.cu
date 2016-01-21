@@ -239,16 +239,16 @@ void map_kernel(unsigned int* const d_out_coarse,
                 const unsigned int* const d_predicate,
                 const unsigned int* const d_sum_scan_0,
                 const unsigned int* const d_sum_scan_1,
-                const size_t NUM_ELEMS) {
+                const size_t NUM_ELEMS, const unsigned int i) {
   const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= NUM_ELEMS) return;
 
   const unsigned int pos = ((d_predicate[mid]) ? d_sum_scan_0[mid] : d_sum_scan_1[mid]);
-  // EDIT: MOVE ACCORDINGLY FOR ALL ARRAYS
+  // EDIT: MOVE ACCORDINGLY FOR ALL ARRAYS 
   d_out_val[pos]    = d_in_val[mid];
   d_out_bin[pos]    = d_in_bin[mid];
   d_out_coarse[pos] = d_in_coarse[mid];
-  printf("moving %u to %u\n", mid, pos);
+  if (i == 0) printf("moving %u to %u\n", mid, pos);
 }
 
 // Calls reduce kernel to compute reduction.
