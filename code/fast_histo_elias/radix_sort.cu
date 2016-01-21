@@ -345,8 +345,8 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
 
   // copy host array to device
   checkCudaErrors(cudaMemcpy(d_sort_by, h_to_be_sorted[0], ARRAY_BYTES, cudaMemcpyHostToDevice));
-  checkCudaErrors(cudaMemcpy(d_in_bin, h_to_be_sorted[1], ARRAY_BYTES, cudaMemcpyHostToDevice));
-  checkCudaErrors(cudaMemcpy(d_in_val, h_to_be_sorted[2], ARRAY_BYTES, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_in_bin,  h_to_be_sorted[1], ARRAY_BYTES, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_in_val,  h_to_be_sorted[2], ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   for (unsigned int i = 0; i < (BITS_PER_BYTE * sizeof(unsigned int)); i++) {
     // predicate is that LSB is 0
@@ -376,6 +376,9 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
     // swap pointers, instead of moving elements
     std::swap(d_sort_by, d_map_coarse);
   }
+
+  printf("H_OUT[0] = %u", h_output[0]);
+  printf("D_SORT_BY = %u", d_sort_by);
 
   // copy contents back
   checkCudaErrors(cudaMemcpy(h_output[0], d_sort_by, ARRAY_BYTES, cudaMemcpyDeviceToHost));
