@@ -4,6 +4,7 @@
 #include <time.h>       /* time */
 #include <string.h>
 #include "utils.h"
+#include "radix_sort.h"
 
 // CONSTANTS
 const unsigned int NUM_ELEMS    = 1 << 10;
@@ -95,6 +96,15 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
   // sort
+  const unsigned int NUM_ARRAYS = 3;
+  unsigned int** all_arrays = new unsigned int[NUM_ARRAYS];
+  all_arrays[0] = h_coarse_bins;
+  all_arrays[1] = h_bins;
+  all_arrays[2] = h_values;
+  unsigned int** sorted = radix_sort(h_coarse_bins, all_arrays, NUM_ARRAYS, NUM_ELEMS);
+  h_coarse_bins = sorted[0];
+  h_bins = sorted[1];
+  h_values = sorted[2];
 
   // send coarse bin to each block
   // atomicAdd bins in shared memory
