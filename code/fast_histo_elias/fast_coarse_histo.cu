@@ -101,7 +101,8 @@ void print(const unsigned int* const h_in,
 
   printf("positions:\n");
   for (int i = 0; i < COARSER_SIZE; i++)
-    printf("%u : %u\n", i, h_positions[i]);
+    printf("%u\t", h_positions[i]);
+  printf("\n");
 }
 
 void sort(unsigned int*& h_coarse_bins, 
