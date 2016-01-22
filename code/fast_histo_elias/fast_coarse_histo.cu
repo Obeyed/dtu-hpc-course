@@ -27,7 +27,7 @@ void fire_up_local_bins(unsigned int* const d_out,
                         const unsigned int g_end) {
   if (l_end < 0) return; // means that no values are in coarsed bin
 
-  unsigned int l_pos = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int l_pos = l_start + threadIdx.x + blockIdx.x * blockDim.x;
   unsigned int g_pos = l_pos + g_start;
 
   if (g_pos < g_start || g_pos >= g_end  || 
