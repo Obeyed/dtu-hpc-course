@@ -27,7 +27,7 @@ void fire_up_local_bins(unsigned int* const d_out,
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   unsigned int global_pos = mid + offset;
 
-  printf("mid: %u, g_pos: %u, l:%d,o:%u%s", mid, global_pos, offset, limit, ((mid % 3 == 2) ? "\n" : "\t"));
+  printf("mid: %u, g_pos: %u, l:%d,o:%u%s", mid, global_pos, limit, offset, ((mid % 3 == 2) ? "\n" : "\t"));
 
   if (global_pos >= NUM_ELEMS || mid >= limit) return;
 
