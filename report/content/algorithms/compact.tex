@@ -7,8 +7,8 @@ The algorithm can be divided into three steps
 %
 \begin{enumerate}
   \item Calculate predicate array
-  \item Calculate scatter addresses from predicate array
-  \item Map desired items to output, given the scatter addresses
+  \item Calculate scatter addresses from predicate array (using scan from \cref{sec:scan})
+  \item Map desired items to output, given the scatter addresses (using map from \cref{sec:map})
 \end{enumerate}
 %
 \Cref{lst:predicate} presents the predicate computation computation, of whether or not the LSB is 0, and saves the result to the \ttt{predicate} array.
