@@ -21,26 +21,30 @@ const unsigned int MAX_NUMS = 1000;
 __global__
 void fire_up_local_bins(unsigned int* const d_out,
                         const unsigned int* const d_bins,
-                        const int offset,
-                        const unsigned int limit,
+                        const unsigned int l_start,
+                        const int l_end,
+                        const unsigned int g_start,
+                        const unsigned int g_end,
                         const unsigned int coarser_id) {
+  if (l_end < 0) return; // means that no values are in coarsed bin
+
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  unsigned int global_pos = mid + offset;
+  unsigned int g_pos = mid + g_start;
 
-  if (global_pos >= NUM_ELEMS || mid >= limit) return;
+  if (g_pos < g_start || g_pos >= g_end  || 
+      mid < l_start   || mid >= l_end) 
+    return;
 
-  unsigned int own_histo_pos = blockIdx.x * COARSER_SIZE;
-  unsigned int normalised_bin = d_bins[global_pos]-coarser_id*COARSER_SIZE;
+  //unsigned int l_pos = blockIdx.x * COARSER_SIZE;
+  //unsigned int normalised_bin = d_bins[g_pos]-coarser_id*COARSER_SIZE;
+  unsigned int bin = d_bins[mid];
 
-  printf("mid: %u, g_pos: %u, l_pos: %u, norm_bin: %u\n", mid, global_pos, own_histo_pos, normalised_bin);
+  printf("mid: %u, g_pos: %u, bin: %u\n", mid, g_pos, bin);
 
   // read some into shared memory
-  atomicAdd(&(d_out[own_histo_pos + normalised_bin]), 1);
-
   // atomic adds
-
   // write to global memory
-
+  atomicAdd(&(d_out[bin]), 1);
 }
 
 __global__
@@ -175,10 +179,10 @@ int main(int argc, char **argv) {
   print(h_values, h_bins, h_coarse_bins, h_positions);
 
   // make some local bins
-  int local_bin_size = h_positions[1];
+  int local_bin_end = h_positions[1];
   unsigned int local_bin_start = 0;
 
-  unsigned int BIN_BYTES = local_bin_size * sizeof(unsigned int);
+  unsigned int BIN_BYTES = local_bin_end * sizeof(unsigned int);
   unsigned int* d_bin_grid;
   // created entire bin grid in first run
   // only access relevant elements in kernel
@@ -186,14 +190,18 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMalloc((void **) &d_bin_grid, ARRAY_BYTES));
   checkCudaErrors(cudaMemset(d_bin_grid, 0, ARRAY_BYTES));
 
-  unsigned int grid_size = local_bin_size / BLOCK_SIZE.x + 1;
-  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_size, 0);
+  unsigned int grid_size = local_bin_end / BLOCK_SIZE.x + 1;
+
+  unsigned int i = 0;
+  unsigned int global_bin_start = i * COARSER_SIZE;
+  unsigned int global_bin_end   = (1+i) * COARSER_SIZE;
+  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end, 0);
 
   // ############
 
           checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
 
-          printf("\n\nFIRST RUN -- bin size: %d, bin start: %u, grid size: %u, limit: %d, offset: %u\n", local_bin_size, local_bin_start, grid_size, local_bin_start, local_bin_size);
+          printf("\n\nFIRST RUN -- bin (%u, %d), global: (%u, %u), grid size: %u\n",  local_bin_start,local_bin_end,global_bin_start, global_bin_end, grid_size);
           for (int j = 0; j < grid_size * COARSER_SIZE; j++)
             printf("%u\t%s", 
                 h_histogram[j], 
@@ -205,11 +213,11 @@ int main(int argc, char **argv) {
 /*  for (int i = 1; i < COARSER_SIZE; i++) {
           printf("RUN %u:\n", i);
     local_bin_start = h_positions[i];
-    local_bin_size = h_positions[i-1] - h_positions[i];
-    if (local_bin_size > 0) {
-      grid_size = local_bin_size / BLOCK_SIZE.x + 1;
+    local_bin_end = h_positions[i-1] - h_positions[i];
+    if (local_bin_end > 0) {
+      grid_size = local_bin_end / BLOCK_SIZE.x + 1;
       BIN_BYTES = grid_size * COARSER_SIZE * sizeof(unsigned int);
-      fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_size, i);
+      fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, i);
 
 
           checkCudaErrors(cudaMemcpy(h_histogram, d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
