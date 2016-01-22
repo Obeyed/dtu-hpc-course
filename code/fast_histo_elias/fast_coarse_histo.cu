@@ -21,13 +21,13 @@ const unsigned int MAX_NUMS = 1000;
 __global__
 void fire_up_local_bins(unsigned int* const d_out,
                         const unsigned int* const d_bins,
-                        const unsigned int offset,
+                        const int offset,
                         const unsigned int limit,
                         const unsigned int coarser_id) {
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   unsigned int global_pos = mid + offset;
 
-  printf("mid: %u, g_pos: %u\n", mid, global_pos);
+  printf("mid: %u, g_pos: %u, l:%d,o:%u%s", mid, global_pos, offset, limit, ((mid % 3 == 2) ? "\n" : "\t"));
 
   if (global_pos >= NUM_ELEMS || mid >= limit) return;
 
@@ -182,14 +182,18 @@ int main(int argc, char **argv) {
 
   unsigned int BIN_BYTES = local_bin_size * sizeof(unsigned int);
   unsigned int* d_bin_grid;
-  checkCudaErrors(cudaMalloc((void **) &d_bin_grid, BIN_BYTES));
+  // created entire bin grid in first run
+  // only access relevant elements in kernel
+  // based on bin_size and bin_start
+  checkCudaErrors(cudaMalloc((void **) &d_bin_grid, ARRAY_BYTES));
+  checkCudaErrors(cudaMemset(d_bin_grid, 0, ARRAY_BYTES));
 
   unsigned int grid_size = local_bin_size / BLOCK_SIZE.x + 1;
-  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_start, 0);
+  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_size, local_bin_start, 0);
 
   // ############
 
-          checkCudaErrors(cudaMemcpy(h_histogram, d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
+          checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
 
           printf("\n\nFIRST RUN -- bin size: %d, bin start: %u, grid size: %u\n", local_bin_size, local_bin_start, grid_size);
           for (int j = 0; j < grid_size * COARSER_SIZE; j++)
@@ -200,8 +204,6 @@ int main(int argc, char **argv) {
 
   // ############
 
-  cudaFree(d_bin_grid);
-
 /*  for (int i = 1; i < COARSER_SIZE; i++) {
           printf("RUN %u:\n", i);
     local_bin_start = h_positions[i];
@@ -209,7 +211,6 @@ int main(int argc, char **argv) {
     if (local_bin_size > 0) {
       grid_size = local_bin_size / BLOCK_SIZE.x + 1;
       BIN_BYTES = grid_size * COARSER_SIZE * sizeof(unsigned int);
-      checkCudaErrors(cudaMalloc((void **) &d_bin_grid, BIN_BYTES));
       fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_size, i);
 
 
@@ -222,11 +223,12 @@ int main(int argc, char **argv) {
           printf("\n");
 
 
-      cudaFree(d_bin_grid);
     }
   }
 */
 
+  cudaFree(d_bin_grid); cudaFree(d_values); cudaFree(d_positions);
+  cudaFree(d_coarse_bins); cudaFree(d_bins);
 
   printf("## DONE ##\n");
 
