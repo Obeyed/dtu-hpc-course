@@ -26,16 +26,10 @@ void fire_up_local_bins(unsigned int* const d_out,
                         const int l_end) {
   if (l_end < 0) return; // means that no values are in coarsed bin
 
-  unsigned int l_pos = l_start + threadIdx.x + blockIdx.x * blockDim.x;
-
+  const unsigned int l_pos = l_start + threadIdx.x + blockIdx.x * blockDim.x;
   if (l_pos < l_start || l_pos >= l_end) return;
 
-  //unsigned int l_pos = blockIdx.x * COARSER_SIZE;
-  //unsigned int normalised_bin = d_bins[g_pos]-coarser_id*COARSER_SIZE;
-  unsigned int bin = d_bins[l_pos];
-
-  printf("l_pos: %u, bin: %u\n", l_pos, bin);
-
+  const unsigned int bin = d_bins[l_pos];
   // read some into shared memory
   // atomic adds
   // write to global memory
@@ -46,7 +40,7 @@ __global__
 void compute_coarse_bin_mapping(const unsigned int* const d_in,
                                 unsigned int* const d_out,
                                 const size_t COARSE) {
-  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= NUM_ELEMS) return;
 
   d_out[mid] = d_in[mid] / COARSE;
@@ -55,7 +49,7 @@ void compute_coarse_bin_mapping(const unsigned int* const d_in,
 __global__
 void compute_bin_mapping(const unsigned int* const d_in,
                          unsigned int* const d_out) {
-  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if (mid >= NUM_ELEMS) return;
 
   d_out[mid] = d_in[mid] % NUM_BINS;
@@ -64,7 +58,7 @@ void compute_bin_mapping(const unsigned int* const d_in,
 __global__
 void find_positions_mapping_kernel(unsigned int* const d_out,
                                    const unsigned int* const d_in) {
-  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
+  const unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   if ((mid >= NUM_ELEMS) || (mid == 0)) return;
 
   if (d_in[mid] != d_in[mid-1])
