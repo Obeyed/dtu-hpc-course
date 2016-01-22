@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
 
 
   // do final loop
-  local_bin_start = h_positions[COARSER-1];
+  local_bin_start = h_positions[COARSER_SIZE-1];
   local_bin_end   = NUM_ELEMS;
   amount = local_bin_end - local_bin_start;
   global_bin_start = (COARSER_SIZE - 1) * COARSER_SIZE;
