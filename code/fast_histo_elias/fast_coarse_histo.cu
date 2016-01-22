@@ -186,8 +186,9 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemset(d_bin_grid, 0, ARRAY_BYTES));
 
   // make some local bins
-  int local_bin_end = h_positions[1];
   unsigned int local_bin_start = 0;
+  unsigned int local_bin_end = h_positions[1];
+  int amount = local_bin_end - local_bin_start;
   unsigned int global_bin_start = 0;
   unsigned int global_bin_end   = COARSER_SIZE;
   // calculate amount of bytes to read
@@ -210,10 +211,11 @@ int main(int argc, char **argv) {
 
   // ############
 
-  for (unsigned int i = 1; i < COARSER_SIZE; i++) {
+  for (unsigned int i = 1; i < COARSER_SIZE - 1; i++) {
     // make some local bins
-    local_bin_end   = h_positions[i];
-    local_bin_start = h_positions[i] - h_positions[i-1];
+    local_bin_start = h_positions[i];
+    local_bin_end   = h_positions[i+1];
+    amount = local_bin_end - local_bin_start;
     global_bin_start = i * COARSER_SIZE;
     global_bin_end   = (i+1) * COARSER_SIZE;
     // calculate amount of bytes to read
@@ -223,7 +225,7 @@ int main(int argc, char **argv) {
 
     printf("RUN %u -- bin (%u, %d), global: (%u, %u), grid size: %u, bytes: %u\n", i, local_bin_start,local_bin_end,global_bin_start, global_bin_end, grid_size, BIN_BYTES);
 
-    if (local_bin_end > 0) {
+    if (amount > 0) {
       fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end);
 
       checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
@@ -234,6 +236,32 @@ int main(int argc, char **argv) {
             ((j % 5 == 4) ? "\n" : "\t\t"));
       printf("\n");
     }
+  }
+
+
+  // do final loop
+  local_bin_start = h_positions[COARSER-1];
+  local_bin_end   = NUM_ELEMS;
+  amount = local_bin_end - local_bin_start;
+  global_bin_start = (COARSER_SIZE - 1) * COARSER_SIZE;
+  global_bin_end   = COARSER_SIZE * COARSER_SIZE;
+  // calculate amount of bytes to read
+  BIN_BYTES = (global_bin_end * sizeof(unsigned int)) - (global_bin_start * sizeof(unsigned int));
+  // calculate local grid size
+  grid_size = local_bin_end / BLOCK_SIZE.x + 1;
+
+  printf("FINAL RUN -- bin (%u, %d), global: (%u, %u), grid size: %u, bytes: %u\n", local_bin_start,local_bin_end,global_bin_start, global_bin_end, grid_size, BIN_BYTES);
+
+  if (amount > 0) {
+    fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end);
+
+    checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
+
+    for (int j = global_bin_start; j < global_bin_end; j++)
+      printf("%u\t%s", 
+          h_histogram[j], 
+          ((j % 5 == 4) ? "\n" : "\t\t"));
+    printf("\n");
   }
 
   //#####
