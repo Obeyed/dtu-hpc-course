@@ -24,8 +24,7 @@ void fire_up_local_bins(unsigned int* const d_out,
                         const unsigned int l_start,
                         const int l_end,
                         const unsigned int g_start,
-                        const unsigned int g_end,
-                        const unsigned int coarser_id) {
+                        const unsigned int g_end) {
   if (l_end < 0) return; // means that no values are in coarsed bin
 
   unsigned int l_pos = threadIdx.x + blockIdx.x * blockDim.x;
@@ -178,10 +177,7 @@ int main(int argc, char **argv) {
   
   print(h_values, h_bins, h_coarse_bins, h_positions);
 
-  // make some local bins
-  int local_bin_end = h_positions[1];
-  unsigned int local_bin_start = 0;
-
+  // ####
   unsigned int* d_bin_grid;
   // created entire bin grid in first run
   // only access relevant elements in kernel
@@ -191,48 +187,55 @@ int main(int argc, char **argv) {
 
   unsigned int grid_size = local_bin_end / BLOCK_SIZE.x + 1;
 
-  unsigned int i = 0;
-  unsigned int global_bin_start = i * COARSER_SIZE;
-  unsigned int global_bin_end   = (1+i) * COARSER_SIZE;
+  // make some local bins
+  int local_bin_end = h_positions[1];
+  unsigned int local_bin_start = 0;
+  unsigned int global_bin_start = 0;
+  unsigned int global_bin_end   = COARSER_SIZE;
   // calculate amount of bytes to read
   unsigned int BIN_BYTES = (global_bin_end * sizeof(unsigned int)) - (global_bin_start * sizeof(unsigned int));
-  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end, 0);
+  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end);
 
   // ############
 
           checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
 
           printf("\n\nFIRST RUN -- bin (%u, %d), global: (%u, %u), grid size: %u, bytes: %u\n",  local_bin_start,local_bin_end,global_bin_start, global_bin_end, grid_size, BIN_BYTES);
-          for (int j = 0; j < grid_size * COARSER_SIZE; j++)
+          for (int j = global_bin_start; j < global_bin_end; j++)
             printf("%u\t%s", 
                 h_histogram[j], 
-                ((j % 4 == 3) ? "\n" : "\t\t"));
+                ((j % 5 == 4) ? "\n" : "\t\t"));
           printf("\n");
 
   // ############
 
-/*  for (int i = 1; i < COARSER_SIZE; i++) {
-          printf("RUN %u:\n", i);
+  for (unsigned int i = 1; i < COARSER_SIZE; i++) {
+    // make some local bins
+    local_bin_end   = h_positions[i] - h_positions[i-1];
     local_bin_start = h_positions[i];
-    local_bin_end = h_positions[i-1] - h_positions[i];
+    global_bin_start = i * COARSER_SIZE;
+    global_bin_end   = (i+1) * COARSER_SIZE;
+    // calculate amount of bytes to read
+    BIN_BYTES = (global_bin_end * sizeof(unsigned int)) - (global_bin_start * sizeof(unsigned int));
+    // calculate local grid size
+    grid_size = local_bin_end / BLOCK_SIZE.x + 1;
+
+    printf("RUN %u -- bin (%u, %d), global: (%u, %u), grid size: %u, bytes: %u\n", i, local_bin_start,local_bin_end,global_bin_start, global_bin_end, grid_size, BIN_BYTES);
+
     if (local_bin_end > 0) {
-      grid_size = local_bin_end / BLOCK_SIZE.x + 1;
-      BIN_BYTES = grid_size * COARSER_SIZE * sizeof(unsigned int);
-      fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, i);
+      fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end);
 
+      checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
 
-          checkCudaErrors(cudaMemcpy(h_histogram, d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
-
-          for (int j = 0; j < grid_size * COARSER_SIZE; j++)
-            printf("%u\t%s", 
-                h_histogram[j], 
-                ((j % 4 == 3) ? "\n" : "\t\t"));
-          printf("\n");
-
-
+      for (int j = global_bin_start; j < global_bin_end; j++)
+        printf("%u\t%s", 
+            h_histogram[j], 
+            ((j % 5 == 4) ? "\n" : "\t\t"));
+      printf("\n");
     }
   }
-*/
+
+  //#####
 
   cudaFree(d_bin_grid); cudaFree(d_values); cudaFree(d_positions);
   cudaFree(d_coarse_bins); cudaFree(d_bins);
