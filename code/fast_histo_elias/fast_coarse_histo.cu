@@ -7,12 +7,12 @@
 #include "radix_sort.h"
 
 // CONSTANTS
-const unsigned int NUM_ELEMS    = 1 << 10;
+const unsigned int NUM_ELEMS    = 1 << 22;
 const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 const unsigned int TOTAL_BIN_BYTES  = sizeof(unsigned int) * NUM_BINS;
 
-const dim3 BLOCK_SIZE(1 << 8);
+const dim3 BLOCK_SIZE(1 << 7);
 const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x + 1);
 
 const unsigned int COARSER_SIZE = NUM_BINS / 10;
@@ -117,9 +117,9 @@ void sort(unsigned int*& h_coarse_bins,
 }
 
 int main(int argc, char **argv) {
-  printf("## STARTING ##\n");
-  printf("blocks: %u\tthreads: %u\t COARSER_SIZE: %u", GRID_SIZE.x, BLOCK_SIZE.x, COARSER_SIZE);
-  printf("\n\n");
+//  printf("## STARTING ##\n");
+//  printf("blocks: %u\tthreads: %u\t COARSER_SIZE: %u", GRID_SIZE.x, BLOCK_SIZE.x, COARSER_SIZE);
+//  printf("\n\n");
 
   // create random values
   unsigned int* h_values = new unsigned int[NUM_ELEMS];
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
   find_positions_mapping_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_positions, d_coarse_bins);
   checkCudaErrors(cudaMemcpy(h_positions, d_positions, COARSER_BYTES, cudaMemcpyDeviceToHost));
   
-  print(h_values, h_bins, h_coarse_bins, h_positions);
+//  print(h_values, h_bins, h_coarse_bins, h_positions);
 
   // ####
   unsigned int* d_bin_grid;
@@ -208,20 +208,20 @@ int main(int argc, char **argv) {
 
   checkCudaErrors(cudaMemcpy(h_histogram, d_bin_grid, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
-  printf("\n");
+/*  printf("\n");
   for (int j = 0; j < NUM_BINS; j++)
     printf("%d:%u\t%s", 
         j,
         h_histogram[j], 
         ((j % 6 == 5) ? "\n" : "\t\t"));
   printf("\n");
-
+*/
   //#####
 
   cudaFree(d_bin_grid); cudaFree(d_values); cudaFree(d_positions);
   cudaFree(d_coarse_bins); cudaFree(d_bins);
 
-  printf("## DONE ##\n");
+//  printf("## DONE ##\n");
 
   return 0;
 }
