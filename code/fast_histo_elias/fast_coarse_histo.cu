@@ -7,7 +7,7 @@
 #include "radix_sort.h"
 
 // CONSTANTS
-const unsigned int NUM_ELEMS    = 1 << 6;
+const unsigned int NUM_ELEMS    = 1 << 10;
 const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 const unsigned int TOTAL_BIN_BYTES  = sizeof(unsigned int) * NUM_BINS;
@@ -23,9 +23,7 @@ __global__
 void fire_up_local_bins(unsigned int* const d_out,
                         const unsigned int* const d_bins,
                         const unsigned int l_start,
-                        const int l_end,
-                        const unsigned int g_start,
-                        const unsigned int g_end) {
+                        const int l_end) {
   if (l_end < 0) return; // means that no values are in coarsed bin
 
   unsigned int l_pos = l_start + threadIdx.x + blockIdx.x * blockDim.x;
@@ -186,29 +184,21 @@ int main(int argc, char **argv) {
   unsigned int local_bin_start = 0;
   unsigned int local_bin_end = h_positions[1];
   int amount = local_bin_end - local_bin_start;
-  unsigned int global_bin_start = 0;
-  unsigned int global_bin_end   = COARSER_SIZE;
-  // calculate amount of bytes to read
-  unsigned int BIN_BYTES = (global_bin_end * sizeof(unsigned int)) - (global_bin_start * sizeof(unsigned int));
   // calculate local grid size
   unsigned int grid_size = local_bin_end / BLOCK_SIZE.x + 1;
 
-  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end);
+  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
 
   for (unsigned int i = 1; i < COARSER_SIZE - 1; i++) {
     // make some local bins
     local_bin_start = h_positions[i];
     local_bin_end   = h_positions[i+1];
     amount = local_bin_end - local_bin_start;
-    global_bin_start = i * COARSER_SIZE;
-    global_bin_end   = (i+1) * COARSER_SIZE;
-    // calculate amount of bytes to read
-    BIN_BYTES = (global_bin_end * sizeof(unsigned int)) - (global_bin_start * sizeof(unsigned int));
     // calculate local grid size
     grid_size = local_bin_end / BLOCK_SIZE.x + 1;
 
     if (amount > 0)
-      fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end);
+      fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
   }
 
 
@@ -216,15 +206,11 @@ int main(int argc, char **argv) {
   local_bin_start = h_positions[COARSER_SIZE-1];
   local_bin_end   = NUM_ELEMS;
   amount = local_bin_end - local_bin_start;
-  global_bin_start = (COARSER_SIZE - 1) * COARSER_SIZE;
-  global_bin_end   = COARSER_SIZE * COARSER_SIZE;
-  // calculate amount of bytes to read
-  BIN_BYTES = (global_bin_end * sizeof(unsigned int)) - (global_bin_start * sizeof(unsigned int));
   // calculate local grid size
   grid_size = local_bin_end / BLOCK_SIZE.x + 1;
 
   if (amount > 0)
-    fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end);
+    fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
 
   checkCudaErrors(cudaMemcpy(h_histogram, d_bin_grid, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
