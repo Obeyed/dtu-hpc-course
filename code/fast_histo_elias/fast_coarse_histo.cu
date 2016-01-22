@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemset(d_bin_grid, 0, ARRAY_BYTES));
 
   unsigned int grid_size = local_bin_size / BLOCK_SIZE.x + 1;
-  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_size, local_bin_start, 0);
+  fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_size, 0);
 
   // ############
 
