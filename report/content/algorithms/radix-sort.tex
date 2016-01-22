@@ -7,47 +7,22 @@ The implementation of the Radix Sort algorithm can be found in \cref{ap:radix so
 Radix Sort is a bit-wise comparison algorithm that iteratively, in the length of the bits of the integer, looks at the LSB and sorts the values accordingly.\cite{udacity}
 
 In order to parralelize the sorting of the LSB in the radix sort we used the compact(\cref{sec:compact}).  
-Thus, the radix sort is performed with multiple compact operations, because we move elements according to some predicate.
-We aim to outline a single iteration of radix sort in this section.
+Thus to parralelize the entire sorting we perform multiple compact operations as we move the elements in the array according to their LSB.
+In this section we outline a single iteration of radix sort in this section.
 
-% iteratively do for each bit
+To sort the elements according to their least significant bit we perform two compact operations.
+The first compact operation maps the elements with LSB = $0$ from the output arrays zero index and upto 
+\[\mathrm{zeros\_end\_idx}\{|x|-1\ |\ (x\&1)=0, x \in \mathrm{input}\}\]
+As illustrated in \cref{fig:radix sort example}.
 
-\paragraph{Compute Predicates}
-The first step is to find the elements that obey the predicate.
-For radix sort we look at the LSB of every bit of the integers.
-The predicate is as presented in \cref{lst:predicate radix}.
+The second compact operation maps the elements with LSB = $1$ from the output arraysindex $\mathrm{zeros\_end\_idx}+1$ to index \[\{|x|-1\}\] being the end position.  
 
-\begin{lstlisting}[caption={predicate to calculate}, label={lst:predicate radix}]
-d_predicate[mid] = (int)(((d_val_src[mid] & (1 << i)) >> i) == 0)
-\end{lstlisting}
-
-The \ttt{d\_predicate} will contain 0s and 1s.
-If the LSB is 0, it will contain a 1 for that element.
-The elements in \ttt{d\_val\_src} are traversed and labelled accordingly.
-
-For each iteration of the outer loop, we count the \ttt{i} variable up.
-This way we can left shift the integer 1 by \ttt{i} positions to move to the next LSB in the row.
-When perform the bitwise-and, and shift it back to see if it is equal to 0.
-
-Furthermore, we save a new predicate array, \ttt{d\_predicate\_toggle}, where we save the toggled version of the original \ttt{d\_predicate}.
-This array gives us the elements that did not obey the predicate.
-We do this, because we must maintain the order of the elements in the output array.
-
-\subsection*{Compute Scatter Addresses}
-
-To be able to move the elements to their new positions according to the predicate, we can perform an exclusive sum scan of the predicate array.
-This gives the addresses to which the elements must be scattered.
-We performed an exclusive sum scan by first invoking a Hillis and Steele inclusive sum scan and then shifting the resulting array to obtain an exclusive sum scan.
-
-For the toggled predicate array we must include an offset that is equal to the amount of elements, that did obey the initial predicate.
-Thus, we must add an offset to the scatter addresses computed from the toggled predicate array.
-We do this by performing a reduce operation on the original predicate array, which gives us the amount of elements that had LSB to 0.
-We then do a mapping operation to add the offset to each element of the scatter address array.
-
-The elements should then be scattered to the new addresses according to the LSB.
-This is briefly illustrated in \cref{fig:radix sort example}.
-This method should then be continued for each bit.
-We continue to the next bit by incrementing the variable \ttt{i}, and perform the bitwise-and as illustrated in \cref{lst:predicate radix}.
+For each iteration of Radix Sort the LSB will shift left and compact sorting thus based on increasing importance of the bit representations in the element.
+LSB place examplified.
+\[\mathrm{iteration 0:}0000 0000 0000 000[0]\]
+\[\mathrm{iteration 1:}0000 0000 0000 00[0]0\]
+\[ ... \]
+\[\mathrm{iteration 31:}[0]000 0000 0000 0000\]
 
 \begin{figure}[htb]
   \centering
