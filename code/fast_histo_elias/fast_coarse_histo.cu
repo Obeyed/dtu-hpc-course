@@ -212,8 +212,8 @@ int main(int argc, char **argv) {
 
   for (unsigned int i = 1; i < COARSER_SIZE; i++) {
     // make some local bins
-    local_bin_end   = h_positions[i] - h_positions[i-1];
-    local_bin_start = h_positions[i];
+    local_bin_end   = h_positions[i];
+    local_bin_start = h_positions[i] - h_positions[i-1];
     global_bin_start = i * COARSER_SIZE;
     global_bin_end   = (i+1) * COARSER_SIZE;
     // calculate amount of bytes to read
