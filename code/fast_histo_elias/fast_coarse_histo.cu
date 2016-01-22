@@ -27,10 +27,7 @@ void fire_up_local_bins(unsigned int* const d_out,
   unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
   unsigned int global_pos = mid + offset;
 
-  printf("mid: %u, g_pos: %u, l:%d,o:%u%s", mid, global_pos, limit, offset, ((mid % 3 == 2) ? "\n" : "\t"));
-
   if (global_pos >= NUM_ELEMS || mid >= limit) return;
-
 
   unsigned int own_histo_pos = blockIdx.x * COARSER_SIZE;
   unsigned int normalised_bin = d_bins[global_pos]-coarser_id*COARSER_SIZE;
@@ -195,7 +192,7 @@ int main(int argc, char **argv) {
 
           checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
 
-          printf("\n\nFIRST RUN -- bin size: %d, bin start: %u, grid size: %u\n", local_bin_size, local_bin_start, grid_size);
+          printf("\n\nFIRST RUN -- bin size: %d, bin start: %u, grid size: %u, limit: %d, offset: %u\n", local_bin_size, local_bin_start, grid_size, local_bin_start, local_bin_size);
           for (int j = 0; j < grid_size * COARSER_SIZE; j++)
             printf("%u\t%s", 
                 h_histogram[j], 
