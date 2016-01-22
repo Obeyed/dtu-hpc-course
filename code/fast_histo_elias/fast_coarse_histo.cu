@@ -28,18 +28,18 @@ void fire_up_local_bins(unsigned int* const d_out,
                         const unsigned int coarser_id) {
   if (l_end < 0) return; // means that no values are in coarsed bin
 
-  unsigned int mid = threadIdx.x + blockIdx.x * blockDim.x;
-  unsigned int g_pos = mid + g_start;
+  unsigned int l_pos = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int g_pos = l_pos + g_start;
 
   if (g_pos < g_start || g_pos >= g_end  || 
-      mid < l_start   || mid >= l_end) 
+      l_pos < l_start || l_pos >= l_end) 
     return;
 
   //unsigned int l_pos = blockIdx.x * COARSER_SIZE;
   //unsigned int normalised_bin = d_bins[g_pos]-coarser_id*COARSER_SIZE;
-  unsigned int bin = d_bins[mid];
+  unsigned int bin = d_bins[l_pos];
 
-  printf("mid: %u, g_pos: %u, bin: %u\n", mid, g_pos, bin);
+  printf("l_pos: %u, g_pos: %u, bin: %u\n", l_pos, g_pos, bin);
 
   // read some into shared memory
   // atomic adds
@@ -182,7 +182,6 @@ int main(int argc, char **argv) {
   int local_bin_end = h_positions[1];
   unsigned int local_bin_start = 0;
 
-  unsigned int BIN_BYTES = local_bin_end * sizeof(unsigned int);
   unsigned int* d_bin_grid;
   // created entire bin grid in first run
   // only access relevant elements in kernel
@@ -195,13 +194,15 @@ int main(int argc, char **argv) {
   unsigned int i = 0;
   unsigned int global_bin_start = i * COARSER_SIZE;
   unsigned int global_bin_end   = (1+i) * COARSER_SIZE;
+  // calculate amount of bytes to read
+  unsigned int BIN_BYTES = (global_bin_end * sizeof(unsigned int)) - (global_bin_start * sizeof(unsigned int));
   fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end, 0);
 
   // ############
 
           checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
 
-          printf("\n\nFIRST RUN -- bin (%u, %d), global: (%u, %u), grid size: %u\n",  local_bin_start,local_bin_end,global_bin_start, global_bin_end, grid_size);
+          printf("\n\nFIRST RUN -- bin (%u, %d), global: (%u, %u), grid size: %u, bytes: %u\n",  local_bin_start,local_bin_end,global_bin_start, global_bin_end, grid_size, BIN_BYTES);
           for (int j = 0; j < grid_size * COARSER_SIZE; j++)
             printf("%u\t%s", 
                 h_histogram[j], 
