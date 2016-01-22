@@ -185,8 +185,6 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMalloc((void **) &d_bin_grid, ARRAY_BYTES));
   checkCudaErrors(cudaMemset(d_bin_grid, 0, ARRAY_BYTES));
 
-  unsigned int grid_size = local_bin_end / BLOCK_SIZE.x + 1;
-
   // make some local bins
   int local_bin_end = h_positions[1];
   unsigned int local_bin_start = 0;
@@ -194,6 +192,9 @@ int main(int argc, char **argv) {
   unsigned int global_bin_end   = COARSER_SIZE;
   // calculate amount of bytes to read
   unsigned int BIN_BYTES = (global_bin_end * sizeof(unsigned int)) - (global_bin_start * sizeof(unsigned int));
+  // calculate local grid size
+  unsigned int grid_size = local_bin_end / BLOCK_SIZE.x + 1;
+
   fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end);
 
   // ############
