@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
 
           checkCudaErrors(cudaMemcpy(h_histogram, d_COARSER_GRID, BYTES, cudaMemcpyDeviceToHost));
 
-          printf("\nFIRST RUN:\n");
+          printf("\n\nFIRST RUN -- bin size: %d, bin start: %u, grid size: %u\n", local_bin_size, local_bin_start, grid_size);
           for (int j = 0; j < grid_size * COARSER_SIZE; j++)
             printf("%u\t%s", 
                 h_histogram[j], 
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
 
   cudaFree(d_COARSER_GRID);
 
-  for (int i = 1; i < COARSER_SIZE; i++) {
+/*  for (int i = 1; i < COARSER_SIZE; i++) {
           printf("RUN %u:\n", i);
     local_bin_start = h_positions[i];
     local_bin_size = h_positions[i-1] - h_positions[i];
@@ -219,8 +219,7 @@ int main(int argc, char **argv) {
       cudaFree(d_COARSER_GRID);
     }
   }
-
-  // combine bins and write to global memory
+*/
 
 
   printf("## DONE ##\n");
