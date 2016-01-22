@@ -180,8 +180,8 @@ int main(int argc, char **argv) {
   // created entire bin grid in first run
   // only access relevant elements in kernel
   // based on bin_size and bin_start
-  checkCudaErrors(cudaMalloc((void **) &d_bin_grid, ARRAY_BYTES));
-  checkCudaErrors(cudaMemset(d_bin_grid, 0, ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_bin_grid, TOTAL_BIN_BYTES));
+  checkCudaErrors(cudaMemset(d_bin_grid, 0, TOTAL_BIN_BYTES));
 
   // make some local bins
   unsigned int local_bin_start = 0;
@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
 
   // ############
 
-/*          checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
+/*          checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
           printf("\n\nFIRST RUN -- bin (%u, %d), global: (%u, %u), grid size: %u, bytes: %u\n",  local_bin_start,local_bin_end,global_bin_start, global_bin_end, grid_size, BIN_BYTES);
           for (int j = global_bin_start; j < global_bin_end; j++)
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
     if (amount > 0) {
       fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, global_bin_start, global_bin_end);
 
-/*      checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, BIN_BYTES, cudaMemcpyDeviceToHost));
+/*      checkCudaErrors(cudaMemcpy(&(h_histogram[local_bin_start]), d_bin_grid, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
       for (int j = global_bin_start; j < global_bin_end; j++)
         printf("%u\t%s", 
