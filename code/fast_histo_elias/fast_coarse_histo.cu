@@ -28,17 +28,14 @@ void fire_up_local_bins(unsigned int* const d_out,
   if (l_end < 0) return; // means that no values are in coarsed bin
 
   unsigned int l_pos = l_start + threadIdx.x + blockIdx.x * blockDim.x;
-  unsigned int g_pos = l_pos + g_start;
 
-  if (g_pos < g_start || g_pos >= g_end  || 
-      l_pos < l_start || l_pos >= l_end) 
-    return;
+  if (l_pos < l_start || l_pos >= l_end) return;
 
   //unsigned int l_pos = blockIdx.x * COARSER_SIZE;
   //unsigned int normalised_bin = d_bins[g_pos]-coarser_id*COARSER_SIZE;
   unsigned int bin = d_bins[l_pos];
 
-  printf("l_pos: %u, g_pos: %u, bin: %u\n", l_pos, g_pos, bin);
+  printf("l_pos: %u, bin: %u\n", l_pos, bin);
 
   // read some into shared memory
   // atomic adds
