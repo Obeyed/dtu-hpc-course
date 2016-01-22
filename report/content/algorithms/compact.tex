@@ -1,25 +1,26 @@
 \section{Compact}
 \label{sec:compact}
 
-This section presents the algorithm commonly known as compact (also known as filter).
-The idea is to take some input and only return the items that obey some predicate, e.g. whether or not the least significant bit (LSB) is 0.
+This section presents the algorithm compact (also known as filter).
+The idea is to take some input and only return the items that obey some predicate, e.g. whether or not the least significant bit (LSB) is 0.\cite{udacity}
 The algorithm can be divided into three steps
 %
 \begin{enumerate}
   \item Calculate predicate array
-  \item Calculate scatter addresses from predicate array
-  \item Map desired items to output, given the scatter addresses
+  \item Calculate scatter addresses from predicate array (using scan from \cref{sec:scan})
+  \item Map desired items to output, given the scatter addresses (using map from \cref{sec:map})
 \end{enumerate}
 %
-\Cref{lst:predicate} briefly presents a simple computation whether or not the LSB is 0, and saves the result to the \ttt{predicate} array.
+\Cref{lst:predicate} presents the predicate computation computation, of whether or not the LSB is 0, and saves the result to the \ttt{predicate} array.
 
 \begin{lstlisting}[numbers=none, caption={LSB equal to 0 -- save items' result to predicate array.}, label={lst:predicate}]
 predicate[idx] = (int)((input[idx] & 1) == 0);
 \end{lstlisting}
 
-The next step is to compute the addresses to which the given items from the input array must be moved.
+The next step is to calculate the scatter adresses from the predicate array, i.e. the addresses to which the elements in the input array must be mapped to.
 This can be computed with an exclusive sum scan over the \ttt{predicate} array.
-\Cref{tab:excl sum scan} presents a simple example, where the top row presents the input indices, then the items in each index, the predicate for that item, and the scatter address based on the predicates, respectively.
+\Cref{tab:excl sum scan} illustrates a trivial example.
+The top row presents the input indices, the next row the elements in the respective index, next the LSB predicate for that item and lastly the scatter address based on the predicates.
 
 \begin{table}[htb]
   \centering
@@ -36,9 +37,9 @@ This can be computed with an exclusive sum scan over the \ttt{predicate} array.
   \label{tab:excl sum scan}
 \end{table}
 
-From the scatter addresses it is now possible to map the values where the predicate is 1 to a new output array.
+From the scatter addresses the elements with predicate=$1$ are moved to the scatter address in the output array index of the bottom row.
 The contents of that array is thus the values where the LSB is 0.
-This array will be of length 3, because the reduction of the predicate array yields the value 3.
-The array will be \ttt{[4, 6, 8]}.
+This array will be of length 3 as the reduction of the predicate array yields the value 3.
+The resulting output array would equal \ttt{[4, 6, 8]}.
 
 
