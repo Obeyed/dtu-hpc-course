@@ -5,9 +5,10 @@
 #include <string.h>
 #include "utils.h"
 #include "radix_sort.h"
+#include "gputimer.h"
 
 // CONSTANTS
-const unsigned int NUM_ELEMS    = 1 << 22;
+const unsigned int NUM_ELEMS    = 1 << 8;
 const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 const unsigned int TOTAL_BIN_BYTES  = sizeof(unsigned int) * NUM_BINS;
@@ -135,34 +136,31 @@ void init_memory(unsigned int*& h_values,
                  unsigned int*& d_coarse_bins,
                  unsigned int*& d_positions,
                  unsigned int*& d_bin_grid) {
-
+  // host
   h_values      = new unsigned int[NUM_ELEMS];
   h_bins        = new unsigned int[NUM_ELEMS];
   h_coarse_bins = new unsigned int[NUM_ELEMS];
   h_histogram   = new unsigned int[NUM_BINS];
   h_positions   = new unsigned int[COARSER_SIZE];
-
+  // device
   checkCudaErrors(cudaMalloc((void **) &d_values,       ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_bins,         ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_coarse_bins,  ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_positions,    ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_bin_grid,     TOTAL_BIN_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_histogram,    TOTAL_BIN_BYTES));
 }
 
-int main(int argc, char **argv) {
-  // host pointers
-  unsigned int* h_values, * h_bins, * h_coarse_bins, * h_histogram, * h_positions;
-  // device pointers
-  unsigned int* d_values, * d_bins, * d_coarse_bins, * d_positions, * d_bin_grid;
-  // set up memory
-  init_memory(h_values, h_bins, h_coarse_bins, h_histogram, h_positions,
-              d_values, d_bins, d_coarse_bins, d_positions, d_bin_grid);
-
-  // initialise random values
-  init_rand(h_values);
-  // copy host memory to device
-  checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
-
+void coarse_atomic_bin_calc(unsigned int* const d_values,
+                            unsigned int* const h_values,
+                            unsigned int* const d_bins,
+                            unsigned int* const h_bins,
+                            unsigned int* const d_coarse_bins,
+                            unsigned int* const h_coarse_bins,
+                            unsigned int* const d_positions,
+                            unsigned int* const h_positions,
+                            unsigned int* const d_bin_grid,
+                            unsigned int* const h_histogram) {
   // compute bin id
   compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
 
@@ -180,7 +178,7 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemcpy(d_values,      h_values,       ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   // find starting position for each coarsed bin
-  cudaMemset(d_positions, 0, COARSER_BYTES);
+  checkCudaErrors(cudaMemset(d_positions, 0, COARSER_BYTES));
   checkCudaErrors(cudaMemcpy(h_positions, d_positions, COARSER_BYTES, cudaMemcpyDeviceToHost));
 
   // find positions of separators
@@ -227,6 +225,33 @@ int main(int argc, char **argv) {
 
   cudaFree(d_bin_grid); cudaFree(d_values); cudaFree(d_positions);
   cudaFree(d_coarse_bins); cudaFree(d_bins);
+}
+
+int main(int argc, char **argv) {
+  // host pointers
+  unsigned int* h_values, * h_bins, * h_coarse_bins, * h_histogram, * h_positions;
+  // device pointers
+  unsigned int* d_values, * d_bins, * d_coarse_bins, * d_positions, * d_bin_grid, * d_histogram;
+  // set up memory
+  init_memory(h_values, h_bins, h_coarse_bins, h_histogram, h_positions,
+              d_values, d_bins, d_coarse_bins, d_positions, d_bin_grid);
+
+  // initialise random values
+  init_rand(h_values);
+  // copy host memory to device
+  checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
+
+  //###
+  // reset output array
+  checkCudaErrors(cudaMemset(d_histogram, 0, TOTAL_BIN_BYTES));
+  // parallel reference test
+  parallel_reference_calc(d_histogram, d_values);
+  //###
+
+  //###
+  coarse_atomic_bin_calc(d_values, h_values, d_bins, h_bins, d_coarse_bins, h_coarse_bins, 
+                         d_positions, h_positions, d_bin_grid, h_histogram);
+  //###
 
   return 0;
 }
