@@ -86,26 +86,26 @@ void init_rand(unsigned int* const h_in) {
 
 void print(const unsigned int* const h_in,
            const unsigned int* const h_bins,
-           const unsigned int* const h_coarse_bins,
-           const unsigned int* const h_positions) {
-  const unsigned int WIDTH = 4;
+           const unsigned int* const h_histogram) {
+  const unsigned int WIDTH = 5;
 
   for(int i = 0; i < WIDTH; i++)
-    printf("input\tbin\tcoarse\t\t");
+    printf("input\tbin\t\t");
   printf("\n");
 
   for (int i = 0; i < NUM_ELEMS; i++)
-    printf("%u\t%u\t%u%s", 
+    printf("%u\t%u%s", 
         h_in[i], 
         h_bins[i], 
-        h_coarse_bins[i], 
         ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t\t"));
   printf("\n");
 
-  printf("positions:\n");
-  for (int i = 0; i < COARSER_SIZE; i++)
-    printf("%u\t", h_positions[i]);
-  printf("\n");
+  printf("histogram:\n");
+  for (int i = 0; i < NUM_BINS; i++)
+    printf("%u%s", 
+        h_histogram[i], 
+        ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t"));
+  printf("\n\n");
 }
 
 void sort(unsigned int*& h_coarse_bins, 
@@ -152,16 +152,16 @@ void init_memory(unsigned int*& h_values,
   checkCudaErrors(cudaMalloc((void **) &d_histogram,    TOTAL_BIN_BYTES));
 }
 
-void coarse_atomic_bin_calc(unsigned int* d_values,
-                            unsigned int* h_values,
-                            unsigned int* d_bins,
-                            unsigned int* h_bins,
-                            unsigned int* d_coarse_bins,
-                            unsigned int* h_coarse_bins,
-                            unsigned int* d_positions,
-                            unsigned int* h_positions,
-                            unsigned int* d_bin_grid,
-                            unsigned int* h_histogram) {
+void coarse_atomic_bin_calc(unsigned int*& d_values,
+                            unsigned int*& h_values,
+                            unsigned int*& d_bins,
+                            unsigned int*& h_bins,
+                            unsigned int*& d_coarse_bins,
+                            unsigned int*& h_coarse_bins,
+                            unsigned int*& d_positions,
+                            unsigned int*& h_positions,
+                            unsigned int*& d_bin_grid,
+                            unsigned int*& h_histogram) {
   // compute bin id
   compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
 
@@ -248,11 +248,18 @@ int main(int argc, char **argv) {
   // parallel reference test
   parallel_reference_calc<<<1,1>>>(d_histogram, d_values);
   //###
+  memset(h_bins, 0, TOTAL_BIN_BYTES);
+  printf("PARALLEL REFERENCE\n");
+  print(h_values, h_bins, h_histogram);
+
+  checkCudaErrors(cudaMemcpy(h_histogram, d_histogram, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
   //###
   coarse_atomic_bin_calc(d_values, h_values, d_bins, h_bins, d_coarse_bins, h_coarse_bins, 
                          d_positions, h_positions, d_bin_grid, h_histogram);
   //###
+  printf("COARSE ATOMIC BIN\n");
+  print(h_values, h_bins, h_histogram);
 
   return 0;
 }
