@@ -7,7 +7,7 @@
 #include "radix_sort.h"
 
 // CONSTANTS
-const unsigned int NUM_ELEMS    = 1 << 8;
+const unsigned int NUM_ELEMS    = 1 << 22;
 const unsigned int NUM_BINS     = 100;
 const unsigned int ARRAY_BYTES  = sizeof(unsigned int) * NUM_ELEMS;
 const unsigned int TOTAL_BIN_BYTES  = sizeof(unsigned int) * NUM_BINS;
@@ -247,7 +247,7 @@ int main(int argc, char **argv) {
 
   // initialise random values
   init_rand(h_values);
-  memset(h_bins, 0, TOTAL_BIN_BYTES);
+//  memset(h_bins, 0, TOTAL_BIN_BYTES);
   // copy host memory to device
   checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
 
@@ -259,15 +259,15 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemcpy(h_reference_histo, d_histogram,  TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
   //###
 
-  checkCudaErrors(cudaMemcpy(h_histogram, d_histogram, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
+/*  checkCudaErrors(cudaMemcpy(h_histogram, d_histogram, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
   //###
   coarse_atomic_bin_calc(d_values, h_values, d_bins, h_bins, d_coarse_bins, h_coarse_bins, 
                          d_positions, h_positions, d_bin_grid, h_histogram);
-  printf("COARSE ATOMIC BIN (%s) %f\n", 
+  printf("COARSE ATOMIC BIN (%s)\n", 
       (compare_results(h_reference_histo, h_histogram) ? "Success" : "Failed"));
   //###
-
+*/
   cudaFree(d_bin_grid); cudaFree(d_values); cudaFree(d_positions);
   cudaFree(d_coarse_bins); cudaFree(d_bins); cudaFree(d_histogram);
 
