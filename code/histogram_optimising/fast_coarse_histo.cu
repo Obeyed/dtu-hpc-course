@@ -135,7 +135,8 @@ void init_memory(unsigned int*& h_values,
                  unsigned int*& d_bins,
                  unsigned int*& d_coarse_bins,
                  unsigned int*& d_positions,
-                 unsigned int*& d_bin_grid) {
+                 unsigned int*& d_bin_grid,
+                 unsigned int*& d_histogram) {
   // host
   h_values      = new unsigned int[NUM_ELEMS];
   h_bins        = new unsigned int[NUM_ELEMS];
@@ -234,7 +235,7 @@ int main(int argc, char **argv) {
   unsigned int* d_values, * d_bins, * d_coarse_bins, * d_positions, * d_bin_grid, * d_histogram;
   // set up memory
   init_memory(h_values, h_bins, h_coarse_bins, h_histogram, h_positions,
-              d_values, d_bins, d_coarse_bins, d_positions, d_bin_grid);
+              d_values, d_bins, d_coarse_bins, d_positions, d_bin_grid, d_histogram);
 
   // initialise random values
   init_rand(h_values);
