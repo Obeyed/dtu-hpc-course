@@ -116,40 +116,54 @@ void sort(unsigned int*& h_coarse_bins,
   h_values = sorted[2];
 }
 
+void init_memory(unsigned int*& h_values,
+                 unsigned int*& h_bins,
+                 unsigned int*& h_coarse_bins,
+                 unsigned int*& h_histogram,
+                 unsigned int*& h_positions,
+                 unsigned int*& d_values,
+                 unsigned int*& d_bins,
+                 unsigned int*& d_coarse_bins,
+                 unsigned int*& d_positions,
+                 unsigned int*& d_bin_grid) {
+
+  h_values      = new unsigned int[NUM_ELEMS];
+  h_bins        = new unsigned int[NUM_ELEMS];
+  h_coarse_bins = new unsigned int[NUM_ELEMS];
+  h_histogram   = new unsigned int[NUM_BINS];
+  h_positions   = new unsigned int[COARSER_SIZE];
+
+  checkCudaErrors(cudaMalloc((void **) &d_values,       ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_bins,         ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_coarse_bins,  ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_positions,    ARRAY_BYTES));
+  checkCudaErrors(cudaMalloc((void **) &d_bin_grid,     TOTAL_BIN_BYTES));
+}
+
 int main(int argc, char **argv) {
-//  printf("## STARTING ##\n");
-//  printf("blocks: %u\tthreads: %u\t COARSER_SIZE: %u", GRID_SIZE.x, BLOCK_SIZE.x, COARSER_SIZE);
-//  printf("\n\n");
+  // host pointers
+  unsigned int* h_values, * h_bins, * h_coarse_bins, * h_histogram, * h_positions;
+  // device pointers
+  unsigned int* d_values, * d_bins, * d_coarse_bins, * d_positions, * d_bin_grid;
+  // set up memory
+  init_memory(h_values, h_bins, h_coarse_bins, h_histogram, h_positions,
+              d_values, d_bins, d_coarse_bins, d_positions, d_bin_grid);
 
-  // create random values
-  unsigned int* h_values = new unsigned int[NUM_ELEMS];
+  // initialise random values
   init_rand(h_values);
-  // host memory
-  unsigned int* h_bins = new unsigned int[NUM_ELEMS];
-  unsigned int* h_coarse_bins = new unsigned int[NUM_ELEMS];
-  unsigned int* h_histogram = new unsigned int[NUM_BINS];
-  unsigned int* h_positions = new unsigned int[COARSER_SIZE];
-
-  //copy values to device memory
-  unsigned int* d_values, * d_bins, * d_coarse_bins, * d_positions;
-  checkCudaErrors(cudaMalloc((void **) &d_values, ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_bins,   ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_coarse_bins, ARRAY_BYTES));
-  checkCudaErrors(cudaMalloc((void **) &d_positions, ARRAY_BYTES));
-
   // copy host memory to device
   checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
 
   // compute bin id
   compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
-  // move memory to host
-  checkCudaErrors(cudaMemcpy(h_bins, d_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
   // compute coarse bin id
   compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins, COARSER_SIZE);
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
+  // move memory to host
+  checkCudaErrors(cudaMemcpy(h_bins, d_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
   // sort
   sort(h_coarse_bins, h_bins, h_values);
   checkCudaErrors(cudaMemcpy(d_coarse_bins, h_coarse_bins,  ARRAY_BYTES, cudaMemcpyHostToDevice));
@@ -164,14 +178,9 @@ int main(int argc, char **argv) {
   find_positions_mapping_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_positions, d_coarse_bins);
   checkCudaErrors(cudaMemcpy(h_positions, d_positions, COARSER_BYTES, cudaMemcpyDeviceToHost));
   
-//  print(h_values, h_bins, h_coarse_bins, h_positions);
-
-  // ####
-  unsigned int* d_bin_grid;
-  // created entire bin grid in first run
+  // we have entire bin_grid
   // only access relevant elements in kernel
   // based on bin_size and bin_start
-  checkCudaErrors(cudaMalloc((void **) &d_bin_grid, TOTAL_BIN_BYTES));
   checkCudaErrors(cudaMemset(d_bin_grid, 0, TOTAL_BIN_BYTES));
 
   // make some local bins
@@ -195,7 +204,6 @@ int main(int argc, char **argv) {
       fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
   }
 
-
   // do final loop
   local_bin_start = h_positions[COARSER_SIZE-1];
   local_bin_end   = NUM_ELEMS;
@@ -208,20 +216,8 @@ int main(int argc, char **argv) {
 
   checkCudaErrors(cudaMemcpy(h_histogram, d_bin_grid, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
-/*  printf("\n");
-  for (int j = 0; j < NUM_BINS; j++)
-    printf("%d:%u\t%s", 
-        j,
-        h_histogram[j], 
-        ((j % 6 == 5) ? "\n" : "\t\t"));
-  printf("\n");
-*/
-  //#####
-
   cudaFree(d_bin_grid); cudaFree(d_values); cudaFree(d_positions);
   cudaFree(d_coarse_bins); cudaFree(d_bins);
-
-//  printf("## DONE ##\n");
 
   return 0;
 }
