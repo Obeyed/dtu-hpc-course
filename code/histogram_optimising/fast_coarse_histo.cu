@@ -184,7 +184,7 @@ float coarse_atomic_bin_calc(unsigned int*& d_values,
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_bins, d_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
   // sort
-  sort(h_coarse_bins, h_bins, h_values, elapsed);
+  sort(h_coarse_bins, h_bins, h_values, total_elapsed_time);
   checkCudaErrors(cudaMemcpy(d_coarse_bins, h_coarse_bins,  ARRAY_BYTES, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(d_bins,        h_bins,         ARRAY_BYTES, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(d_values,      h_values,       ARRAY_BYTES, cudaMemcpyHostToDevice));

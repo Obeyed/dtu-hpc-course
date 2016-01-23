@@ -339,7 +339,6 @@ unsigned int** radix_sort(float*& elapsed,
                           const size_t NUM_ARRAYS_TO_SORT,
                           const size_t NUM_ELEMS) {
   GpuTimer timer;
-  *elapsed = 0.0;
 
   const int BLOCK_SIZE  = 1024;
   const int GRID_SIZE   = NUM_ELEMS / BLOCK_SIZE + 1;
