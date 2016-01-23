@@ -154,21 +154,29 @@ void init_memory(unsigned int*& h_values,
   checkCudaErrors(cudaMalloc((void **) &d_histogram,    TOTAL_BIN_BYTES));
 }
 
-void coarse_atomic_bin_calc(unsigned int*& d_values,
-                            unsigned int*& h_values,
-                            unsigned int*& d_bins,
-                            unsigned int*& h_bins,
-                            unsigned int*& d_coarse_bins,
-                            unsigned int*& h_coarse_bins,
-                            unsigned int*& d_positions,
-                            unsigned int*& h_positions,
-                            unsigned int*& d_bin_grid,
-                            unsigned int*& h_histogram) {
+float coarse_atomic_bin_calc(unsigned int*& d_values,
+                             unsigned int*& h_values,
+                             unsigned int*& d_bins,
+                             unsigned int*& h_bins,
+                             unsigned int*& d_coarse_bins,
+                             unsigned int*& h_coarse_bins,
+                             unsigned int*& d_positions,
+                             unsigned int*& h_positions,
+                             unsigned int*& d_bin_grid,
+                             unsigned int*& h_histogram,
+                             GpuTimer timer) {
+  float total_elapsed_time = 0.0;
   // compute bin id
+  timer.Start();
   compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
+  timer.Stop();
+  total_elapsed_time += timer.Elapsed();
 
   // compute coarse bin id
+  timer.Start();
   compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins, COARSER_SIZE);
+  timer.Stop();
+  total_elapsed_time += timer.Elapsed();
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
@@ -185,7 +193,10 @@ void coarse_atomic_bin_calc(unsigned int*& d_values,
   checkCudaErrors(cudaMemcpy(h_positions, d_positions, COARSER_BYTES, cudaMemcpyDeviceToHost));
 
   // find positions of separators
+  timer.Start();
   find_positions_mapping_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_positions, d_coarse_bins);
+  timer.Stop();
+  total_elapsed_time += timer.Elapsed();
   checkCudaErrors(cudaMemcpy(h_positions, d_positions, COARSER_BYTES, cudaMemcpyDeviceToHost));
   
   // we have entire bin_grid
@@ -200,7 +211,10 @@ void coarse_atomic_bin_calc(unsigned int*& d_values,
   // calculate local grid size
   unsigned int grid_size = local_bin_end / BLOCK_SIZE.x + 1;
 
+  timer.Start();
   fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
+  timer.Stop();
+  total_elapsed_time += timer.Elapsed();
 
   for (unsigned int i = 1; i < COARSER_SIZE - 1; i++) {
     // make some local bins
@@ -210,8 +224,12 @@ void coarse_atomic_bin_calc(unsigned int*& d_values,
     // calculate local grid size
     grid_size = local_bin_end / BLOCK_SIZE.x + 1;
 
-    if (amount > 0)
+    if (amount > 0) {
+      timer.Start();
       fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
+      timer.Stop();
+      total_elapsed_time += timer.Elapsed();
+    }
   }
 
   // do final loop
@@ -221,13 +239,16 @@ void coarse_atomic_bin_calc(unsigned int*& d_values,
   // calculate local grid size
   grid_size = local_bin_end / BLOCK_SIZE.x + 1;
 
-  if (amount > 0)
+  if (amount > 0) {
+    timer.Start();
     fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
+    timer.Stop();
+    total_elapsed_time += timer.Elapsed();
+  }
 
   checkCudaErrors(cudaMemcpy(h_histogram, d_bin_grid, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
-  cudaFree(d_bin_grid); cudaFree(d_values); cudaFree(d_positions);
-  cudaFree(d_coarse_bins); cudaFree(d_bins);
+  return total_elapsed_time;
 }
 
 bool compare_results(const unsigned int* const ref,
@@ -239,6 +260,8 @@ bool compare_results(const unsigned int* const ref,
 }
 
 int main(int argc, char **argv) {
+  GpuTimer timer;
+  float elapsed = 0.0;
   // host pointers
   unsigned int* h_values, * h_bins, * h_coarse_bins, * h_histogram, * h_positions, * h_reference_histo;
   // device pointers
@@ -257,20 +280,25 @@ int main(int argc, char **argv) {
   // reset output array
   checkCudaErrors(cudaMemset(d_histogram, 0, TOTAL_BIN_BYTES));
   // parallel reference test
+  timer.Start();
   parallel_reference_calc<<<1,1>>>(d_histogram, d_values);
+  timer.Stop();
   checkCudaErrors(cudaMemcpy(h_reference_histo, d_histogram,  TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
-  printf("PARALLEL REFERENCE\n");
-  print(h_values, h_bins, h_reference_histo);
+  printf("PARALLEL REFERENCE %f\n", timer.Elapsed());
   //###
 
   checkCudaErrors(cudaMemcpy(h_histogram, d_histogram, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
   //###
-  coarse_atomic_bin_calc(d_values, h_values, d_bins, h_bins, d_coarse_bins, h_coarse_bins, 
-                         d_positions, h_positions, d_bin_grid, h_histogram);
-  printf("COARSE ATOMIC BIN (%s)\n", (compare_results(h_reference_histo, h_histogram) ? "Success" : "Failed"));
-  print(h_values, h_bins, h_histogram);
+  elapsed = coarse_atomic_bin_calc(d_values, h_values, d_bins, h_bins, d_coarse_bins, h_coarse_bins, 
+                                         d_positions, h_positions, d_bin_grid, h_histogram, timer);
+  printf("COARSE ATOMIC BIN (%s) %f\n", 
+      (compare_results(h_reference_histo, h_histogram) ? "Success" : "Failed"),
+      elapsed);
   //###
+
+  cudaFree(d_bin_grid); cudaFree(d_values); cudaFree(d_positions);
+  cudaFree(d_coarse_bins); cudaFree(d_bins); cudaFree(d_histogram);
 
   return 0;
 }
