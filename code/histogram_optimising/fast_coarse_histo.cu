@@ -27,7 +27,7 @@ void parallel_reference_calc(unsigned int* const d_out,
   for (unsigned int l = 0; l < NUM_ELEMS; ++l) {
     int bin = (d_in[l] % NUM_BINS);
     d_out[bin]++;
-    printf("%u:%d hist: %u%s", d_in[l], bin, d_out[bin], ((l % 7 == 6) ? "\n" : "\t")):
+    printf("%u:%d hist: %u%s", d_in[l], bin, d_out[bin], ((l % 7 == 6) ? "\n" : "\t"));
   }
 }
 
