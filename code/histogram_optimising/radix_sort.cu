@@ -316,10 +316,12 @@ void exclusive_sum_scan(unsigned int* const d_out,
 
   // sum scan call
   for (unsigned int step = 1; step < NUM_ELEMS; step *= 2) {
+    printf("elapsed: %f\n", elapsed);
     timer.Start();
     inclusive_sum_scan_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_sum_scan, d_predicate_tmp, step, NUM_ELEMS);
     timer.Stop();
     elapsed += timer.Elapsed();
+    printf("elapsed: %f\n", elapsed);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   }
