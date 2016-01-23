@@ -111,7 +111,7 @@ void print(const unsigned int* const h_in,
 void sort(unsigned int*& h_coarse_bins, 
           unsigned int*& h_bins, 
           unsigned int*& h_values,
-          float*& elapsed) {
+          float& elapsed) {
   const unsigned int NUM_ARRAYS = 3;
   // set up pointers
   unsigned int** to_be_sorted = new unsigned int*[NUM_ARRAYS];
