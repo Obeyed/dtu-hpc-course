@@ -383,6 +383,7 @@ unsigned int** radix_sort(float& elapsed,
     elapsed += timer.Elapsed();
 
     // calculate scatter addresses from predicates
+    printf("first\n");
     exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE, timer, elapsed);
 
     // copy contents of predicate, so we do not change its content
@@ -397,6 +398,7 @@ unsigned int** radix_sort(float& elapsed,
     timer.Stop();
     elapsed += timer.Elapsed();
     // so we now have addresses for elements where LSB is equal to 1
+    printf("second\n");
     exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE, timer, elapsed);
     // shift scatter addresses according to amount of elements that had LSB equal to 0
     timer.Start();
