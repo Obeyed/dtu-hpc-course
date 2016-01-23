@@ -121,7 +121,9 @@ void map_kernel(unsigned int* const,
 void reduce_wrapper(unsigned int* const,
                     unsigned int* const,
                     size_t,
-                    int);
+                    int,
+                    GpuTimer,
+                    float*);
 /**
     Computes an exclusive sum scan of scatter addresses for the given predicate array.
 
@@ -141,7 +143,9 @@ void exclusive_sum_scan(unsigned int* const,
                         const unsigned int,
                         const size_t,
                         const int,
-                        const int);
+                        const int,
+                        GpuTimer,
+                        float*);
 /**
     Sort values using radix sort.
 
@@ -254,7 +258,9 @@ void map_kernel(unsigned int* const d_out_coarse,
 void reduce_wrapper(unsigned int* const d_out,
                     unsigned int* const d_in,
                     size_t num_elems,
-                    int block_size) {
+                    int block_size,
+                    GpuTimer timer,
+                    float* elapsed) {
   unsigned int grid_size = num_elems / block_size + 1;
 
   unsigned int* d_tmp;
@@ -265,7 +271,10 @@ void reduce_wrapper(unsigned int* const d_out,
   unsigned int remainder = 0;
   // recursively solving, will run approximately log base block_size times.
   do {
+    timer.Start();
     reduce_kernel<<<grid_size, block_size>>>(d_tmp, d_in, num_elems);
+    timer.Stop();
+    *elapsed += timer.Elapsed();
 
     remainder = num_elems % block_size;
     num_elems  = num_elems / block_size + remainder;
@@ -283,7 +292,10 @@ void reduce_wrapper(unsigned int* const d_out,
   } while(num_elems > block_size);
 
   // computing rest
+  timer.Start();
   reduce_kernel<<<1, num_elems>>>(d_out, d_in, prev_grid_size);
+  timer.Stop();
+  *elapsed += timer.Elapsed();
 }
 
 // Computes an exclusive sum scan of scatter addresses for the given predicate array.
@@ -294,7 +306,9 @@ void exclusive_sum_scan(unsigned int* const d_out,
                         const unsigned int ARRAY_BYTES,
                         const size_t NUM_ELEMS,
                         const int GRID_SIZE,
-                        const int BLOCK_SIZE) {
+                        const int BLOCK_SIZE,
+                        GpuTimer timer,
+                        float* elapsed) {
   // copy predicate values to new array
   checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   // set all elements to zero 
@@ -302,21 +316,31 @@ void exclusive_sum_scan(unsigned int* const d_out,
 
   // sum scan call
   for (unsigned int step = 1; step < NUM_ELEMS; step *= 2) {
+    timer.Start();
     inclusive_sum_scan_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_sum_scan, d_predicate_tmp, step, NUM_ELEMS);
+    timer.Stop();
+    *elapsed += timer.Elapsed();
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   }
 
   // shift to get exclusive scan
   checkCudaErrors(cudaMemcpy(d_out, d_sum_scan, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
+  timer.Start();
   right_shift_array_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_out, d_sum_scan, NUM_ELEMS);
+  timer.Stop();
+  *elapsed += timer.Elapsed();
 }
 
 // Sort values using radix sort
 // EDIT: sort by first array in h_to_be_sorted
-unsigned int** radix_sort(unsigned int** h_to_be_sorted,
+unsigned int** radix_sort(float* elapsed,
+                          unsigned int** h_to_be_sorted,
                           const size_t NUM_ARRAYS_TO_SORT,
                           const size_t NUM_ELEMS) {
+  GpuTimer timer;
+  *elapsed = 0.0;
+
   const int BLOCK_SIZE  = 1024;
   const int GRID_SIZE   = NUM_ELEMS / BLOCK_SIZE + 1;
   const unsigned int ARRAY_BYTES = sizeof(unsigned int) * NUM_ELEMS;
@@ -353,28 +377,40 @@ unsigned int** radix_sort(unsigned int** h_to_be_sorted,
 
   for (unsigned int i = 0; i < (BITS_PER_BYTE * sizeof(unsigned int)); i++) {
     // predicate is that LSB is 0
+    timer.Start();
     predicate_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_predicate, d_sort_by, NUM_ELEMS, i);
+    timer.Stop();
+    *elapsed += timer.Elapsed();
 
     // calculate scatter addresses from predicates
-    exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE);
+    exclusive_sum_scan(d_sum_scan_0, d_predicate, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE, timer, elapsed);
 
     // copy contents of predicate, so we do not change its content
     checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
 
     // calculate how many elements had predicate equal to 1
-    reduce_wrapper(d_reduce, d_predicate_tmp, NUM_ELEMS, BLOCK_SIZE);
+    reduce_wrapper(d_reduce, d_predicate_tmp, NUM_ELEMS, BLOCK_SIZE, timer, elapsed);
 
     // toggle predicate values, so we can compute scatter addresses for toggled predicates
+    timer.Start();
     toggle_predicate_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_predicate_toggle, d_predicate, NUM_ELEMS);
+    timer.Stop();
+    *elapsed += timer.Elapsed();
     // so we now have addresses for elements where LSB is equal to 1
-    exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE);
+    exclusive_sum_scan(d_sum_scan_1, d_predicate_toggle, d_predicate_tmp, d_sum_scan, ARRAY_BYTES, NUM_ELEMS, GRID_SIZE, BLOCK_SIZE, timer, elapsed);
     // shift scatter addresses according to amount of elements that had LSB equal to 0
+    timer.Start();
     add_splitter_map_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_sum_scan_1, d_reduce, NUM_ELEMS);
+    timer.Stop();
+    *elapsed += timer.Elapsed();
 
     // move elements accordingly
+    timer.Start();
     map_kernel<<<GRID_SIZE,BLOCK_SIZE>>>(d_map_coarse, d_map_bin, d_map_val, 
                                          d_sort_by, d_in_bin, d_in_val, 
                                          d_predicate, d_sum_scan_0, d_sum_scan_1, NUM_ELEMS);
+    timer.Stop();
+    *elapsed += timer.Elapsed();
 
     // swap pointers, instead of moving elements
     std::swap(d_sort_by, d_map_coarse);

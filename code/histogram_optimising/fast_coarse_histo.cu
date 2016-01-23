@@ -110,7 +110,8 @@ void print(const unsigned int* const h_in,
 
 void sort(unsigned int*& h_coarse_bins, 
           unsigned int*& h_bins, 
-          unsigned int*& h_values) {
+          unsigned int*& h_values,
+          float*& elapsed) {
   const unsigned int NUM_ARRAYS = 3;
   // set up pointers
   unsigned int** to_be_sorted = new unsigned int*[NUM_ARRAYS];
@@ -118,7 +119,7 @@ void sort(unsigned int*& h_coarse_bins,
   to_be_sorted[1] = h_bins;
   to_be_sorted[2] = h_values;
 
-  unsigned int** sorted = radix_sort(to_be_sorted, NUM_ARRAYS, NUM_ELEMS);
+  unsigned int** sorted = radix_sort(&elapsed, to_be_sorted, NUM_ARRAYS, NUM_ELEMS);
 
   // update pointers
   h_coarse_bins = sorted[0];
@@ -183,7 +184,7 @@ float coarse_atomic_bin_calc(unsigned int*& d_values,
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_bins, d_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
   // sort
-  sort(h_coarse_bins, h_bins, h_values);
+  sort(h_coarse_bins, h_bins, h_values, elapsed);
   checkCudaErrors(cudaMemcpy(d_coarse_bins, h_coarse_bins,  ARRAY_BYTES, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(d_bins,        h_bins,         ARRAY_BYTES, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(d_values,      h_values,       ARRAY_BYTES, cudaMemcpyHostToDevice));
