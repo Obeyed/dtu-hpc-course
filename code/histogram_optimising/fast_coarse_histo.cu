@@ -19,6 +19,15 @@ const unsigned int COARSER_SIZE = NUM_BINS / 10;
 const unsigned int COARSER_BYTES = sizeof(unsigned int) * COARSER_SIZE;
 const unsigned int MAX_NUMS = 1000;
 
+
+__global__
+void parallel_reference_calc(unsigned int* const d_out,
+                             const unsigned int* const d_in) {
+  for (unsigned int l = 0; l < NUM_ELEMS; ++l)
+    d_out[(d_in[l] % NUM_BINS)]++;
+}
+
+
 __global__
 void fire_up_local_bins(unsigned int* const d_out,
                         const unsigned int* const d_bins,
