@@ -24,8 +24,11 @@ const unsigned int MAX_NUMS = 1000;
 __global__
 void parallel_reference_calc(unsigned int* const d_out,
                              const unsigned int* const d_in) {
-  for (unsigned int l = 0; l < NUM_ELEMS; ++l)
-    d_out[(d_in[l] % NUM_BINS)]++;
+  for (unsigned int l = 0; l < NUM_ELEMS; ++l) {
+    int bin = (d_in[l] % NUM_BINS);
+    d_out[bin]++;
+    printf("%u:%d hist: %u%s", d_in[l], bin, d_out[bin], ((l % 7 == 6) ? "\n" : "\t")):
+  }
 }
 
 
