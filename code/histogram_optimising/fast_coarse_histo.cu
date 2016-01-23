@@ -242,6 +242,7 @@ int main(int argc, char **argv) {
 
   // initialise random values
   init_rand(h_values);
+  memset(h_bins, 0, TOTAL_BIN_BYTES);
   // copy host memory to device
   checkCudaErrors(cudaMemcpy(d_values, h_values,  ARRAY_BYTES, cudaMemcpyHostToDevice));
 
@@ -249,21 +250,20 @@ int main(int argc, char **argv) {
   // reset output array
   checkCudaErrors(cudaMemset(d_histogram, 0, TOTAL_BIN_BYTES));
   // parallel reference test
-  printf("call ref \n");
   parallel_reference_calc<<<1,1>>>(d_histogram, d_values);
-  //###
-  memset(h_bins, 0, TOTAL_BIN_BYTES);
+  checkCudaErrors(cudaMemcpy(h_histogram, d_histogram,  TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
   printf("PARALLEL REFERENCE\n");
   print(h_values, h_bins, h_histogram);
+  //###
 
   checkCudaErrors(cudaMemcpy(h_histogram, d_histogram, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
 
   //###
   coarse_atomic_bin_calc(d_values, h_values, d_bins, h_bins, d_coarse_bins, h_coarse_bins, 
                          d_positions, h_positions, d_bin_grid, h_histogram);
-  //###
   printf("COARSE ATOMIC BIN\n");
   print(h_values, h_bins, h_histogram);
+  //###
 
   return 0;
 }
