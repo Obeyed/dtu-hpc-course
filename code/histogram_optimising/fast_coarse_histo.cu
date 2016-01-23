@@ -152,16 +152,16 @@ void init_memory(unsigned int*& h_values,
   checkCudaErrors(cudaMalloc((void **) &d_histogram,    TOTAL_BIN_BYTES));
 }
 
-void coarse_atomic_bin_calc(unsigned int* const d_values,
-                            unsigned int* const h_values,
-                            unsigned int* const d_bins,
-                            unsigned int* const h_bins,
-                            unsigned int* const d_coarse_bins,
-                            unsigned int* const h_coarse_bins,
-                            unsigned int* const d_positions,
-                            unsigned int* const h_positions,
-                            unsigned int* const d_bin_grid,
-                            unsigned int* const h_histogram) {
+void coarse_atomic_bin_calc(unsigned int* d_values,
+                            unsigned int* h_values,
+                            unsigned int* d_bins,
+                            unsigned int* h_bins,
+                            unsigned int* d_coarse_bins,
+                            unsigned int* h_coarse_bins,
+                            unsigned int* d_positions,
+                            unsigned int* h_positions,
+                            unsigned int* d_bin_grid,
+                            unsigned int* h_histogram) {
   // compute bin id
   compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
 
