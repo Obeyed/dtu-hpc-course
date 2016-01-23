@@ -123,7 +123,7 @@ void reduce_wrapper(unsigned int* const,
                     size_t,
                     int,
                     GpuTimer,
-                    float*);
+                    float*&);
 /**
     Computes an exclusive sum scan of scatter addresses for the given predicate array.
 
@@ -145,7 +145,7 @@ void exclusive_sum_scan(unsigned int* const,
                         const int,
                         const int,
                         GpuTimer,
-                        float*);
+                        float*&);
 /**
     Sort values using radix sort.
 
@@ -260,7 +260,7 @@ void reduce_wrapper(unsigned int* const d_out,
                     size_t num_elems,
                     int block_size,
                     GpuTimer timer,
-                    float* elapsed) {
+                    float*& elapsed) {
   unsigned int grid_size = num_elems / block_size + 1;
 
   unsigned int* d_tmp;
@@ -308,7 +308,7 @@ void exclusive_sum_scan(unsigned int* const d_out,
                         const int GRID_SIZE,
                         const int BLOCK_SIZE,
                         GpuTimer timer,
-                        float* elapsed) {
+                        float*& elapsed) {
   // copy predicate values to new array
   checkCudaErrors(cudaMemcpy(d_predicate_tmp, d_predicate, ARRAY_BYTES, cudaMemcpyDeviceToDevice));
   // set all elements to zero 
@@ -334,7 +334,7 @@ void exclusive_sum_scan(unsigned int* const d_out,
 
 // Sort values using radix sort
 // EDIT: sort by first array in h_to_be_sorted
-unsigned int** radix_sort(float* elapsed,
+unsigned int** radix_sort(float*& elapsed,
                           unsigned int** h_to_be_sorted,
                           const size_t NUM_ARRAYS_TO_SORT,
                           const size_t NUM_ELEMS) {

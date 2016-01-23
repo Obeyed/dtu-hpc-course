@@ -119,7 +119,7 @@ void sort(unsigned int*& h_coarse_bins,
   to_be_sorted[1] = h_bins;
   to_be_sorted[2] = h_values;
 
-  unsigned int** sorted = radix_sort(&elapsed, to_be_sorted, NUM_ARRAYS, NUM_ELEMS);
+  unsigned int** sorted = radix_sort(elapsed, to_be_sorted, NUM_ARRAYS, NUM_ELEMS);
 
   // update pointers
   h_coarse_bins = sorted[0];
