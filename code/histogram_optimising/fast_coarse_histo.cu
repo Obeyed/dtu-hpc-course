@@ -24,11 +24,8 @@ const unsigned int MAX_NUMS = 1000;
 __global__
 void parallel_reference_calc(unsigned int* const d_out,
                              const unsigned int* const d_in) {
-  for (unsigned int l = 0; l < NUM_ELEMS; ++l) {
-    int bin = (d_in[l] % NUM_BINS);
-    d_out[bin]++;
-    printf("%u:%d hist: %u%s", d_in[l], bin, d_out[bin], ((l % 7 == 6) ? "\n" : "\t"));
-  }
+  for (unsigned int l = 0; l < NUM_ELEMS; ++l)
+    d_out[(d_in[l] % NUM_BINS)]++;
 }
 
 
@@ -107,7 +104,7 @@ void print(const unsigned int* const h_in,
   for (int i = 0; i < NUM_BINS; i++)
     printf("%u%s", 
         h_histogram[i], 
-        ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t"));
+        ((i % 15 == 14) ? "\n" : "\t"));
   printf("\n\n");
 }
 
@@ -134,6 +131,7 @@ void init_memory(unsigned int*& h_values,
                  unsigned int*& h_coarse_bins,
                  unsigned int*& h_histogram,
                  unsigned int*& h_positions,
+                 unsigned int*& h_reference_histo,
                  unsigned int*& d_values,
                  unsigned int*& d_bins,
                  unsigned int*& d_coarse_bins,
@@ -141,11 +139,12 @@ void init_memory(unsigned int*& h_values,
                  unsigned int*& d_bin_grid,
                  unsigned int*& d_histogram) {
   // host
-  h_values      = new unsigned int[NUM_ELEMS];
-  h_bins        = new unsigned int[NUM_ELEMS];
-  h_coarse_bins = new unsigned int[NUM_ELEMS];
-  h_histogram   = new unsigned int[NUM_BINS];
-  h_positions   = new unsigned int[COARSER_SIZE];
+  h_values          = new unsigned int[NUM_ELEMS];
+  h_bins            = new unsigned int[NUM_ELEMS];
+  h_coarse_bins     = new unsigned int[NUM_ELEMS];
+  h_histogram       = new unsigned int[NUM_BINS];
+  h_reference_histo = new unsigned int[NUM_BINS];
+  h_positions       = new unsigned int[COARSER_SIZE];
   // device
   checkCudaErrors(cudaMalloc((void **) &d_values,       ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_bins,         ARRAY_BYTES));
@@ -231,13 +230,21 @@ void coarse_atomic_bin_calc(unsigned int*& d_values,
   cudaFree(d_coarse_bins); cudaFree(d_bins);
 }
 
+bool compare_results(const unsigned int* const ref,
+                     const unsigned int* const gpu) {
+  for (unsigned int i = 0; i < NUM_BINS; i++)
+    if (gpu[i] != ref[i]) return false;
+
+  return true;
+}
+
 int main(int argc, char **argv) {
   // host pointers
-  unsigned int* h_values, * h_bins, * h_coarse_bins, * h_histogram, * h_positions;
+  unsigned int* h_values, * h_bins, * h_coarse_bins, * h_histogram, * h_positions, * h_reference_histo;
   // device pointers
   unsigned int* d_values, * d_bins, * d_coarse_bins, * d_positions, * d_bin_grid, * d_histogram;
   // set up memory
-  init_memory(h_values, h_bins, h_coarse_bins, h_histogram, h_positions,
+  init_memory(h_values, h_bins, h_coarse_bins, h_histogram, h_positions, h_reference_histo,
               d_values, d_bins, d_coarse_bins, d_positions, d_bin_grid, d_histogram);
 
   // initialise random values
@@ -251,9 +258,9 @@ int main(int argc, char **argv) {
   checkCudaErrors(cudaMemset(d_histogram, 0, TOTAL_BIN_BYTES));
   // parallel reference test
   parallel_reference_calc<<<1,1>>>(d_histogram, d_values);
-  checkCudaErrors(cudaMemcpy(h_histogram, d_histogram,  TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_reference_histo, d_histogram,  TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
   printf("PARALLEL REFERENCE\n");
-  print(h_values, h_bins, h_histogram);
+  print(h_values, h_bins, h_reference_histo);
   //###
 
   checkCudaErrors(cudaMemcpy(h_histogram, d_histogram, TOTAL_BIN_BYTES, cudaMemcpyDeviceToHost));
@@ -261,7 +268,7 @@ int main(int argc, char **argv) {
   //###
   coarse_atomic_bin_calc(d_values, h_values, d_bins, h_bins, d_coarse_bins, h_coarse_bins, 
                          d_positions, h_positions, d_bin_grid, h_histogram);
-  printf("COARSE ATOMIC BIN\n");
+  printf("COARSE ATOMIC BIN (%s)\n", (compare_results(h_reference_histo, h_histogram) ? "Success" : "Failed"));
   print(h_values, h_bins, h_histogram);
   //###
 
