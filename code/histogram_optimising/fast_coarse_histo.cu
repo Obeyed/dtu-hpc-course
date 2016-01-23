@@ -249,6 +249,7 @@ int main(int argc, char **argv) {
   // reset output array
   checkCudaErrors(cudaMemset(d_histogram, 0, TOTAL_BIN_BYTES));
   // parallel reference test
+  printf("call ref \n");
   parallel_reference_calc<<<1,1>>>(d_histogram, d_values);
   //###
   memset(h_bins, 0, TOTAL_BIN_BYTES);
