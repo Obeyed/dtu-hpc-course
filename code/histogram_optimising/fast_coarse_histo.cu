@@ -238,15 +238,15 @@ bool compare_results(const unsigned int* const ref,
 
 
 void streamed_coarse_atomic_bin_calc(unsigned int*& d_values,
-                            unsigned int*& h_values,
-                            unsigned int*& d_bins,
-                            unsigned int*& h_bins,
-                            unsigned int*& d_coarse_bins,
-                            unsigned int*& h_coarse_bins,
-                            unsigned int*& d_positions,
-                            unsigned int*& h_positions,
-                            unsigned int*& d_bin_grid,
-                            unsigned int*& h_histogram) {
+                                     unsigned int*& h_values,
+                                     unsigned int*& d_bins,
+                                     unsigned int*& h_bins,
+                                     unsigned int*& d_coarse_bins,
+                                     unsigned int*& h_coarse_bins,
+                                     unsigned int*& d_positions,
+                                     unsigned int*& h_positions,
+                                     unsigned int*& d_bin_grid,
+                                     unsigned int*& h_histogram) {
   // initialise streams
   cudaStream_t streams[COARSER_SIZE];
 
