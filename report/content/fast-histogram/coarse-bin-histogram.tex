@@ -70,13 +70,22 @@ void coarse_histogram_count(unsigned int* const d_out,
 }
 \end{lstlisting}
 
+We have that \ttt{l\_start} defines the starting index of the given coarse bin, and \ttt{l\_end} defines the maximum index for that coarse bin.
+Together they define the range of which bins can be manipulates for each given kernel.
 
 \subsection{Profiling and Analysis}
 
 We tested and profiled our new implementation by using the \ttt{nvprof} command-line tools to get a file that could be imported into the NVIDIA Visual Profiler.
 This is desirable because it is possible to run a guided analysis of the program.
 The Visual Profiler runs analyses and informs what types of changes are recommended to try to maximise the usage of the GPU device.
+We ran the code with
 
+\begin{quote}
+  \ttt{nvprof --analysis-metrics -o output-file.nvprof ./executable-to-test}
+\end{quote}
+
+which gave us a file that contained all the metrics needed for the guided analysis.
+This file was opened with the NVIDIA Visual Profiler and the program performed analysis of how the GPU as used.
 \Cref{fig:first impl} shows the output given by the NVIDIA Visual Profiler's initial GPU usage analysis.
 It informs that the algorithm has low kernel concurrency and low compute utilisation.
 
@@ -102,3 +111,5 @@ This were the kernels that were in charge of counting and incrementing the final
 The resulting output did not boost the performance very much.
 We found that the sorting of the numbers used approximately $80\%$ of the execution time.
 This means that the bottleneck was the sorting, and no longer the histogram's atomic increments.
+The reason for the sorting being so slow may be because we use the Hillis and Steele scan in our radix sort implementation.
+It might have made a difference to use Blelloch scan as it is more work efficient, which we presented in \cref{sec:workload and step size}.
