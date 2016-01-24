@@ -30,7 +30,7 @@ void parallel_reference_calc(unsigned int* const d_out,
 
 
 __global__
-void fire_up_local_bins(unsigned int* const d_out,
+void coarse_histogram_count(unsigned int* const d_out,
                         const unsigned int* const d_bins,
                         const unsigned int l_start,
                         const unsigned int l_end,
@@ -201,7 +201,7 @@ void streamed_coarse_atomic_bin_calc(unsigned int*& d_values,
     checkCudaErrors(cudaMemset(d_bin_grid, 0, TOTAL_BIN_BYTES*grid_size));
     if (amount > 0) {
       // call kernel with stream
-      fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, COARSER_SIZE, COARSE_SPACE, i);
+      coarse_histogram_count<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, COARSER_SIZE, COARSE_SPACE, i);
     }
   }
   // make sure device is cleared
