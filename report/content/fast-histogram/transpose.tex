@@ -53,8 +53,9 @@ void transpose_kernel_tiled(int * d_out, int * d_in,
   y = threadIdx.y + blockIdx.x * blockDim.x;
   d_out[x + y*ROWS] = tile[threadIdx.x][threadIdx.y];
 }
-}
 \end{lstlisting}
+
+The tiled solution, however, has memory bank conflicts such as described in \cref{sec:bank conflicts}.
 
 \begin{figure}[htb]
   \centering
