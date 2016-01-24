@@ -21,7 +21,7 @@ for(int row=0; row < ROWS; row++)
 
 As we can analyse the problem as a mapping operation, as introduced in \cref{sec:challenges with parallel programs}, we know that every mapping operation is independant from one another why the amount of steps can be reduced to $O(1)$ and the problem thus becomes 100\% parallizible.
 
-In \cref(lst:transpose elem) we present a trivial parallel implementation of the transpose algorithm.
+In \cref(lst:transpose elem) we present a trivial elem-wise parallel implementation of the transpose algorithm.
 
 \begin{lstlisting}[caption={Parallel transpose}, label={lst:transpose elem}]
 __global__
@@ -36,10 +36,17 @@ void transpose_kernel(int * d_out, int * d_in,
 
 The dilemma with the trivial element-wise transpose presented in \cref(lst:transpose elem) is that the kernel will read row-wise but write column-wise.
 The row-wise read will utilize coalesced reading whereas the writes will not be coalesced resulting in only one write per bus, wasting 48-4 bytes.
-To utilize coalesced writes we present the tiled transpose in \cref(lst:transpose tiled).
+To utilize coalesced writes we present the tiled transpose examplified in \cref{fig:tiled transpose} and implemented in \cref(lst:transpose tiled).
 The tiled transpose uses shared memory to make coalesced writes to global memory, such as introduced in \cref{sec:shared memory}.
 
-\begin{lstlisting}[caption={Tiled transpose}, label={lst:transpose tiled}]
+\begin{figure}[htb]
+\centering
+\includegraphics[width=.8\textwidth]{images/transpose-examples.png}
+\caption{Tiled transpose example}
+\label{fig:tiled transpose}
+\end{figure}
+
+\begin{lstlisting}[caption={Tiled transpose implementation}, label={lst:transpose tiled}]
 __global__
 void transpose_kernel_tiled(int * d_out, int * d_in,
                             const int ROWS, const int COLUMNS){
@@ -56,10 +63,24 @@ void transpose_kernel_tiled(int * d_out, int * d_in,
 \end{lstlisting}
 
 The tiled solution, however, has memory bank conflicts such as described in \cref{sec:bank conflicts}.
+To avert bank conflicts we convert line \ttt{4} to \ttt{tile[DIM][DIM+1]}.
 
-\begin{figure}[htb]
+The speed-ups are presented in \cref{tab:transpose speed-ups} for a problem of size $2^{29}$.
+
+\begin{table}[htb]
   \centering
-  \includegraphics[width=.7\textwidth]{images/low-kernel-concurrency.png}
-  \caption{nvidia Visual Profiler analysis indicates low kernel concurrency}
-  \label{fig:first impl}
-\end{figure}
+  \begin{tabular}{c r | r r r r}
+    \toprule
+    device & algorithm & time in ms & speed-up & bandwidth usage & usage percentage\\
+    \midrule
+    {CPU} & serial  & 1332.38 &  &  &  \\
+    \multirow{3}*{GPGPU} & elem-wise & 165.92 & x8.03 & 38.83 GB/s & 13.46\% \\
+                         & tiled &    124.07 & x10.74 & 34.62 GB/s & 6.00\% \\
+                         & tiled+bank &    124.07 & x10.74 & 34.62 GB/s & 6.00\% \\
+    \bottomrule
+  \end{tabular}
+  \caption{Global vs. Shared memory read and writes}
+  \label{tab:tranpose speed-ups}
+\end{table}
+
+
