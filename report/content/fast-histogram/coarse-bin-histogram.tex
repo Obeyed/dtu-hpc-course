@@ -3,7 +3,14 @@
 
 The one thing that slows the first histogram implementation is the need to have atomic increments for each bin.
 Our idea is to split the bins into coarse bins so we have an estimate of how many integers will be in some range of bins.
-The idea is illustrated in \cref{fig:coarse bins example}\todo{add coarse bins example}.
+The idea is illustrated in \cref{fig:coarse bins example}, where we have the sorted bin values at the top and the sorted coarse bin values at the bottom.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=.8\textwidth]{images/coarse-bin-example.png}
+  \caption{Intuition behind coarse bin and kernel invokations}
+  \label{fig:coarse bins example}
+\end{figure}
 
 Basically, the idea is still to use atomic increments but to divide them up into coarse bins so that they can be performed concurrently within the given range of coarse bins.
 Consider \cref{fig:coarse bins example} where each coarse bin has a set of bins that fall into its category.
@@ -33,7 +40,7 @@ d_out[mid] = d_in[mid] / COARSE;
 \end{lstlisting}
 
 We now have a list of values, their respective bins, and their coarse bins.
-The next step is to sort all the values w.r.t. the coarse bins in ascending order\todo{is this ascending order?}, i.e. coarse bin 0 is first, followed by coarse bin 1, etc.
+The next step is to sort all the values w.r.t. the coarse bins in ascending order, i.e. coarse bin 0 is first, followed by coarse bin 1, etc.
 We use the radix sort implementation we developed earlier (with slight modifications to suite our needs) to perform the sorting based on the values in the list of coarse bins.
 
 After the values have been sorted it is possible to find the starting positions of each coarse bin.
@@ -48,8 +55,6 @@ if (d_in[mid] != d_in[mid-1])
 
 Finally, the kernel responsible for counting and incrementing each bin for the histogram is invoked.
 We invoke this kernel for each coarse bin, where we set the range in which the kernel should restrict its work.
-
-\todo[inline]{make sure the name of this kernel is the same as in the code \ttt{fire\_up\_local\_bins()}}
 
 \begin{lstlisting}[caption={kernel to do histogram count for each coarse bin}, label={lst:coarse histo kernel}]
 __global__
