@@ -38,4 +38,8 @@ The first is when a set of threads have to perform several read/write operations
 By mapping the global memory to shared memory, computing the set of operations in shared memory and then writing back to global memory allows us utilize the fast access to shared memory.
 
 The second is to coalesce writes by collecting them in shared memory.
-This type of coalescing is especially interesting in the the transpose problem where data is read row-wise but written column-wise. In \cref{sec:transpose} will introduce how we used tiles in shared memory to allow coalesced writing.
+This type of coalescing is especially interesting in the the transpose problem where data is read row-wise but written column-wise. 
+In \cref{sec:transpose} will introduce how we used tiles in shared memory to allow coalesced writing.
+\subsection{Bank conflicts}
+\label{sec:bank conflicts}
+I
