@@ -1,33 +1,32 @@
 \section{Grids, Blocks, and Threads}
 \label{sec:grids blocks threads}
 
-In \cref{sec:gpgpu memory architecture} we introduced the notion of scheduling and independant processeses on the GPGPU.
+In \cref{sec:gpgpu memory architecture} we introduced the notion of scheduling and independent processes on the GPGPU.
 In this section we will further elaborate on the scheduling paradigm used in CUDA GPGPU programming.
 
-The computation on the GPGPU is done through the use of "threads".
-Threads are scheduled concurrently in ``warps'' by ``blocks'', where the blocks are organized in ``grids''.
-A thread is an independant sequence of work where the sequence is defined by instructions of the kernel and multiple threads can run concurrently.
-A thread has an ID, being a the given threads number in a set of threads, which it uses to coordinate its work without exchange of information between other processors.
+The computation on the GPGPU is done through the use of threads.
+Threads are scheduled concurrently in warps by blocks, where the blocks are organized in grids.
+A thread is an independent sequence of work where the sequence is defined by instructions of the kernel and multiple threads can run concurrently.
+A thread has an ID, being the given threads number in a set of threads, which it uses to coordinate its work without exchange of information between other processors.
 
 To organize threads and utilize the ability to communicate between threads on an SM where memory access is fast, the concept of blocks has emerged.
-A block contains a set amount of threads, has a set amount of L1 cache on the SM reserved and is able to synchronize between threads at any point along executing a kernel.
-It further ensures that every thread is runned before terminating the block.
+A block contains a set of threads, which has a some amount of memory (L1 cache) reserved on the SM and it is able to synchronize between threads at any point along execution of a kernel.
+It further ensures that every thread is run before terminating the block.
 
-As a single block might not be able to carry out all work in a job, a grid is defined to numerate the amount of blocks that are required to support computation of the job.
-However, the grid does does not support the same type of operations as the block, such as synchronization at a specific point in the kernel or fast shared memory.
+As a single block might not be able to carry out all work in a job, a grid is defined to numerate the amount of blocks that is required to support computation of the job.
+However, the grid does not support the same type of operations as the block, such as synchronization at a specific point in the kernel or fast shared memory.
 The reason is that a grid might contain more blocks than a single SM can handle, why shared memory would not make sense.
-Further, the total amount of blocks might be larger than what the GPGPU can support at once, why deadlocks can apear if inter-kernel synchronization was supported.
+Further, the total amount of blocks might be larger than what the GPGPU can support at once, why deadlocks can appear if inter-kernel synchronization was supported.
 The only feature supported by the grid, is that it finish launching all blocks in a kernel before starting the next kernel - why using kernel wrappers might be required in some algorithms that are designed with synchronization across blocks.
-As the grid does not provide guarantees of how many blocks to run at once or where to run them, the grid allows the scheduler to fit the workload onto any GPGPU supporting the CUDA instructions in the kernel and device specifications(e.g. block size).
+As the grid does not provide guarantees of how many blocks to run at once or where to run them, the grid allows the scheduler to fit the workload onto any GPGPU supporting the CUDA instructions in the kernel and device specifications, e.g. block size.
 
-When computing threads in a block the given SM uses a ``Warp scheduler'' to launch the kernels onto the cores on the GPGPU.
-The warp scheduler launches a fixed amount of threads and computes the threads simultanous. 
+When computing threads in a block the given SM uses a warp scheduler to launch the kernels onto the cores on the GPGPU.
+The warp scheduler launches a fixed amount of threads (which is known as a warp) and executes the threads simultaneously. 
 The warp further forces every thread to execute the same workload at every instruction (as the cores are SIMD).
 If the block does not have sufficient threads to fill the warp's capacity the warp will execute empty threads resulting in potential lost computational power.
-In \cref{???} we will go more into depth of the performance penalty when packing a number of threads not a multiple of the warp size and investigate what happens when the threads within a warp follows a diverging path.
+In \cref{sec:testing BUS width} we will go more into depth of the performance penalty when packing a number of threads not a multiple of the warp size.
 
 From a development perspective the position of each block within the grid and each thread within its block is fetched with the built-in variables presented in \cref{tab:built-in variables}, which all have three dimensions (\ttt{x, y, z}).
-\todo{nice to have illustration of grids of blocks of threads}
 
 \begin{table}[htb]
   \centering
