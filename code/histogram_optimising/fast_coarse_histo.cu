@@ -201,6 +201,8 @@ void streamed_coarse_atomic_bin_calc(unsigned int*& d_values,
   // based on bin_size and bin_start
   checkCudaErrors(cudaMemset(d_histogram, 0, BIN_BYTES));
 
+  unsigned int local_bin_start, local_bin_end, grid_size;
+  int amount;
   for (unsigned int i = 0; i < COARSE_SIZE; i++) {
     // create stream
     cudaStreamCreate(&streams[i]);
