@@ -5,7 +5,7 @@ Forty years ago, Gordon E. Moore predicted that the number of transistors will d
 
 The performance of processors is often divided into two areas, latency and throughput. Latency is the speed of which a single task can be completed, whereas throughput is the total amount of computation produced over a given time frame.~\cite{farber2011cuda}
 
-The two different approaches of building processors translates to the Central Processing Unit (CPU) and General Purpose Graphics Processing Unit (GPGPU). The CPU is focussed on reducing latency by having a few complex processors maximising clock speed for computing. The GPGPU on the other hand is designed for optimizing throughput using many simple and economical processors. However, the theoretical throughput that GPGPUs is based on the ability to utilize all of its simple processors at once.
+The two different approaches of building processors translates to the Central Processing Unit (CPU) and General-Purpose computation on Graphics Processing Units  (GPGPU). The CPU is focussed on reducing latency by having a few complex processors maximising clock speed for computing. The GPGPU on the other hand is designed for optimizing throughput using many simple and economical processors. However, the theoretical throughput that GPGPUs is based on the ability to utilize all of its simple processors at once.
 
 To fully exploit the potential of the GPGPU a task has to be parallelisable and instructions developed with parallelisation in mind, especially as the memory structure of current GPGPUs are often the bottleneck in reaching the theoretical throughput.
 
