@@ -1,10 +1,10 @@
 \section{Debugging}
 \label{sec:debugging and profiling}
-To debug we use two approached; \ttt{printf} for testing the logic of our application and \ttt{cuda-memcheck} to catch cuda memory errors.
 
-The \ttt{cuda-memcheck} is a command-line tool that allows print of captured cuda-errors doing runtime.
+To debug we used two approaches; \ttt{printf()} for testing the logic of our application and \ttt{cuda-memcheck} to catch CUDA memory errors.
+The \ttt{cuda-memcheck} is a command-line tool that informs the user about CUDA errors during runtime.
 It can be used to find issues with memory access, thread ordering, race conditions and hardware reported program errors.
-It is invoked as folllows
+It is invoked as follows
 %
 \begin{quote}
   \ttt{cuda-memcheck [options] application-name [application-options]}
@@ -14,4 +14,3 @@ As with the \ttt{nvprof} from \cref{sec:introduction to analysis of optimisation
 In the option input \ttt{memcheck} is sat by default.
 We further tested the option flag \ttt{racecheck}.
 The \ttt{racecheck} allows us to detect write-after-write hazards, where two or more threads attempt to update the same memory location simultaneously.
-For example, our race condition from \cref{sec:challenges with parallel programs} gave the following stacktrace\todo{outprint}.~\cite{cudamemcheck2015doc}
