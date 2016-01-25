@@ -2,28 +2,28 @@
 \label{sec:kernels}
 
 In \cref{sec:gpu} we introduced the software perspective of how to run code on the SIMD ALU cores on the GPGPU.
-In the programming language CUDA a kernel is a C++ function with the \ttt{\_\_global\_\_} identifier in front of its declaration as illustrated in \cref{lst:kernel declaration example}.
-This function first computes the thread's index (\ttt{tid}) in the block, then checks if it is out of bounds, and finally copies the value at \ttt{tid} from \ttt{d\_in} to \ttt{d\_out}.
+In the programming language CUDA a kernel is a \verb!C++! function with the \ttt{\_\_global\_\_} identifier in front of its declaration as illustrated in \cref{lst:kernel declaration example}.
+This function first computes the thread's index (\ttt{mid}) in the block, then checks if it is out of bounds, and finally copies the value at \ttt{mid} from \ttt{d\_in} to \ttt{d\_out}.
 
 \begin{lstlisting}[caption={Kernel declaration example}, label={lst:kernel declaration example}]
 __global__
 void map_kernel(const int *d_out, int *d_in, const int size) {
   // thread ID
-  const int tid = threadIdx.x + blockDim.x * blockIdx.x;
+  const int mid = threadIdx.x + blockDim.x * blockIdx.x;
   // check if out of bounds
-  if (tid >= size) return;
+  if (mid >= size) return;
   // copy item by thread's index
-  d_out[tid] = d_in[tid];
+  d_out[mid] = d_in[mid];
 }
 \end{lstlisting}
 
-The map kernel illustrated starts by computing the ID of the thread, \ttt{tid}, by using its thread and block index.
-As the problem of mapping might not fit perfectly into a number of blocks it is nessesary to launch additional blocks, which might have ID's exciding.
-Becuase of the risk of an exciding number of blocks the kernel checks the \ttt{tid} for being out of bounds.
+The map kernel illustrated starts by computing the ID of the thread, \ttt{mid}, by using its thread and block index.
+As the problem of mapping might not fit perfectly into a number of blocks it is necessary to launch additional blocks, because the amount of threads for one block might exceed the block's maximum amount of threads.
+Because of the risk of an exceeding number of blocks the kernel checks the \ttt{mid} for being out of bounds.
 
-Recall that the cores of a GPU are SIMD cores as presented in \cref{sec:gpu}.
-As a result the kernel will be executed by every thread on the GPU.
-The threads then uses their \ttt{tid} to access different data, such as setting device output, \ttt{d\_out}, to being the device input, \ttt{d\_in}, in the mapping kernel.
+Recall that the cores of a GPGPU are SIMD cores as presented in \cref{sec:gpu}.
+As a result the kernel will be executed by every thread on the GPGPU.
+The threads then use their \ttt{mid} to access different data, such as setting device output, \ttt{d\_out}, to being the device input, \ttt{d\_in}, in the mapping kernel.
 
 \subsection{Calling a Kernel}
 \label{sec:calling a kernel}
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
   const int SIZE = 1<<8,
             BYTES = SIZE * sizeof(int);
   const dim3 BLOCK_SIZE(128),
-             GRID_SIZE((BLOCK_SIZE.x/SIZE + ((BLOCK_SIZE.x % SIZE)?1:0)));
+             GRID_SIZE(2);
 
   // set up host memory
   int h_in[SIZE], h_out[SIZE];
@@ -70,17 +70,17 @@ int main(int argc, char **argv) {
 \end{lstlisting}
 
 First, we construct the size, \ttt{SIZE}, of the array to be computed and the amount of bytes, \ttt{BYTES}, of the array.
-We then construct the number a threads as a multiple of warp size and small enough to fit into a block, followed by the grid size, \ttt{GRID\_SIZE}, ensuring that enough blocks will be launched.
-The host's (CPU's) input, \ttt{h\_in}, and output array, \ttt{h\_out}, are declared and the input array, \ttt{h\_in}, is populated.
-The device's (GPGPU's) input, \ttt{d\_in}, and output array, \ttt{d\_out}, are declared and device memory is allocated to the arrays using \ttt{cudaMalloc()}.
+We then construct the number of threads as a multiple of warp size and small enough to fit into a block, followed by the grid size, \ttt{GRID\_SIZE}.
+The host's (CPU's) input \ttt{h\_in} and output array \ttt{h\_out} are declared and the input array \ttt{h\_in} is populated.
+The device's (GPGPU's) input \ttt{d\_in} and output array \ttt{d\_out} are declared and device memory is allocated to the arrays using \ttt{cudaMalloc()}.
 It is good naming practice to call variables on the CPU, the host, with the prefix \ttt{h\_} while GPGPU variables, the device, with the prefix \ttt{d\_}.
-The contents of the input\ttt{h\_in} is copied to \ttt{d\_in} using \ttt{cudaMemcpy} where the transfer is from host to device, which is dictated by the \ttt{cudaMemcpyHostToDevice} keyword.
+The contents of the input \ttt{h\_in} is copied to \ttt{d\_in} using \ttt{cudaMemcpy()} where the transfer is from host to device, which is dictated by the \ttt{cudaMemcpyHostToDevice} keyword.
 
-The kernel is launched with the \ttt{NUM\_BLOCKS, NUM\_THREADS} given as launch rameters, which instructs the scheduler to launch a grid of 2 blocks with 128 threads each, given a total of 128 threads x 128 kernels with The kernel is called with a total of 256 threads.
+The kernel is launched with the \ttt{GRID\_SIZE, BLOCK\_SIZE} given as arguments, which instructs the scheduler to launch a grid of 2 blocks with 128 threads each, giving a total of $128\ \text{threads} \times 2\ \text{blocks} = 256\ \text{threads}$.
 Further the kernel is given its required input parameters, \ttt{d\_out, d\_in} and \ttt{SIZE}.
 
 Finally, the output from the device, \ttt{d\_out}, is copied back to the host's array, \ttt{h\_out}, by a device to host transfer, \ttt{cudaMemcpyDeviceToHost}.
 The contents is asserted to be correct and printed, the GPU's memory is freed using \ttt{cudaFree} and the main function returns 0, indicating everything went well.
 
-A kernel takes up to three arguments within the triple chevrons.
-The first and second arguments are of type \ttt{dim3}, and the third and optional argument determines how much shared memory, per block, to allocate on the device.
+A kernel takes up to four arguments within the triple chevrons.
+The first and second arguments are of type \ttt{dim3}, and the third and optional argument determines how much shared memory, per block, to allocate on the device, and the fourth optional argument defines which stream to run the kernel on.
