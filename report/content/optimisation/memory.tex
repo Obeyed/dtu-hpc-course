@@ -1,17 +1,19 @@
 \section{Memory Optimisations}
 \label{sec:memory optimisations}
+
+This section presents relevant memory optimisations.
+
 \subsection{Coalesced Memory Access}
 \label{sec:coalesced}
 
-In \cref{sec:GPGPU memory architecture} we introduced the L1 cache design being computed for spatial locality.
+In \cref{sec:gpgpu memory architecture} we introduced the L1 cache, which is designed for spatial locality.
+Spatial locality promotes the use of coalesced memory access by the individual threads.
+Coalesced memory access means to have threads access successive memory locations.
+Since querying the global memory for a data value will often cause a memory transfer larger than what the thread requires and place the data in the faster cache on the SM.
+When the subsequent thread queries for the successive value it will be returned from the L1 cache instead of the global memory, giving a substantial speed up.
 
-Spartial locality promotes the use of ``coalesced'' memory access by the individual threads.
-Coalesced memory access means to have threads access successive memory location.
-Since quering the global memory for a data value will often cause a memory transfer larger than what the thread requires and place the data in the faster cache on the SM.
-When the sebsequent thread queries for the successive value it will be returned from the L1 cache instead of the global memory, giving a substantial speed-up.
-
-In order to utilize coalesced the memory layout of the data needs to be in a structure that promotes data to be successive rather than strided.\cite{udacity}
-This leads to two different approached for storing data, Array of Structures and Structures of Arrays, examplified with RGB images in \cref{lst:soa aos}.
+In order to utilize coalesced the memory layout the data needs to be in a structure that promotes data to be successive rather than strided.~\cite{udacity}
+This leads to two different approaches for storing data, namely array of structures (AoS) and structures of arrays (SoA), exemplified with RGB images in \cref{lst:soa aos}.
 
 \begin{lstlisting}[caption={Example of SoA and AoS with RGB images}, label={lst:soa aos}]
 struct {
@@ -23,8 +25,19 @@ struct {
 } SoA;
 \end{lstlisting}
 
-The Array of Structures lays out the images accordingly : $R[1], G[1], B[1], R[2] G[2], B[2] ... R[N], G[N], B[N]$, whereas the Structure of Arrays would layout the images in the following manner : $R[1], R[2], ... R[N], G[1], G[2], ... G[N], B[1], B[2], ... B[N]$.
-The Structures of Arrays thus manages to layout the data in a coalsced way, where as the Arrays of Structures lays out the data as strided.
+The AoS lays out the images in the following manner
+
+\begin{quote} 
+  \ttt{R[1], G[1], B[1], R[2] G[2], B[2] $\ldots$ R[N], G[N], B[N]}
+\end{quote}
+
+whereas the SoA would lay out the images in the following manner
+
+\begin{quote}
+  \ttt{R[1], R[2], $\ldots$ R[N], G[1], G[2], $\ldots$ G[N], B[1], B[2], $\ldots$ B[N]}
+\end{quote}
+
+The SoA thus manages to lay out the data in a coalesced fashion, whereas the AoS lays out the data in a strided fashion.
 
 \subsection{Shared Memory}
 \label{sec:shared memory}
