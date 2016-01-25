@@ -118,7 +118,7 @@ for (unsigned int i = 0; i < COARSE_SIZE; i++) {
 
   // set up range for local coarse bin
   local_bin_start = h_positions[i];
-  local_bin_end   = h_positions[i+1];
+  local_bin_end   = (i == COARSE_SIZE-1) ? NUM_ELEMS : h_positions[i+1];
 
   // calculate local grid size
   amount = local_bin_end - local_bin_start;
