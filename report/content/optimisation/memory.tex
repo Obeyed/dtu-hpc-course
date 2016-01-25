@@ -2,6 +2,7 @@
 \label{sec:memory optimisations}
 
 This section presents relevant memory optimisations.
+We present coalesced memory access, followed by shared memory optimisations, and finally we briefly introduce bank conflicts.
 
 \subsection{Coalesced Memory Access}
 \label{sec:coalesced}
@@ -59,6 +60,6 @@ In \cref{sec:transpose} will introduce how we used tiles in shared memory to all
 
 The local memory is divided into memory banks.
 Transactions within these memory banks can only be accessed in a serial manner.
-Thus, if the memory bank is busy and a warp requests some data, the data retrieval must wait its turn.
+Thus, if the memory bank is busy and a warp requests some data the data retrieval must wait for its turn.
 This is called a bank conflict.
 Such conflicts can be avoided if the memory access are successive and do not cross other warp's data requests there will be no bank conflict.~\cite{farber2011cuda}
