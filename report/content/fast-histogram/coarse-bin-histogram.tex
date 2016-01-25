@@ -1,7 +1,7 @@
 \section{Histogram with Coarse Bins}
 \label{sec:coarse bin histogram}
 
-In the Histogram with Coarse Bins we presents a parallel algorithm for histograms that does not suffer from the same serial bottlenecks as the atomic version from \cref{sec:histogram}.
+In this section we presents a parallel algorithm for histograms that does not suffer from the same serial bottlenecks as the atomic version from \cref{sec:histogram}.
 
 The idea is to allow each block to compute their own histogram with atomic add and then use reduce to merge these histograms, which reduces steps from $\mathcal{O}(n)$ to $\mathcal{O}(\mathrm{block\_size})$.
 
@@ -9,30 +9,29 @@ As having a personal histogram might be memory intense giving a large amount of 
 To avoid such we split the bins into coarse bins containing a range of bins.
 Each block thus works on a coarse bin instead of the total histogram.
 However, performing such coarse bin introduces a sorting of the input values according to their coarse bins.
+
 \begin{figure}[htb]
   \centering
   \includegraphics[width=.6\textwidth]{images/coarse-bin-example.png}
-  \caption{Intuition behind coarse bin and kernel invokations}
+  \caption{Intuition behind coarse bin and kernel invocations}
   \label{fig:coarse bins example}
 \end{figure}
+
 The idea is illustrated in \cref{fig:coarse bins example}, where we have the sorted bin values at the top and the sorted coarse bin values at the bottom.
 
-\
-For each coarse bin histogram a \ttt{grid\_size} $\times$ the number of elements in a course bin, with \ttt{grid\_size} the number of blocks nessesary to collect all elements in the given coarse bin, is allocated as the \ttt{coarse\_bin\_grid}.
+For each coarse bin histogram a \ttt{grid\_size} $\times$ the number of elements in a course bin, with \ttt{grid\_size} the number of blocks necessary to collect all elements in the given coarse bin, is allocated as the \ttt{coarse\_bin\_grid}.
 For each coarse bin a kernel is launched containing threads to gather all the elements in the coarse bin.
 Each block in this kernel has its own private histogram in \ttt{coarse\_bin\_grid} in which only the given block performs updates.
 At end of kernel execution the \ttt{coarse\_bin\_grid} is left with bin values represented along the columns.
-In order to avoid cache misses and have coalesced access the transpose operation introduced in previous section is performed to have bin values alligned in row indexes.Given all values for each bin being set in a row we perform reduce over the rows to gather the independant block's histograms for each bin leaving an array of bin values for each coarse bin.
+In order to avoid cache misses and have coalesced access the transpose operation introduced in previous section is performed to have bin values aligned in row-major order. Given all values for each bin being set in a row we perform reduce over the rows to gather the independent block's histograms for each bin leaving an array of bin values for each coarse bin.
 These are then merged resulting in the total histogram.
 
 In our implementation we did not manage to create the full fast histogram solution as described above.
 We computed the coarse bin sorting and merely had each bin atomic add to the global memory without the private \ttt{coarse\_bin\_grid} to reduce over.
 From an algorithmic viewpoint this is no better than the atomic reduce histogram we were trying to improve, but it allowed us to test our coarse bin sorting.
-
-
 A more detailed description of the coarse bin implementation can be found below.
 
-Given and input array, number of bins \ttt{NUM\_BINS} and a number of coarse bins \ttt{COARSE\_SIZE} we perform the following computation.
+Given and input array, number of bins, \ttt{NUM\_BINS}, and a number of coarse bins, \ttt{COARSE\_SIZE}, we perform the following computation.
 %
 \begin{enumerate}
   \item Compute bin for each value
@@ -56,7 +55,7 @@ d_out[mid] = d_in[mid] / COARSE_SIZE;
 
 This gives an array of values, their respective bins, and their coarse bins.
 The next step is to sort all the values w.r.t. the coarse bins in ascending order, i.e. coarse bin 0 is first, followed by coarse bin 1, etc.
-We use the radix sort implementation we developed earlier (with slight modifications to suite our needs) to perform the sorting based on the values in the list of coarse bins.
+We use the radix sort implementation we developed earlier (with slight modifications to suit our needs) to perform the sorting based on the values in the list of coarse bins.
 
 After the values have been sorted it is possible to find the starting positions of each coarse bin.
 This gives us a starting value for each coarse bin from which it is possible to calculate how many values fall into each coarse bin.
@@ -72,7 +71,7 @@ if (d_in[mid] != d_in[mid-1])
 
 We tested and profiled our new implementation by using the \ttt{nvprof} command-line tools to get a file that could be imported into the nvidia visual profiler.
 This is desirable because nvidia visual profiler is able to run a guided analysis of the program and give us advice on bottlenecks to optimize.
-We computed an executable with $\mathrm{BIN\_SIZE}=100$, $n=2^{22}$ and $\mathrm{COARSE\_SIZE}=10$, which we ran with
+We computed an executable with $\mathtt{BIN\_SIZE}=100$, $n=2^{22}$ and $\mathtt{COARSE\_SIZE}=10$, which we ran with
 
 \begin{quote}
   \ttt{nvprof --analysis-metrics -o output-file.nvprof ./executable-to-test}
@@ -87,7 +86,7 @@ As for low kernel concurrency our approach to solve the coarse bins is serial an
 \begin{figure}[htb]
   \centering
   \includegraphics[width=.9\textwidth]{images/low-kernel-concurrency.png}
-  \caption{NVIDIA Visual Profiler analysis}
+  \caption{nvidia Visual Profiler analysis}
   \label{fig:first impl}
 \end{figure}
 
