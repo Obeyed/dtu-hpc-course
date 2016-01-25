@@ -203,46 +203,20 @@ void streamed_coarse_atomic_bin_calc(unsigned int*& d_values,
   // based on bin_size and bin_start
   checkCudaErrors(cudaMemset(d_bin_grid, 0, BIN_BYTES));
 
-  // make some local bins
-  unsigned int local_bin_start = 0;
-  unsigned int local_bin_end = h_positions[1];
-  int amount = local_bin_end - local_bin_start;
-  // calculate local grid size
-  unsigned int grid_size = local_bin_end / BLOCK_SIZE.x + 1;
-
-  // create stream
-  cudaStreamCreate(&streams[0]);
-  // call kernel with stream
-  coarse_histogram_count<<<grid_size, BLOCK_SIZE, 0, streams[0]>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
-
-  for (unsigned int i = 1; i < COARSE_SIZE - 1; i++) {
+  unsigned int local_bin_start, local_bin_end, grid_size;
+  int amount;
+  for (unsigned int i = 0; i < COARSE_SIZE; i++) {
     // create stream
     cudaStreamCreate(&streams[i]);
     // make some local bins
     local_bin_start = h_positions[i];
-    local_bin_end   = h_positions[i+1];
+    local_bin_end   = (i == COARSE_SIZE-1) ? NUM_ELEMS : h_positions[i+1];
     amount = local_bin_end - local_bin_start;
     // calculate local grid size
-    grid_size = local_bin_end / BLOCK_SIZE.x + 1;
+    grid_size = amount / BLOCK_SIZE.x + 1;
 
-    if (amount > 0) {
-      // call kernel with stream
+    if (amount > 0) 
       coarse_histogram_count<<<grid_size, BLOCK_SIZE, 0, streams[i]>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
-    }
-  }
-
-  // do final loop
-  local_bin_start = h_positions[COARSE_SIZE-1];
-  local_bin_end   = NUM_ELEMS;
-  amount = local_bin_end - local_bin_start;
-  // calculate local grid size
-  grid_size = local_bin_end / BLOCK_SIZE.x + 1;
-
-  // create stream
-  cudaStreamCreate(&streams[COARSE_SIZE-1]);
-  if (amount > 0) {
-    // call kernel with stream
-    coarse_histogram_count<<<grid_size, BLOCK_SIZE, 0, streams[COARSE_SIZE-1]>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end);
   }
 
   // make sure device is cleared
