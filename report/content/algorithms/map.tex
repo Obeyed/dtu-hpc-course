@@ -1,14 +1,10 @@
 \section{Map}
 \label{sec:map}
 
-As introduced in \cref{sec:challenges with parallel programs} we present a CPU sequential execution of the mapping operation and a GPGPU accelerated parallel implementation of the mapping operation.
+As introduced in \cref{sec:challenges with parallel programs} we present a serial execution of the mapping operation and a parallel implementation of the mapping operation.
 The serial code for a mapping operation is presented in \cref{lst:map seq}.
 The code loops through each index of the input and copies the value to the same index in the output.
-Given $n=ARRAY\_SIZE$This algorithm will take.
-\begin{equation*}
-workload: O(n)
-Steps: O(n)
-\end{equation*}
+Given $n=\mathtt{ARRAY\_SIZE}$ this algorithm will have a workload of $\mathcal{O}(n)$, and step size of $\mathcal{O}(n)$.
 
 \begin{lstlisting}[caption={Serial map}, label={lst:map seq}]
 void map(int *h_in, int *h_out, int SIZE) {
@@ -17,9 +13,8 @@ void map(int *h_in, int *h_out, int SIZE) {
 }
 \end{lstlisting}
 
-As we can analyse the problem as a mapping operation, as introduced in \cref{sec:challenges with parallel programs}, we know that every mapping operation is independant from one another why the amount of steps can be reduced to $O(1)$ and the problem thus becomes 100\% parallizible.
-Given Amdahls law we should be able to achieve a speed up in the amount of cores, which is 2880 according to \cref{ap:tesla k40 specifications}
-
+As we can analyse the problem as a mapping operation, as introduced in \cref{sec:challenges with parallel programs}, we know that every mapping operation is independent from one another why the amount of steps can be reduced to $\mathcal{O}(1)$ and the problem thus becomes 100\% parallelisible.
+Given Amdahl's law we should be able to achieve a speed up in the amount of cores, which is 2880 according to \cref{ap:tesla k40 specifications}.
 We present a simple kernel that perform such a map operation in \cref{lst:map par}.
 
 \begin{lstlisting}[caption={Map kernel}, label={lst:map par}]
@@ -40,16 +35,15 @@ It is clear that the parallel mapping algorithm has an advantage.
 All the operations can be performed in parallel, while the CPU has to perform every operation as consecutive operations.
 
 In \cref{tab:mapping cpu vs gpgpu} we list the performance at $n = 2^{29}$.
-However, the result is nowhere near Amdahls law prediction of $x2880$ speed-up.
+However, the result is nowhere near the prediction of Amdahl's law, which said that we would get a 2880x speed up.
 The reason is that the mapping operation is an operation with very low computational complexity and many expensive transfers to and from global memory.
-This result in the global memory being a bottleneck we are held back by the memory bottlenecks.
-
+Thus, the global memory transactions are the bottleneck.
 
 \begin{table}[htb]
   \centering
   \begin{tabular}{c r | r r r r}
     \toprule
-    device & algorithm & time in ms & speed-up & bandwidth usage & usage percentage\\
+    device & algorithm & time in ms & speed up & bandwidth usage & usage percentage\\
     \midrule
     CPU & serial  & 1200.73 &  &  &  \\
     GPGPU & parallel & 25.32 & x47.42 & 169.63 GB/s & 58.9\% \\
@@ -59,9 +53,7 @@ This result in the global memory being a bottleneck we are held back by the memo
   \label{tab:mapping cpu vs gpgpu}
 \end{table}
 
-
-At $n = 2^{29}$ it takes the CPU $1200.73 ms$ while the GPGPU computes the mapping in $25.32$ being a $x47.42$ speed-up.
-However, Amdahls law predicted a $x2880$ speed-up, but as the mapping operation is an operation with very low computational operation and many expensive transfers to and from global memory we are held back by the memory bottlenecks.
+At $n = 2^{29}$ it takes the CPU $1200.73 ms$ while the GPGPU computes the mapping in $25.32$ being $47.42$ times faster.
 
 \begin{figure}[htb]
   \centering

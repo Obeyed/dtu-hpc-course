@@ -2,16 +2,13 @@
 \label{sec:reduce}
 
 The next algorithm is the reduce algorithm.
-The reduce algorithm is a gather operation that maps a space down to a subspace, e.g. performing a addition on an array of numbers.
+The reduce algorithm is a gather operation that maps a space down to a subspace, e.g. performing an addition on an array of numbers.
 The algorithm for performing parallel gathers are restricted to associative operations such that \ttt{(a op b) op c = a op (b op c)}.
 
-\Cref{lst:reduce seq} shows the such type of operations in a serial fashion.
+\Cref{lst:reduce seq} shows such an operation in a serial fashion.
 The operation loops through all input elements and sums the result.
-The operation can be expressed such as, given $n=ARRAY\_SIZE$
-\begin{equation*}
-work load: O(n)
-size: O(n)
-\end{equation*}
+The operation can be expressed such as, given $n=\mathtt{ARRAY\_SIZE}$, workload of $\mathcal{O}(n)$ and step size of $\mathcal{O}(n)$.
+
 \begin{lstlisting}[caption={Serial reduce}, label={lst:reduce seq}]
 void reduce(int *h_in, int h_out, int SIZE) {
   for (int l = 0; l < SIZE; ++l) 
@@ -21,9 +18,13 @@ void reduce(int *h_in, int h_out, int SIZE) {
 
 The challenge with the reduce code is that we perform all operations on a single memory address.
 If the serial code is naively made parallel we would be faced with race conditions.
-Instead we can look at the associative property of out problem, such that $((a+b)+c)+d = A + B$ where $A=a+b$ and $B=c+d$.
-By utilizing this property we can perform the computation of $A$ and $B$ in parallel and thus halve the problem by allowing each thread to compute two numbers to one.
-Reducing the problem size by a factor of two at each step gives a step size of $O(lg_2n)$ and allows us to compute parts of the problem in parallel.
+Instead we can look at the associative property of out problem, such that 
+\[
+  \mathtt{((a+b)+c)+d = A + B},
+\]
+where \ttt{A=a+b} and \ttt{B=c+d}.
+By utilizing this property we can perform the computation of \ttt{A} and \ttt{B} in parallel and thus halve the problem by allowing each thread to compute two numbers to one.
+Reducing the problem size by a factor of two at each step gives a step size of $\mathcal{O}(\log_2 n)$ and allows us to compute parts of the problem in parallel.
 We present an illustration in \cref{fig:reduce decomp example} to try to give an intuition of how the parallel code will run.~\cite{reduceharris}
 
 \begin{figure}[htb]
@@ -70,7 +71,7 @@ do {
   bytes = sizeof(int) * size;
   cudaMemcpy(d_tmp_in, d_tmp_out, bytes, cudaMemcpyDeviceToDevice);
   // Updating to reflect how many blocks we now want to compute on
-  grid_size = size / BLOCK_SIZE + ((size % BLOCK_SIZE)?1:0);
+  grid_size = size / BLOCK_SIZE + 1;
 } while(size > BLOCK_SIZE);
 // Computing remainder
 reduce_kernel<<<1, size>>>(d_out, d_tmp_out, size);
@@ -128,14 +129,14 @@ void reduce_kernel(int *d_out, int *d_in, int SIZE) {
 \end{lstlisting}
 
 \begin{lstlisting}[caption={Updated call to reduce kernel after use of shared memory}, label={lst:reduce invocation with smem}]
-const unsigned int SMEM = BLOCK_SIZE * sizeof(int);
+unsigned int SMEM = BLOCK_SIZE * sizeof(int);
 reduce_kernel<<<grid_size, BLOCK_SIZE, SMEM>>>(d_tmp_out, d_tmp_in, size);
 \end{lstlisting}
 
 Furthermore, we must update the kernel call to include the amount of shared memory to be allocated.
 This is illustrated in \cref{lst:reduce invocation with smem}, where the third argument in the triple chevrons is the amount of shared memory to allocate.
 
-In \cref{fig:reduce plot} is the run time for the reduce algorithms graphed.
+In \cref{fig:reduce plot} we present a graph of the runtime for the reduce algorithms.
 The GPGPU gets an advantage when the array size to sum is large.
 This is most likely due to overhead and memory transfers.
 The GPGPU is superior to the CPU when it has enough work to spread out to its many SMs.
@@ -147,8 +148,9 @@ The GPGPU is superior to the CPU when it has enough work to spread out to its ma
   \label{fig:reduce plot}
 \end{figure}
 
-Using amdahls law would conclude that this problem is not as parallelizable as the mapping function from the previous section and should thus achieve a lesser speed-up.
-At $n=2^{29}$ the performances are summarized in \cref{tab:cpu vs shared global gpgpu}the CPU performs the reduce in $1332.38ms$ where as the GPGPU performs the global reduce in $165.92$, x$8.03$ speed-up, and shared reduce in $124.07$, x$10.74$ speed-up.
+Using Amdahl's law we can conclude that this problem is not as parallelisable as the mapping function from the previous section and should thus achieve a lesser speed up.
+\Cref{tab:cpu vs shared global gpgpu}  present the performance with $n=2^{29}$.
+The CPU performs the reduce in $1332.38ms$ where the GPGPU performs the global reduce in $165.92$, a $8.03$x speed up, and shared reduce in $124.07$, $10.74$x speed up.
 
 \begin{table}[htb]
   \centering
@@ -165,11 +167,11 @@ At $n=2^{29}$ the performances are summarized in \cref{tab:cpu vs shared global 
   \label{tab:cpu vs shared global gpgpu}
 \end{table}
 
-Reads in the global memory model is twice the total array amount as it also reads/writes for every step in the combining tree.
+Reads in the global memory model are twice the total array amount as it also reads/writes for every step in the combining tree.
 As the size of the tree and amount of work is logarithmic with respect to the input the total amount of reads and writes are twice the input size.
 Reads/writes in the shared memory model does not follow the same logarithmic reduction in global memory reads/writes as it only communicates with global memory at block termination and thus only performs one write.
-As we used a block size of $1024$ in the experiments we will not consider the additional transfers at the combining tree layers beyong the initial input array.i
+As we used a block size of $1024$ in the experiments we will not consider the additional transfers at the combining tree layers beyond the initial input array.
  
-We mentioned that the shared memory version of the reduce would theoretically get approximately a 3x speed-up compared to the regular version.
-This is not the case as illustrated in the plot and by the speed-ups.
-This is due to the fact that we do not utilize the full potential of the local memory of the device.\cite{udacity}
+We mentioned that the shared memory version of the reduce would theoretically get approximately a 3x speed up compared to the regular version.
+This is not the case as illustrated in the plot and by the speed ups.
+This is due to the fact that we do not utilize the full potential of the local memory of the device.~\cite{udacity}

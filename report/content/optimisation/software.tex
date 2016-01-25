@@ -6,29 +6,32 @@ This section presents software optimisations.
 \subsection{Workload and step size}
 \label{sec:workload and step size}
 As presented in the previous section the workload to step ratio is of importance when constructing a parallel algorithm.
-This approach of analysing the properties of the computational steps in an algorithm is thightly knit with Amdahls law for strong scaling.
-The step size compared with the total workload thus gives an idear of the amount of non-paralizable content in the algorithm.
+The step size compared with the total workload thus gives an idea of the amount of non-paralelisable content in the algorithm.
 
-It is beneficial to both reduce stepsize (increasing parallerizability) and reduce workload (total amount of work).
-However, these goals are often not alligned as we will show with the two scan algorithms: Hillis \& Steele's inclusive scan and Blelloch's exclusive scan.
-Hillis \& Steele, which we have implemented in \cref{sec:scan}, has the following properties:
-\begin{equation*}
-Work: O(n lg n)
-Step: O(lg n)
-\end{equation*}
+It is beneficial to both reduce step size (increasing parallelisability) and reduce workload (total amount of work).
+However, these goals are often not aligned as we will show with the two scan algorithms: Hillis and Steele's inclusive scan and Blelloch's exclusive scan.
+Our implementation of Hillis and Steele is presented in \cref{sec:scan}.
+\Cref{tab:hs b} presents the work and step for these two algorithms.
+However, in Blelloch there is a hidden multiple constant of two in the step size.
 
-Blelloch has the following properties:
-\begin{equation*}
-Work: O(n)
-Step: O(lg n)
-\end{equation*}
-However, in Blelloch there is a hidden multiple constant of two in the stepsize.
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{cccc}
+    \toprule
+    \multicolumn{2}{c}{Hillis and Steele} & \multicolumn{2}{c}{Blelloch} \\
+    work & step & work & step \\
+    \midrule
+    $\mathcal{O}(n\log n)$ & $\mathcal{O}(\log n)$ & $\mathcal{O}(n)$ & $\mathcal{O}(\log n)$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Work and step for Hillis and Steele, and Blelloch}
+  \label{tab:hs b}
+\end{table}
 
-Even though the workload is larger for the Hillis \& Steele scan if the amount of work at any given step in the algorithm is smaller than the total amount of available processors then the Hillis \& Steele algorithm will finish faster.
-However, if the workload is significantly larger than the amount of available processors and the stepsize is not the bottleneck, then the Blelloch scan will be superior.
+Even though the workload is larger for the Hillis and Steele scan if the amount of work at any given step in the algorithm is smaller than the total amount of available processors then the Hillis and Steele algorithm will finish faster.
+However, if the workload is significantly larger than the amount of available processors and the step size is not the bottleneck, then the Blelloch scan will be superior.
 
 \subsection{Avoiding atomic operations}
 In \cref{sec:challenges with parallel programs} we introduced atomic operations to handle race conditions amongst threads.
-However, using atomic operations serializes the access to the memory cell containing the bin which in worst case could cause a step size equivalent of the workload.
-In \todo{fig} we ran a test to perceive the performance penalty of using such approach, in which the workload is the same but output size differs along the x-axis.
-To avoid using the atomic operation we will device an algorithm overcoming the race condition in a more parallel way in \cref{sec:fast histogram}
+However, using atomic operations serializes the access to the memory cell containing the bin which in the worst case could cause a step size equivalent of the workload.
+In an attempt to optimise the histogram implementation we aim to minimise the usage of atomic operations, which we present in \cref{sec:coarse bin histogram}.

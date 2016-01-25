@@ -1,11 +1,14 @@
 \section{Hardware Optimisations}
 \label{sec:hardware optimisations}
 
+This section presents relevant hardware optimisations.
+First we test how different warp sizes affect idle threads, followed by a test of the bus width.
+
 \subsection{Testing Warp Sizes}
 \label{sec:testing warp sizes}
 
-In \cref{sec:gpu} we introduced the concept of a warp, a scheduler for launching threads within a kernel.
-\cref{tab:warp size testing} shows the average elapsed time over 1,000 runs for launching different threads, to see the impact compared to the amount of warps are needed.
+In \cref{sec:gpu} we introduced the concept of a warp, the smallest amount of threads that can be launched at one time within a kernel.
+\Cref{tab:warp size testing} shows the average elapsed time over 1,000 runs for launching different threads, to see the impact compared to the amount of warps needed.
 One warp launches 32 threads at a time, asserted from \cref{ap:tesla k40 specifications}.
 
 \begin{table}[htb]%
@@ -41,19 +44,18 @@ One warp launches 32 threads at a time, asserted from \cref{ap:tesla k40 specifi
 
 We present the multiple of 32 as the base case for the two tables.
 By using block size between $32 \times 8$ and $32 \times 9$ the SM still launched the same amount of warps (9 warps per block), but with idle threads in the 9'th warp as it must have 32 threads.
-As the amount of threads per block is reduced the total amount of blocks nessesary to complete the job must increase and thus increases runtime.
+As the amount of threads per block is reduced, the total amount of blocks necessary to complete the job must increase and thus increases runtime.
 \cref{tab:warp size testing} shows how the performance deteriorates as the amount of idle threads in the last warp increases.
 
 \subsection{Testing BUS width}
 \label{sec:testing BUS width}
 
-In \cref{sec:gpu} we introduced the concept of a warp, a scheduler for launching threads within a kernel.
-\cref{fig:block size testing} shows the average elapsed time over 10 runs for launching different block size being multiples of the warp size, to see the SM's max thread bottleneck is impacted the impact by the amount of threads in a block.
+\Cref{fig:block size testing} shows the average elapsed time over 10 runs for launching different sized blocks that were a multiple of the warp size.
+We did this to see how the SM's maximum thread bottleneck impacted the the amount of threads in a block.
 The SM can handle 2048 threads concurrently, asserted from \cref{ap:tesla k40 specifications}.
-Active threads in \cref{fig:active threads}.
-\todo{flat 2048 curve}
+The number of active threads is illustrated in \cref{fig:active threads} as a function of \(\lfloor \frac{2048}{x} \rfloor \times x\), where $x$ is the amount of launched threads.
 
-\begin{figure*}[t]
+\begin{figure*}[b]
   \centering
   \begin{subfigure}[b]{.49\linewidth}
     \centering

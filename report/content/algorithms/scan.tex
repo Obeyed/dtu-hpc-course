@@ -34,13 +34,11 @@ void scan(int *h_int, int *h_out, int SIZE) {
 }
 \end{lstlisting}
 
-The workload and amount of steps for the serial implementation can be expressed as follows.
-
 \subsection{Hillis and Steele Inclusive Scan}
 \label{sec:hillis and steele scan}
 
-In this section we have provided an implementation and analysis of the Hillis and Steel inclusive scan.
-The algorithm is illustrated in \cref{fig:hillis steele scan}
+In this section we have provided an implementation and analysis of the Hillis and Steele inclusive scan.
+The algorithm is illustrated in \cref{fig:hillis steele scan}.
 
 \begin{figure}[htb]
   \centering
@@ -51,18 +49,12 @@ The algorithm is illustrated in \cref{fig:hillis steele scan}
 
 The algorithm utilizes the same type of dynammic programming scheme from the serial implementation though it is not as efficient.
 
-The algorithm uses ``steps'' (not to be confused with the steps used in the algorithmic analysis) starting with step=0.
-On the $i$th step, each element adds itself to the neighbour $2^i$ to the left.
+The algorithm uses \ttt{steps} (not to be confused with the steps used in the algorithmic analysis) starting with \ttt{step=0}.
+On the $i$th \ttt{step}, each element adds itself to the neighbour $2^i$ to the left.
+Given an array where $n=\mathtt{ARRAY\_SIZE}$ and a reduction of $2^i$ at every level of the algorithm the tree gets a height of $\log_2 n$ and a workload of $\mathcal{O}(n \log_2 n)$.
+Thus, the step size is $\mathcal{O}(\log_2 n)$.
 
-Given an array where $n=ARRAY\_SIZE$ and a reduction of $2^i$ at every level of the algorithm the tree gets a height of $\mathrm{log}_2(n)$ amount of work$n \mathrm{log}_2(n)$ .
-
-
-\begin{equation*}
-work load = O(n \mathrm{log}_2(n))
-\#steps = O(\mathrm{log}_2(n))
-\end{equation*}
-
-As of implementation details we need synchronization between each iteration of $O(lgn)$ scan tree.
+As of implementation details we need synchronization between each iteration of $\mathcal{O}(\log_2 n)$ scan tree.
 To implement this synchronization we have the kernel only performing a single operation per element in the array.
 To handle the height of the array we use a kernel wrapper to secure synchronization between blocks.
 
@@ -95,13 +87,6 @@ void scan_kernel_wrapper(int *d_out, const int *d_in, int SIZE,
 }
 \end{lstlisting}
 
-\Cref{fig:scan plot} presents the scan algorithm's run time development.
-Noticeable is that the Hillis and Steele scan does not perform significantly better than the serial at high values.
-As the algorithm grows in logarithmic complexity the workload become approximately $28$ larger at $n=2^{29}$.
-Given the higher asymptotic runtime we cannot assume that the Hillis \& Steel algorithm will scale efficiently even though it is parallelizable.
-However, at smaller problems we found that the Hillis \& Steele algorithm performed superior to the serial algorithm such as shown with $n = 2^{19}$ in \cref{tab:cpu vs hillis steele}.
-We futher elaborated the asymptotic relationship of the Hillis \& Steele scan in \cref{sec:workload and step size}
-
 \begin{table}[htb]
   \centering
   \begin{tabular}{c r | r r r r}
@@ -112,9 +97,17 @@ We futher elaborated the asymptotic relationship of the Hillis \& Steele scan in
     GPGPU & Hillis \& Steele & 1.57 & x2.81 & 72.13 GB/s & 25.01\% \\
     \bottomrule
   \end{tabular}
-  \caption{Serial vs. Hillis \& Steel}
+  \caption{Serial vs. Hillis and Steele}
   \label{tab:cpu vs hillis steele}
 \end{table}
+
+\Cref{fig:scan plot} presents the scan algorithm's runtime development.
+Noticeable is that the Hillis and Steele scan does not perform significantly better than the serial at high values.
+As the algorithm grows in logarithmic complexity the workload become approximately $28$ larger at $n=2^{29}$.
+
+Given the higher asymptotic runtime we cannot assume that the Hillis and Steele algorithm will scale efficiently even though it is parallelisable.
+However, at smaller problems we found that the Hillis and Steele algorithm performed superior to the serial algorithm such as shown with $n = 2^{19}$ in \cref{tab:cpu vs hillis steele}.
+We further elaborated the asymptotic relationship of the Hillis and Steele scan in \cref{sec:workload and step size}.
 
 \begin{figure}[htb]
   \centering
