@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <cuda_runtime.h>
-//#include "gputimer.h"
+#include <iostream>
+#include <fstream>
 
-const unsigned int DIM = 12;
+const unsigned int DIM = 32;
 const dim3 BLOCK_SIZE(DIM, DIM);
 
 // For testing
@@ -50,43 +52,32 @@ void transpose_kernel(unsigned int * d_out, unsigned int * d_in,
 __global__
 void transpose_kernel_tiled(unsigned int * d_out, unsigned int * d_in,
                             const unsigned int ROWS, const unsigned int COLUMNS){
-
-  __shared__ unsigned int tile[DIM][DIM+1]; //fucking cuda, should be blockDim.y
-
+  __shared__ unsigned int tile[DIM][DIM]; 
   unsigned int x = threadIdx.x + blockIdx.x * blockDim.x,
                y = threadIdx.y + blockIdx.y * blockDim.y;
-  if((x >= COLUMNS) || (y >= ROWS))
-  {
-//  	printf("RETURNED: %d, %d \n", x, y);
-    return;
-  }
+  if((x >= COLUMNS) || (y >= ROWS)) return;
   tile[threadIdx.y][threadIdx.x] = d_in[x + y*COLUMNS];
-//  printf("FIRST: id: threadIdx[y=%d][x=%d]=%d\n",threadIdx.y, threadIdx.x, tile[threadIdx.y][threadIdx.x]);
-//  printf("from in_position: %d\n", x + y*COLUMNS);
   __syncthreads();
-
   x = threadIdx.x + blockIdx.y * blockDim.y;
   y = threadIdx.y + blockIdx.x * blockDim.x;
-
   d_out[x + y*ROWS] = tile[threadIdx.x][threadIdx.y];
-//  printf("I am tile[%d][%d] = %d \n", x, y, tile[threadIdx.x][threadIdx.y]);
-//  printf("to out_position %d\n", x + y*ROWS);
 }
 
-
-
-
 int main(int argc, char **argv){
-  const unsigned int ROWS = 1<<10,
-                     COLUMNS = 1<<10,
+  unsigned int times = 1;
+  printf("Starting!\n");
+  const unsigned int ROWS = 1<<14,
+                     COLUMNS = 1<<14,
                      BYTES_ARRAY = ROWS*COLUMNS*sizeof(unsigned int);
-
+  printf("Bytes sat\n");
   unsigned int * h_in = (unsigned int *) malloc(BYTES_ARRAY),
                * h_out = (unsigned int *) malloc(BYTES_ARRAY),
                * gold = (unsigned int *) malloc(BYTES_ARRAY);
-
+  printf("pointers sat\n");
+  printf("Filling matrix\n");
   fill_matrix(h_in, ROWS, COLUMNS);
-  transpose_CPU(h_in, gold, ROWS, COLUMNS);
+  printf("Transposing!\n");
+
 
   unsigned int * d_in, * d_out;
 
@@ -99,10 +90,23 @@ int main(int argc, char **argv){
   /* STARTING KERNEL */
 
   const dim3 GRID_SIZE(ROWS/BLOCK_SIZE.x + 1, COLUMNS/BLOCK_SIZE.y + 1);
-//  timer.start();
-//  transpose_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_in, ROWS, COLUMNS);
-  transpose_kernel_tiled<<<GRID_SIZE, BLOCK_SIZE, DIM*DIM*sizeof(unsigned int)+1>>>(d_out, d_in, ROWS, COLUMNS);
-//  timer.stop();
+transpose_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_out, d_in, ROWS, COLUMNS);
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  cudaEventRecord(start, 0);
+
+//  for (unsigned int k = 0; k<times; k++){
+  //  transpose_kernel_tiled<<<GRID_SIZE, BLOCK_SIZE, DIM*(DIM)*sizeof(unsigned int)>>>(d_out, d_in, ROWS, COLUMNS);
+  transpose_CPU(h_in, gold, ROWS, COLUMNS);
+//  }
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+  // calculating time
+  float elapsedTime = .0f;
+  cudaEventElapsedTime(&elapsedTime, start, stop);
+  elapsedTime = elapsedTime / ((float) times);
+  printf(" time: %.5f\n", elapsedTime);
 
   cudaMemcpy(h_out, d_out, BYTES_ARRAY, cudaMemcpyDeviceToHost);
   printf("transpose_serial\nVerifying transpose...%s\n", 
