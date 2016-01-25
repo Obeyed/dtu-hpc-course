@@ -1,13 +1,11 @@
 \section{Software Optimisations}
 \label{sec:software optimisations}
 
+This section presents software optimisations.
+
 \subsection{Workload and step size}
 \label{sec:workload and step size}
-When considering algorithms for parallel purposes, the parallizability in an algorithm is of importance.
-When designing algorithms we will view the computations as a directed acyclic graph(DAG).
-This graph will have a set of computational steps linked togetther from top till bottom such as illustrated by the Hillis and Steele scan in figure. \todo{cref}
-The important aspect is the workload to step ratio.
-The workload gives the total amount of work nessesary for the algorithm whereas the step size determines the amount of serial work in the algorithm.
+As presented in the previous section the workload to step ratio is of importance when constructing a parallel algorithm.
 This approach of analysing the properties of the computational steps in an algorithm is thightly knit with Amdahls law for strong scaling.
 The step size compared with the total workload thus gives an idear of the amount of non-paralizable content in the algorithm.
 

@@ -31,7 +31,8 @@ This graph will have a set of computational steps linked together from top till 
 
 The important aspect is the workload to step ratio. The workload decides the total amount of work necessary for that specific algorithm whereas the step size determines the amount of serial work in the algorithm.
 For an algorithm to have a parallel nature the step size has to be relatively low compared to the workload.
-When we describe the algorithms we have implemented in the algorithms section we will also describe the algorithm's workload and step size.
+This approach of analysing the properties of the computational steps in an algorithm is tightly knit with Amdahl's law for strong scaling.
+We describe the algorithms we have implemented in the algorithms section we will also describe the algorithm's workload and step size.
 
 Basic principles of efficiency is the second most important aspect.
 Developing memory optimised kernels that utilize the cache efficiently is critical to reduce memory bottlenecks.
