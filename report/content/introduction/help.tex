@@ -1,9 +1,9 @@
 \section{Help}
 \label{sec:help}
 
-The work performed for this project has mostly been independent study.
-Aside from the references given throughout the report, we have used the stackoverflow website to ask question to the community.
-We submitted the following questions to stackoverflow
+The style of work for the special course has relied on independent studies.
+To facilitate our independent studies we have utilized online learning platforms and online communities to handle questions and challenges.
+Below are a listing of our questions posted to the stack overflow community.
 
 \begin{itemize}
   \item Why does shared memory ensure coalesced writes~\footnote{\href{http://stackoverflow.com/questions/34881190/shared-memory-writes-coalesced-writes}{http://stackoverflow.com/questions/34881190/shared-memory-writes-coalesced-writes}}
@@ -30,3 +30,5 @@ We compiled our CUDA code with the \ttt{nvcc} compiler and ran it with the follo
 \begin{quote}
   \ttt{nvcc -arch=sm\_35 -o test cudaCode.cu \&\& ./test}
 \end{quote}
+%
+where \ttt{-arch} defines the compute capability of the device for which we aim to compile the code.
