@@ -16,8 +16,8 @@ const dim3 BLOCK_SIZE(1 << 7);
 const dim3 GRID_SIZE(NUM_ELEMS / BLOCK_SIZE.x + 1);
 
 const unsigned int COARSE_SPACE = 10;
-const unsigned int COARSER_SIZE = NUM_BINS / COARSE_SPACE;
-const unsigned int COARSER_BYTES = sizeof(unsigned int) * COARSER_SIZE;
+const unsigned int COARSE_SIZE = NUM_BINS / COARSE_SPACE;
+const unsigned int COARSER_BYTES = sizeof(unsigned int) * COARSE_SIZE;
 const unsigned int MAX_NUMS = 1000;
 
 
@@ -30,19 +30,19 @@ void parallel_reference_calc(unsigned int* const d_out,
 
 
 __global__
-void fire_up_local_bins(unsigned int* const d_out,
+void coarse_histogram_count(unsigned int* const d_out,
                         const unsigned int* const d_bins,
                         const unsigned int l_start,
                         const unsigned int l_end,
-                        const unsigned int COARSER_SIZE,
+                        const unsigned int COARSE_SIZE,
                         const unsigned int COARSE_SPACE,
-                        const unsigned int noCourse) {
+                        const unsigned int num_coarse) {
 
   const unsigned int l_pos = l_start + threadIdx.x + blockIdx.x * blockDim.x;
   const unsigned int start_place = blockIdx.x*COARSE_SPACE;
   if (l_pos < l_start || l_pos >= l_end) return;
 
-  const unsigned int bin = d_bins[l_pos] - COARSER_SIZE*noCourse;
+  const unsigned int bin = d_bins[l_pos] - COARSE_SIZE*num_coarse;
   // read some into shared memory
   // atomic adds
   // write to global memory
@@ -147,7 +147,7 @@ void init_memory(unsigned int*& h_values,
   h_coarse_bins     = new unsigned int[NUM_ELEMS];
   h_histogram       = new unsigned int[NUM_BINS];
   h_reference_histo = new unsigned int[NUM_BINS];
-  h_positions       = new unsigned int[COARSER_SIZE];
+  h_positions       = new unsigned int[COARSE_SIZE];
   // device
   checkCudaErrors(cudaMalloc((void **) &d_values,       ARRAY_BYTES));
   checkCudaErrors(cudaMalloc((void **) &d_bins,         ARRAY_BYTES));
@@ -171,7 +171,7 @@ void streamed_coarse_atomic_bin_calc(unsigned int*& d_values,
   compute_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_values, d_bins);
 
   // compute coarse bin id
-  compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins, COARSER_SIZE);
+  compute_coarse_bin_mapping<<<GRID_SIZE, BLOCK_SIZE>>>(d_bins, d_coarse_bins, COARSE_SIZE);
   // move memory to host
   checkCudaErrors(cudaMemcpy(h_coarse_bins, d_coarse_bins, ARRAY_BYTES, cudaMemcpyDeviceToHost));
 
@@ -191,7 +191,7 @@ void streamed_coarse_atomic_bin_calc(unsigned int*& d_values,
   find_positions_mapping_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(d_positions, d_coarse_bins);
   checkCudaErrors(cudaMemcpy(h_positions, d_positions, COARSER_BYTES, cudaMemcpyDeviceToHost));
   
-  for (unsigned int i = 0; i < 1; i++) {//COARSER_SIZE; i++) {
+  for (unsigned int i = 0; i < 1; i++) {//COARSE_SIZE; i++) {
     // make some local bins
     const unsigned int local_bin_start = h_positions[i];
     const unsigned int local_bin_end   = h_positions[i+1];
@@ -201,7 +201,7 @@ void streamed_coarse_atomic_bin_calc(unsigned int*& d_values,
     checkCudaErrors(cudaMemset(d_bin_grid, 0, TOTAL_BIN_BYTES*grid_size));
     if (amount > 0) {
       // call kernel with stream
-      fire_up_local_bins<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, COARSER_SIZE, COARSE_SPACE, i);
+      coarse_histogram_count<<<grid_size, BLOCK_SIZE>>>(d_bin_grid, d_bins, local_bin_start, local_bin_end, COARSE_SIZE, COARSE_SPACE, i);
     }
   }
   // make sure device is cleared

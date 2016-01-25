@@ -27,6 +27,7 @@ The Array of Structures lays out the images accordingly : $R[1], G[1], B[1], R[2
 The Structures of Arrays thus manages to layout the data in a coalsced way, where as the Arrays of Structures lays out the data as strided.
 
 \subsection{Shared Memory}
+\label{sec:shared memory}
 In \cref{sec:grids blocks threads} we introduced blocks as having a set amount of shared memory available.
 
 Shared memory is a defined space of memory in the SM's L1 cache that a set of threads within a block can read/write to during block execution.
@@ -37,4 +38,8 @@ The first is when a set of threads have to perform several read/write operations
 By mapping the global memory to shared memory, computing the set of operations in shared memory and then writing back to global memory allows us utilize the fast access to shared memory.
 
 The second is to coalesce writes by collecting them in shared memory.
-This type of coalescing is especially interesting in the the transpose problem where data is read row-wise but written column-wise. In \cref{sec:transpose} will introduce how we used tiles in shared memory to allow coalesced writing.
+This type of coalescing is especially interesting in the the transpose problem where data is read row-wise but written column-wise. 
+In \cref{sec:transpose} will introduce how we used tiles in shared memory to allow coalesced writing.
+\subsection{Bank conflicts}
+\label{sec:bank conflicts}
+I
