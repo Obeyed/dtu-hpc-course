@@ -87,30 +87,6 @@ void init_rand(unsigned int* const h_in) {
     h_in[i] = rand() % MAX_NUMS;
 }
 
-void print(const unsigned int* const h_in,
-           const unsigned int* const h_bins,
-           const unsigned int* const h_histogram) {
-  const unsigned int WIDTH = 5;
-
-  for(int i = 0; i < WIDTH; i++)
-    printf("input\tbin\t\t");
-  printf("\n");
-
-  for (int i = 0; i < NUM_ELEMS; i++)
-    printf("%u\t%u%s", 
-        h_in[i], 
-        h_bins[i], 
-        ((i % WIDTH == (WIDTH-1)) ? "\n" : "\t\t"));
-  printf("\n");
-
-  printf("histogram:\n");
-  for (int i = 0; i < NUM_BINS; i++)
-    printf("%u%s", 
-        h_histogram[i], 
-        ((i % 15 == 14) ? "\n" : "\t"));
-  printf("\n\n");
-}
-
 void sort(unsigned int*& h_coarse_bins, 
           unsigned int*& h_bins, 
           unsigned int*& h_values) {
