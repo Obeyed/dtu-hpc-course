@@ -1,23 +1,38 @@
 \section{Histogram with Coarse Bins}
 \label{sec:coarse bin histogram}
 
-The one thing that slows the first histogram implementation is the need to have atomic increments for each bin.
-Our idea is to split the bins into coarse bins so we have an estimate of how many integers will be in some range of bins.
-The idea is illustrated in \cref{fig:coarse bins example}, where we have the sorted bin values at the top and the sorted coarse bin values at the bottom.
+In the Histogram with Coarse Bins we presents a parallel algorithm for histograms that does not suffer from the same serial bottlenecks as the atomic version from \cref{sec:histogram}.
 
+The idea is to allow each block to compute their own histogram with atomic add and then use reduce to merge these histograms, which reduces steps from $\mathcal{O}(n)$ to $\mathcal{O}(\mathrm{block\_size})$.
+
+As having a personal histogram might be memory intense giving a large amount of bins.
+To avoid such we split the bins into coarse bins containing a range of bins.
+Each block thus works on a coarse bin instead of the total histogram.
+However, performing such coarse bin introduces a sorting of the input values according to their coarse bins.
 \begin{figure}[htb]
   \centering
-  \includegraphics[width=.8\textwidth]{images/coarse-bin-example.png}
+  \includegraphics[width=.6\textwidth]{images/coarse-bin-example.png}
   \caption{Intuition behind coarse bin and kernel invokations}
   \label{fig:coarse bins example}
 \end{figure}
+The idea is illustrated in \cref{fig:coarse bins example}, where we have the sorted bin values at the top and the sorted coarse bin values at the bottom.
 
-Basically, the idea is still to use atomic increments but to divide them up into coarse bins so that they can be performed concurrently within the given range of coarse bins.
-Consider \cref{fig:coarse bins example} where each coarse bin has a set of bins that fall into its category.
-Each set in each bin is then executed by one kernel and divided into the correct bins.
-So, the reasoning is that as a consequence of dividing the bin counting among more independent kernels the algorithm will run faster.
+\
+For each coarse bin histogram a \ttt{grid\_size} $\times$ the number of elements in a course bin, with \ttt{grid\_size} the number of blocks nessesary to collect all elements in the given coarse bin, is allocated as the \ttt{coarse\_bin\_grid}.
+For each coarse bin a kernel is launched containing threads to gather all the elements in the coarse bin.
+Each block in this kernel has its own private histogram in \ttt{coarse\_bin\_grid} in which only the given block performs updates.
+At end of kernel execution the \ttt{coarse\_bin\_grid} is left with bin values represented along the columns.
+In order to avoid cache misses and have coalesced access the transpose operation introduced in previous section is performed to have bin values alligned in row indexes.Given all values for each bin being set in a row we perform reduce over the rows to gather the independant block's histograms for each bin leaving an array of bin values for each coarse bin.
+These are then merged resulting in the total histogram.
 
-The proposed procedure runs as following
+In our implementation we did not manage to create the full fast histogram solution as described above.
+We computed the coarse bin sorting and merely had each bin atomic add to the global memory without the private \ttt{coarse\_bin\_grid} to reduce over.
+From an algorithmic viewpoint this is no better than the atomic reduce histogram we were trying to improve, but it allowed us to test our coarse bin sorting.
+
+
+A more detailed description of the coarse bin implementation can be found below.
+
+Given and input array, number of bins \ttt{NUM\_BINS} and a number of coarse bins \ttt{COARSE\_SIZE} we perform the following computation.
 %
 \begin{enumerate}
   \item Compute bin for each value
@@ -27,19 +42,19 @@ The proposed procedure runs as following
   \item For each coarse bin --- count each bin in given range
 \end{enumerate}
 %
-We compute the bin for each respective value as presented in \cref{lst:value bin}, where \ttt{d\_in} is the list of values.
+We compute the bin for each respective value as presented in \cref{lst:value bin}, where \ttt{d\_in} is the array of input values and \ttt{d\_out} is a give inputs respective bin number.
 
 \begin{lstlisting}[caption={compute each value's bin}, label={lst:value bin}, numbers=none]
 d_out[mid] = d_in[mid] % NUM_BINS;
 \end{lstlisting}
 
-Then the bins are divided into coarse bins as presented in \cref{lst:value coarse bin}, where the \ttt{d\_in} is the list of bins, i.e. the \ttt{d\_out} from \cref{lst:value bin}.
+Then the respective bin numbers are divided into coarse bins as presented in \cref{lst:value coarse bin}, where the \ttt{d\_in} is the array of bins, i.e. the \ttt{d\_out} from \cref{lst:value bin}.
 
 \begin{lstlisting}[caption={compute each value's coarse bin}, label={lst:value coarse bin}, numbers=none]
 d_out[mid] = d_in[mid] / COARSE_SIZE;
 \end{lstlisting}
 
-We now have a list of values, their respective bins, and their coarse bins.
+This gives an array of values, their respective bins, and their coarse bins.
 The next step is to sort all the values w.r.t. the coarse bins in ascending order, i.e. coarse bin 0 is first, followed by coarse bin 1, etc.
 We use the radix sort implementation we developed earlier (with slight modifications to suite our needs) to perform the sorting based on the values in the list of coarse bins.
 
@@ -53,42 +68,22 @@ if (d_in[mid] != d_in[mid-1])
   d_out[d_in[mid]] = mid;
 \end{lstlisting}
 
-Finally, the kernel responsible for counting and incrementing each bin for the histogram is invoked.
-We invoke this kernel for each coarse bin, where we set the range in which the kernel should restrict its work.
-
-\begin{lstlisting}[caption={kernel to do histogram count for each coarse bin}, label={lst:coarse histo kernel}]
-__global__
-void coarse_histogram_count(unsigned int* const d_out,
-                            const unsigned int* const d_bins,
-                            const unsigned int l_start,
-                            const unsigned int l_end) {
-  const unsigned int l_pos = l_start + threadIdx.x + blockIdx.x * blockDim.x;
-  if (l_pos < l_start || l_pos >= l_end) return;
-
-  const unsigned int bin = d_bins[l_pos];
-  atomicAdd(&(d_out[bin]), 1);
-}
-\end{lstlisting}
-
-We have that \ttt{l\_start} defines the starting index of the given coarse bin, and \ttt{l\_end} defines the maximum index for that coarse bin.
-Together they define the range of which bins can be manipulates for each given kernel.
-
 \subsection{Profiling and Analysis}
 
-We tested and profiled our new implementation by using the \ttt{nvprof} command-line tools to get a file that could be imported into the NVIDIA Visual Profiler.
-This is desirable because it is possible to run a guided analysis of the program.
-The Visual Profiler runs analyses and informs what types of changes are recommended to try to maximise the usage of the GPU device.
-We ran the code with
+We tested and profiled our new implementation by using the \ttt{nvprof} command-line tools to get a file that could be imported into the nvidia visual profiler.
+This is desirable because nvidia visual profiler is able to run a guided analysis of the program and give us advice on bottlenecks to optimize.
+We computed an executable with $\mathrm{BIN\_SIZE}=100$, $n=2^{22}$ and $\mathrm{COARSE\_SIZE}=10$, which we ran with
 
 \begin{quote}
   \ttt{nvprof --analysis-metrics -o output-file.nvprof ./executable-to-test}
 \end{quote}
 
 which gave us a file that contained all the metrics needed for the guided analysis.
-This file was opened with the NVIDIA Visual Profiler and the program performed analysis of how the GPU as used.
-\Cref{fig:first impl} shows the output given by the NVIDIA Visual Profiler's initial GPU usage analysis.
+This file was opened with the nvidia visual profiler and the program performed analysis of GPGPU usage.
+\Cref{fig:first impl} shows the output given by the nvidia visual profiler's initial GPU usage analysis.
 It informs that the algorithm has low kernel concurrency and low compute utilisation.
-
+The low compute utilisation is mainly due to the lack of heavy lifting in our algorithm as most of our operations are memory intensive rather than computationally intensive.
+As for low kernel concurrency our approach to solve the coarse bins is serial and not performed in parallel, which we could optimise upon by introducing streams.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=.9\textwidth]{images/low-kernel-concurrency.png}
@@ -106,7 +101,7 @@ In CUDA kernels are run concurrently with the use of streams.
 Thus, from the visual profiler's analysis we tried to add streams to the kernels that were independent of the execution of the rest of the kernels.
 This were the kernels that were in charge of counting and incrementing the final result of the histogram algorithm.
 This modification to the code is presented in \cref{lst:coarse histo streams}.
-We instantiate an array of streams, and for each iteration of the loop we create a stream and invoke the kernel with it.
+We instantiate an array of streams and for each iteration of the loop we create a stream and invoked the kernel with it.
 The full implementation is presented in \cref{ap:coarse histogram}.
 
 \begin{lstlisting}[caption={Using streams to invoke kernels concurrently}, label={lst:coarse histo streams}]
@@ -133,6 +128,6 @@ for (unsigned int i = 0; i < COARSE_SIZE; i++) {
 
 The resulting output did not boost the performance significantly.
 We found that the sorting of the numbers used approximately $80\%$ of the execution time.
-This means that the bottleneck was the sorting, and no longer the histogram's atomic increments.
-The reason for the sorting being so slow may be because we use the Hillis and Steele scan in our radix sort implementation.
-It might have made a difference to use Blelloch scan as it is more work efficient, which we presented in \cref{sec:workload and step size}.
+This means that the bottleneck was the sorting and not the histogram's atomic increments.
+The reason for the sorting being so slow could be due to using the Hillis \& Steele scan for the compact in our radix sort implementation.
+If we used the Blelloch scan instead, as debated in \cref{sec:workload and step size}, we might have been able to reduce the time spent on sorting.
