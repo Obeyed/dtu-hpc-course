@@ -36,7 +36,7 @@ d_out[mid] = d_in[mid] % NUM_BINS;
 Then the bins are divided into coarse bins as presented in \cref{lst:value coarse bin}, where the \ttt{d\_in} is the list of bins, i.e. the \ttt{d\_out} from \cref{lst:value bin}.
 
 \begin{lstlisting}[caption={compute each value's coarse bin}, label={lst:value coarse bin}, numbers=none]
-d_out[mid] = d_in[mid] / COARSE;
+d_out[mid] = d_in[mid] / COARSE_SIZE;
 \end{lstlisting}
 
 We now have a list of values, their respective bins, and their coarse bins.
@@ -105,10 +105,33 @@ In CUDA kernels are run concurrently with the use of streams.
 
 Thus, from the visual profiler's analysis we tried to add streams to the kernels that were independent of the execution of the rest of the kernels.
 This were the kernels that were in charge of counting and incrementing the final result of the histogram algorithm.
+This modification to the code is presented in \cref{lst:coarse histo streams}.
+We instantiate an array of streams, and for each iteration of the loop we create a stream and invoke the kernel with it.
 
-\todo{put listing with streamed kernel calls here}
+\begin{lstlisting}[caption={Using streams to invoke kernels concurrently}, label={lst:coarse histo streams}]
+// instantiate array of streams
+cudaStream_t streams[COARSE_SIZE];
 
-The resulting output did not boost the performance very much.
+for (unsigned int i = 0; i < COARSE_SIZE; i++) {
+  // create the stream for each kernel call
+  cudaStreamCreate(&streams[i]);
+
+  // set up range for local coarse bin
+  local_bin_start = h_positions[i];
+  local_bin_end   = h_positions[i+1];
+
+  // calculate local grid size
+  amount = local_bin_end - local_bin_start;
+  grid_size = amount / BLOCK_SIZE.x + 1;
+
+  // make sure there is at least one value in coarse bin
+  if (amount > 0)
+    coarse_histogram_count<<<grid_size, BLOCK_SIZE, 0, streams[i]>>>(d_histogram, d_bins, local_bin_start, local_bin_end);
+}
+\end{lstlisting}
+
+
+The resulting output did not boost the performance significantly.
 We found that the sorting of the numbers used approximately $80\%$ of the execution time.
 This means that the bottleneck was the sorting, and no longer the histogram's atomic increments.
 The reason for the sorting being so slow may be because we use the Hillis and Steele scan in our radix sort implementation.
