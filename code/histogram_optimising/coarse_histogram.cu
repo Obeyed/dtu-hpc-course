@@ -1,7 +1,6 @@
-
-#include <stdio.h>      /* printf, scanf, puts, NULL */
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include "utils.h"
 #include "radix_sort.h"
