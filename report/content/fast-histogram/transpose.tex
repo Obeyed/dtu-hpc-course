@@ -5,7 +5,7 @@ We present three algorithms for optimizing the transpose matrix operation.
 
 The serial code for a transpose operation is presented in \cref{lst:transpose seq}.
 The code loops through each index of the input, \ttt{h\_in[i, j]}, and copies the value to the transposed index in the output, \ttt{h\_out[j, i]}.
-Given $n=width,\ m=height$This algorithm will take.
+Given $n=\mathrm{width}$, $m=\mathrm{height}$ this algorithm will take
 \begin{equation*}
 workload: O(nm)
 Steps: O(nm)
@@ -19,9 +19,9 @@ for(int row=0; row < ROWS; row++)
 }
 \end{lstlisting}
 
-As we can analyse the problem as a mapping operation, as introduced in \cref{sec:challenges with parallel programs}, we know that every mapping operation is independant from one another why the amount of steps can be reduced to $O(1)$ and the problem thus becomes 100\% parallizible.
+As we can analyse the problem as a mapping operation, which we introduced in \cref{sec:challenges with parallel programs}, we know that mapping operations are independant from one another why the amount of steps can be reduced to $O(1)$ and the problem thus becomes 100\% parallizible.
 
-In \cref(lst:transpose elem) we present a trivial elem-wise parallel implementation of the transpose algorithm.
+In \cref{lst:transpose elem} we present a trivial elem-wise parallel implementation of the transpose algorithm.
 
 \begin{lstlisting}[caption={Parallel transpose}, label={lst:transpose elem}]
 __global__
@@ -34,9 +34,9 @@ void transpose_kernel(int * d_out, int * d_in,
 }
 \end{lstlisting}
 
-The dilemma with the trivial element-wise transpose presented in \cref(lst:transpose elem) is that the kernel will read row-wise but write column-wise.
+The dilemma with the trivial element-wise transpose presented in \cref{lst:transpose elem} is that the kernel will read row-wise but write column-wise.
 The row-wise read will utilize coalesced reading whereas the writes will not be coalesced resulting in only one write per bus, wasting 48-4 bytes.
-To utilize coalesced writes we present the tiled transpose examplified in \cref{fig:tiled transpose} and implemented in \cref(lst:transpose tiled).
+To utilize coalesced writes we present the tiled transpose examplified in \cref{fig:tiled transpose} and implemented in \cref{lst:transpose tiled}.
 The tiled transpose uses shared memory to make coalesced writes to global memory, such as introduced in \cref{sec:shared memory}.
 
 \begin{figure}[htb]
@@ -83,4 +83,5 @@ The speed-ups are presented in \cref{tab:transpose speed-ups} for a problem of s
   \label{tab:tranpose speed-ups}
 \end{table}
 
-
+It is to be noted that we could not get the tiled and tiled+bank to run a successful transpose if the input matrice was not a square and if the \ttt{BLOCK\_SIZE} was not able to cover the matrice without overlapping blocks (e.g. threads out of bounds).
+We tried using online communities for this issue as desribed in \cref{sec:help}, but unfortunately did not get any responses.
