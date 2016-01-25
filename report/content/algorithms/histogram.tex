@@ -2,19 +2,15 @@
 \label{sec:histogram}
 
 The fourth and last basic algorithm is the histogram algorithm.
-The histogram algorithm maps a series of elements given a function to an index in a histogram with $k = \|Histogram\|$ indexes, also known as the histogram's bins.
+The histogram algorithm maps a series of elements given a function to an index in a histogram with $k = \|\mathtt{histogram}\|$ indexes, also known as the histogram's bins.
 When an element is mapped to the index the given value at the given index is incremented by one.
 
-The mapping function in our implementation is the modulus algorithm such that $e\ \mod\ k$ with $e\ \epsilon\ input$ with the $input\ \subset\ \mathbb{N}$, $0\ \epsilon\ \mathbb{N}$ monotonically increasing, $[0, 1, 2, ..., n]\ \subset\ input$.
+The mapping function in our implementation is the modulus algorithm such that $e \mod k$ with $e \in \mathtt{input}$ with the $\mathtt{input} \subset \mathbb{N}$, $0 \in \mathbb{N}$ monotonically increasing, $[0, 1, 2, \ldots, n] \subset \mathtt{input}$.
 Such that the input maps uniformly to the bins of the histogram.
 
 A serial example is presented in \cref{lst:hist seq} where the input is \ttt{h\_in} and \ttt{h\_out} is the histogram.
 We will have $k$ bins in the output.
-As the serial algorithm is a for loop going over every element in the input array we conclude the follow workload and steps.
-\begin{equation*}
-work load: O(n)
-steps: O(n)
-\end{equation*}
+As the serial algorithm is a for loop going over every element in the input array we conclude that the workload is $\mathcal{O}(n)$ and step size $\mathcal{O}(n)$.
 
 \begin{lstlisting}[caption={Serial histogram}, label={lst:hist seq}]
 void histogram(int *h_in, int *h_out, int IN_SIZE, int k) {
@@ -30,17 +26,17 @@ We present the parallel implementation in \cref{lst:histo par} with the input is
 \begin{lstlisting}[caption={Simple parallel histogram implementation}, label={lst:histo par}]
 __global__ 
 void histo_kernel(int *d_bins, int *d_in, int BIN_SIZE, int SIZE) {
-  int tid = threadIdx.x + blockDim.x * blockIdx.x;
-  if (tid >= SIZE) return; // checking for out-of-bounds
+  int mid = threadIdx.x + blockDim.x * blockIdx.x;
+  if (mid >= SIZE) return; // checking for out-of-bounds
 
-  int bin = d_in[tid] % BIN_SIZE;
+  int bin = d_in[mid] % BIN_SIZE;
   atomicAdd(&(d_bins[bin]), 1);
 }
 \end{lstlisting}
 
-The test performed in this histogram is slightly different from the test performed in on the other basic algorithms (\cref{}) (\cref{}) (\cref{}).
+The test performed in this histogram is slightly different from the test performed in on the other basic algorithms.
 In this test we found that the interesting part of the histogram algorithm with atomic add is how the number of steps, the serial part, of the problem changes with the size of the histogram increasing given a monotonically increasing input.
-In such case we analyse the number of steps to be $O(n/k)$, which is visable from our graph \cref{fig:histogram plot}.
+In such case we analyse the number of steps to be $\mathcal{O}(n/k)$, which is visible from our graph in \cref{fig:histogram plot}.
 
 \begin{figure}[htb]
   \centering
