@@ -65,7 +65,7 @@ void transpose_kernel_tiled(int * d_out, int * d_in,
 The tiled solution, however, has memory bank conflicts such as described in \cref{sec:bank conflicts}.
 To avert bank conflicts we convert line \ttt{4} to \ttt{tile[DIM][DIM+1]}.
 
-The speed-ups are presented in \cref{tab:transpose speed-ups} for a problem of size $2^{29}$.
+The speed-ups are presented in \cref{tab:transpose speed-ups} for a problem of size $n=2^{14}$, $m=2^{14}$.
 
 \begin{table}[htb]
   \centering
@@ -73,10 +73,10 @@ The speed-ups are presented in \cref{tab:transpose speed-ups} for a problem of s
     \toprule
     device & algorithm & time in ms & speed-up & bandwidth usage & usage percentage\\
     \midrule
-    {CPU} & serial  & 1332.38 &  &  &  \\
-    \multirow{3}*{GPGPU} & elem-wise & 165.92 & x8.03 & 38.83 GB/s & 13.46\% \\
-                         & tiled &    124.07 & x10.74 & 34.62 GB/s & 6.00\% \\
-                         & tiled+bank &    124.07 & x10.74 & 34.62 GB/s & 6.00\% \\
+    {CPU} & serial  & 6288.88 &  &  &  \\
+    \multirow{3}*{GPGPU} & elem-wise & 33.61 & x187.11 & 63.89 GB/s & 22.16\% \\
+                         & tiled & 24.93  & x252.26 & 86.14 GB/s & 29.87\% \\
+                         & tiled+bank & 16.99 & x370.15 & 126.40 GB/s & 43.83\% \\
     \bottomrule
   \end{tabular}
   \caption{Global vs. Shared memory read and writes}
