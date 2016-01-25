@@ -25,20 +25,20 @@ This graph will have a set of computational steps linked together from top till 
 \begin{figure}[htb]
   \centering
   \includegraphics[width=.7\textwidth]{images/step-work.png}
-  \caption{Calculating step and work size}
+  \caption{Calculating step and work size~\cite{udacity}}
   \label{fig:step and work}
 \end{figure}
 
-The important aspect is the workload to step ratio. The workload decides the total amount of work nessesary for that specific algorithm whereas the step size determinez the amount of serial work in the algorithm.
+The important aspect is the workload to step ratio. The workload decides the total amount of work necessary for that specific algorithm whereas the step size determines the amount of serial work in the algorithm.
 For an algorithm to have a parallel nature the step size has to be relatively low compared to the workload.
-When we describe the algorithms we have computed in the algorithmic section we will also describe the algorithms work load and step size.
+When we describe the algorithms we have implemented in the algorithms section we will also describe the algorithm's workload and step size.
 
-Basic principles for efficieny is the second most important aspect.
-Developing cache aware kernels that utilizes the cache efficiently is critical to reduce memory bottlenecks.
+Basic principles of efficiency is the second most important aspect.
+Developing memory optimised kernels that utilize the cache efficiently is critical to reduce memory bottlenecks.
 In \cref{sec:memory optimisations} we will provide tricks to optimize the memory transfers and utilize faster memory.
 
 Architectural specific optimisation concerns utilizing the given architecture of a specific GPGPU's SM such as amount of threads per SM, L1 cache size for shared memoryetc.
 In \cref{sec:hardware optimisations} we will consider how to utilize the GPGPU architecture when setting kernel parameters.
 
 Micro level optimisation works at the bit-level, such as approximating the inverse of a square root with magic numbers.
-We will not consider these types of optimisations on the GPGPU in this report as the gains are minimal compared with the other optimisations \cite{udacity}.
+We will not consider these types of optimisations on the GPGPU in this report as the gains are minimal compared with the other optimisations.~\cite{udacity}
