@@ -68,28 +68,6 @@ if (d_in[mid] != d_in[mid-1])
   d_out[d_in[mid]] = mid;
 \end{lstlisting}
 
-
-\todo{remove}
-Finally, the kernel responsible for counting and incrementing each bin for the histogram is invoked.
-We invoke this kernel for each coarse bin, where we set the range in which the kernel should restrict its work.
-
-\begin{lstlisting}[caption={kernel to do histogram count for each coarse bin}, label={lst:coarse histo kernel}]
-__global__
-void coarse_histogram_count(unsigned int* const d_out,
-                            const unsigned int* const d_bins,
-                            const unsigned int l_start,
-                            const unsigned int l_end) {
-  const unsigned int l_pos = l_start + threadIdx.x + blockIdx.x * blockDim.x;
-  if (l_pos < l_start || l_pos >= l_end) return;
-
-  const unsigned int bin = d_bins[l_pos];
-  atomicAdd(&(d_out[bin]), 1);
-}
-\end{lstlisting}
-
-We have that \ttt{l\_start} defines the starting index of the given coarse bin, and \ttt{l\_end} defines the maximum index for that coarse bin.
-Together they define the range of which bins can be manipulates for each given kernel.
-
 \subsection{Profiling and Analysis}
 
 We tested and profiled our new implementation by using the \ttt{nvprof} command-line tools to get a file that could be imported into the nvidia visual profiler.
