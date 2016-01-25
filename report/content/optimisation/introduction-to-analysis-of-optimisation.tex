@@ -1,22 +1,22 @@
-\section{Introduciton to analysis of optimisation}
+\section{Introduciton to Analysis of Optimisation}
 \label{sec:introduction to analysis of optimisation}
-In optimizing algorithms we need to first understand where the time is being spend and afterwards analyse how much we are able to speed up this process with.
-In understanding the problem and bottlenecks we utilize the profiling tools by nvidia called ``nvprof'', elaborated in \cref{sec:profiling}.
-For analysing purposes we approach the problem from two perspectives, a theoretical based, in \cref{sec:amdahls law} on understanding the relationship between parallizability and number of cores and a more hardware specific, elaborated in \cref{sec:analysing hardware}, where we analyse theoretical memory bandwidth usage.
+
+In order to do optimisation we need to first understand where the algorithm spends its time and afterwards analyse how much we are able to speed up this process.
+In understanding the problem and bottlenecks we utilize the profiling tool by nvidia called \ttt{nvprof}, elaborated in \cref{sec:profiling}.
+For analysis purposes we approach the problem from two perspectives, a theoretical based approach, in \cref{sec:amdahls law} on understanding the relationship between parallelisability and the number of cores and a more hardware specific, elaborated in \cref{sec:analysing hardware}, where we analyse theoretical memory bandwidth usage.
 Hardware-wise the bottleneck is often to read/write to global memory.
 As many of our tasks are relatively simple and does not require much computation we will only consider theoretical memory bandwidth as a concrete performance measure.
 
 \subsection{Profilling}
 \label{sec:profiling}
-To understand our problem from a runtime perspective we must quantify the execution time in ``metrics'' of the different ``events'' in our program.
+To understand our problem from a runtime perspective we must quantify the execution time in metrics of the different events in our program.
 An event is some quantifiable activity, action, or occurrence on a GPGPU device.
-Metrics are a set of runtime descriptions of one or more events.i
+Metrics are a set of runtime descriptions of one or more events.
 
 In order to gather metrics about our events we utilize the built-in CUDA tool \ttt{nvprof}, which is a command-line debugging tool to profile compiled CUDA code.
-The property of being a command-line tool makes \ttt{nvprof} especially usefull for us as we are limited to executing code on remote servers.
+The property of being a command-line tool makes \ttt{nvprof} especially useful for us as we are limited to executing code on remote servers.
 
 By default \ttt{nvprof} gives a short summary of how much time was spent on the different invocations.
-The default settings shows where time is spent throughout the application.
 The debugger is invoked as follows
 %
 \begin{quote}
@@ -24,12 +24,12 @@ The debugger is invoked as follows
 \end{quote}
 %
 To give a detailed metrics description the flag \ttt{--print-gpu-trace} can be utilized, this flag will print a list of all kernel invocations.
-Further \ttt{--print.gpu-trace} will show metrics such as the amount of memory used, where it is used, what the memory's transfer rate was, on which GPGPU the kernel ran, the execution time, etc.~\cite{profiling2015doc}
+Further \ttt{--print-gpu-trace} will show metrics such as the amount of memory used, where it is used, what the memory's transfer rate was, on which GPGPU the kernel ran, the execution time, etc.~\cite{profiling2015doc}
 Aside from writing its results to the terminal it is also possible to write the profiling results to a file.
 Furthermore, to gain insight into opportunities for optimisation the \ttt{--analysis-metrics} flag allows nvprof to capture statistics for analysis of the GPGPU's metrics.
-These statistics can be used with Nvidia's visual profiler to perform a ``guided analysis'' which we utilizes in \todo{nvvp fast histo!}.~\cite{nvprof2013tips}
+These statistics can be used with nvidia's visual profiler to perform a guided analysis which we utilizes in \cref{sec:coarse bin histogram}.~\cite{nvprof2013tips}
 
-\subsection{Strong scaling - Amdahl's Law}
+\subsection{Amdahl's Law}
 \label{sec:amdahls law}
 
 Amdahl's Law approximates the potential speed up of a serial program.
@@ -41,7 +41,7 @@ Thus, $S(n)$ is the theoretical speed up achievable while holding the workload c
   S(n) = \frac{1}{(1-P) + P/n}
 \end{equation}
 
-Amdahl's Law only applies if the amount of work performed in the parallel version is not significantly different than the serial code's amount of work.
+Amdahl's Law only applies if the amount of work performed in the parallel version is not significantly different than the serial code's amount of work, this is also known as strong scaling.
 An illustration of the potential speed up is presented in \cref{fig:amdahls law} with $n=1024$.
 The model thus theorize that given a fully parallizable problem, the problem should be executed $n$ times faster~\cite{farber2011cuda}.
 
@@ -56,37 +56,40 @@ An important property of Amdahls is the decline of the curve as the solution mov
 With parallel portion $P=0.99$ the speed up is approximately $91\times$, and $1024\times$ when $P=1.00$ and everything can be executed in parallel.
 According to Amdahl's Law, with just a tiny portion of the code that cannot be executed in parallel, a high speed up is not likely to be achieved.
 
-\todo{in section xyz we use this to analyse a problem statement}
-
 \subsection{Gustafson-Barsis Law}
 \label{sec:gustafson-barsis law}
 
 Gustafson and Barsis Law approximates how much more throughput can be achieved by increasing processor count given a constant amount of time.
-This type of formulation is often interesting when computing problems that are open ended such as computing pi -- given more computational power, the processors can compute more digits of pi in the same time~\cite{amdahlorgustafson2011}.
+This type of formulation is often interesting when computing problems that are open ended such as computing pi -- given more computational power, the processors can compute more digits of pi in the same time.
+It is also known as weak scaling.
+The amount of extra work is computed as~\cite{amdahlorgustafson2011}
 
 \begin{equation}
   \label{eq:gustafson-barsis law}
   W(n) = n + (1-n) \times (1-P)
 \end{equation}
-Where $P$ is the amount of the program that can be parallelized and $W(n)$ is the theoretical increase in throughput over a defined period of time.~\cite{gustafson1988reevaluating}.
 
-\todo{Fuck gustav?}
+where $P$ is the amount of the program that can be parallelised and $W(n)$ is the theoretical increase in throughput over a defined period of time.~\cite{gustafson1988reevaluating}.
 
-\subsection{Theoretical memory speed-up}
+\subsection{Theoretical Memory Speed Up}
 \label{sec:analysing hardware}
-In order to access the usage of the theoretical memory bandwitdth in our optimization we can use the hardware specific numbers to see how much data we should be able to push through the GPGPU.
-We need to find the clock rate to determine how fast the processesors are running and the bus width to determine the amount of data transfered at every clock multiplied by 2 due to double data rate.\footnote{http://devblogs.nvidia.com/parallelforall/how-implement-performance-metrics-cuda-cc/}
-The formulation for theoretical memory bandwidth thus becomes:
-\begin{equation*}
-output \frac{bytes}{s} = \frac{clock}{sec} * \frac{bytes}{clock} * 2
-\end{equation*}
-Reading out \ttt{deviceQuery} information \cref{aap:tesla k40 specifications} we can access that the \ttt{Memory Clock Rate: 3004 Mhz} and \ttt{Memory Bus Width: 384}.
+In order to access the usage of the theoretical memory bandwidth in our optimization we can use the hardware specific numbers to see how much data we should be able to push through the GPGPU within a given time interval.
+We need to find the clock rate to determine how fast the processors are running and the bus width to determine the amount of data transferred at every clock multiplied by 2 due to double data rate.\footnote{http://devblogs.nvidia.com/parallelforall/how-implement-performance-metrics-cuda-cc/}
+The formulation for theoretical memory bandwidth thus becomes
+
+\[
+  \mathrm{output} \times \frac{\mathrm{bytes}}{\mathrm{second}} = \frac{\mathrm{clock}}{\mathrm{second}} \times \frac{\mathrm{bytes}}{\mathrm{clock}} \times 2
+\]
+
+Reading out \ttt{deviceQuery} information, as presented in \cref{ap:tesla k40 specifications}, we can assess that \ttt{Memory Clock Rate: 3004 Mhz} and \ttt{Memory Bus Width: 384}.
 Thus out theoretical memory bandwidth on out K40 is
-\begin{equation*}
-288.384 \frac{GB}{s} = 3.004 Ghz * 48 \frac{bytes}{clock} * 2
-\end{equation*}
-In order to understand how close our solution is to the theoretical memory bandwidthwe use the following formula:
-\begin{equation*}
-percentage of theoretical = \frac{\frac{read/writes in GBs}{time in seconds}}{288.384} * 100
-\end{equation*}
-In \todo{cref section} we use this tool to analyse a problem statement.
+
+\[
+  288.384 \times \frac{\mathrm{GB}}{\mathrm{second}} = 3.004 \mathrm{Ghz} \times 48 \times \frac{\mathrm{bytes}}{\mathrm{clock}} \times 2
+\]
+
+In order to understand how close our solution is to the theoretical memory bandwidth we use the following formula
+
+\[
+  \mathrm{percentage\ of\ theoretical} = \frac{\frac{\mathrm{read/writes\ in\ GBs}}{\mathrm{time\ in\ seconds}}}{288.384} \times 100.
+\]
