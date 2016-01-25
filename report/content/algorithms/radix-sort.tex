@@ -1,27 +1,25 @@
 \section{Radix Sort}
 \label{sec:radix sort}
 
-This this section will present a parrallized algorithm of the radix sort benchmarked with a serial sort implementation from the C++ library.
+This section presents a parallelised algorithm of the radix sort benchmarked with a serial sort implementation from the \verb!C++! library.
 The implementation of the Radix Sort algorithm can be found in \cref{ap:radix sort}.
+Radix Sort is a bit-wise comparison algorithm that iteratively, in the length of the bits of the integer, looks at the least significant bit (LSB) and sorts the values accordingly.~\cite{udacity}
 
-Radix Sort is a bit-wise comparison algorithm that iteratively, in the length of the bits of the integer, looks at the LSB and sorts the values accordingly.\cite{udacity}
-
-In order to parralelize the sorting of the LSB in the radix sort we used the compact(\cref{sec:compact}).  
-Thus to parralelize the entire sorting we perform multiple compact operations as we move the elements in the array according to their LSB.
+In order to parallelise the sorting of the LSB in the radix sort we used the compact(\cref{sec:compact}).  
+Thus to parallelise the entire sorting we perform multiple compact operations as we move the elements in the array according to their LSB.
 In this section we outline a single iteration of radix sort in this section.
 
-To sort the elements according to their least significant bit we perform two compact operations.
-The first compact operation maps the elements with LSB = $0$ from the output arrays zero index and upto 
-\[\mathrm{zeros\_end\_idx}\{|x|-1\ |\ (x\&1)=0, x \in \mathrm{input}\}\]
-As illustrated in \cref{fig:radix sort example}.
-
-The second compact operation maps the elements with LSB = $1$ from the output arraysindex $\mathrm{zeros\_end\_idx}+1$ to index \[\{|x|-1\}\] being the end position.  
+To sort the elements according to their LSB we perform two compact operations.
+The first compact operation maps the elements with LSB = 0 from the output array's zero index and up to 
+\[\mathtt{zeros\_end\_idx} = \{|x|-1\ \bigg|\ (x\&1)=0, x \in \mathrm{input}\},\]
+as illustrated in \cref{fig:radix sort example}.
+The second compact operation maps the elements with LSB = $1$ from the output arraysindex $\mathtt{zeros\_end\_idx}+1$ to index \[\{|x|-1\}\] being the end position.  
 
 For each iteration of Radix Sort the LSB will shift left and compact sorting thus based on increasing importance of the bit representations in the element.
-LSB place examplified.
+Consider for instance the following
 \[\mathrm{iteration 0:}0000 0000 0000 000[0]\]
 \[\mathrm{iteration 1:}0000 0000 0000 00[0]0\]
-\[ ... \]
+\[ \ldots \]
 \[\mathrm{iteration 31:}[0]000 0000 0000 0000\]
 
 \begin{figure}[htb]
